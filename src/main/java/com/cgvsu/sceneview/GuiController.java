@@ -1,4 +1,4 @@
-package com.cgvsu;
+package com.cgvsu.sceneview;
 
 import com.cgvsu.render_engine.RenderEngine;
 import javafx.fxml.FXML;
@@ -7,10 +7,13 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.event.ActionEvent;
 import javafx.scene.canvas.Canvas;
+import javafx.scene.control.CheckBox;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
+
+import java.awt.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.io.IOException;
@@ -26,37 +29,43 @@ public class GuiController {
     final private float TRANSLATION = 0.5F;
 
     @FXML
-    AnchorPane anchorPane;
-
+    AnchorPane canvasParentAnchorPane;
     @FXML
-    private Canvas canvas;
+    private Canvas sceneCanvas;
+    @FXML
+    private CheckBox drawMeshCheckBox;
+    @FXML
+    private CheckBox useTextureCheckBox;
+    @FXML
+    private CheckBox useLightCheckBox;
 
     private Model mesh = null;
 
-    private Camera camera = new Camera(
-            new Vector3f(0, 00, 100),
-            new Vector3f(0, 0, 0),
-            1.0F, 1, 0.01F, 100);
-
     private Timeline timeline;
+
+    private void TestInit(){
+
+    }
 
     @FXML
     private void initialize() {
-        anchorPane.prefWidthProperty().addListener((ov, oldValue, newValue) -> canvas.setWidth(newValue.doubleValue()));
-        anchorPane.prefHeightProperty().addListener((ov, oldValue, newValue) -> canvas.setHeight(newValue.doubleValue()));
+        SceneManager.initialize();
+
+        sceneCanvas.widthProperty().bind(canvasParentAnchorPane.widthProperty());
+        sceneCanvas.heightProperty().bind(canvasParentAnchorPane.heightProperty());
 
         timeline = new Timeline();
         timeline.setCycleCount(Animation.INDEFINITE);
 
         KeyFrame frame = new KeyFrame(Duration.millis(15), event -> {
-            double width = canvas.getWidth();
-            double height = canvas.getHeight();
+            double width = sceneCanvas.getWidth();
+            double height = sceneCanvas.getHeight();
 
-            canvas.getGraphicsContext2D().clearRect(0, 0, width, height);
-            camera.setAspectRatio((float) (width / height));
+            sceneCanvas.getGraphicsContext2D().clearRect(0, 0, width, height);
+            SceneManager.activeCamera.setAspectRatio((float) (width / height));
 
             if (mesh != null) {
-                RenderEngine.render(canvas.getGraphicsContext2D(), camera, mesh, (int) width, (int) height);
+                RenderEngine.render(sceneCanvas.getGraphicsContext2D(), SceneManager.activeCamera, mesh, (int) width, (int) height);
             }
         });
 
@@ -70,7 +79,7 @@ public class GuiController {
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Model (*.obj)", "*.obj"));
         fileChooser.setTitle("Load Model");
 
-        File file = fileChooser.showOpenDialog((Stage) canvas.getScene().getWindow());
+        File file = fileChooser.showOpenDialog((Stage) sceneCanvas.getScene().getWindow());
         if (file == null) {
             return;
         }
@@ -88,31 +97,31 @@ public class GuiController {
 
     @FXML
     public void handleCameraForward(ActionEvent actionEvent) {
-        camera.movePosition(new Vector3f(0, 0, -TRANSLATION));
+        SceneManager.activeCamera.movePosition(new Vector3f(0, 0, -TRANSLATION));
     }
 
     @FXML
     public void handleCameraBackward(ActionEvent actionEvent) {
-        camera.movePosition(new Vector3f(0, 0, TRANSLATION));
+        SceneManager.activeCamera.movePosition(new Vector3f(0, 0, TRANSLATION));
     }
 
     @FXML
     public void handleCameraLeft(ActionEvent actionEvent) {
-        camera.movePosition(new Vector3f(TRANSLATION, 0, 0));
+        SceneManager.activeCamera.movePosition(new Vector3f(TRANSLATION, 0, 0));
     }
 
     @FXML
     public void handleCameraRight(ActionEvent actionEvent) {
-        camera.movePosition(new Vector3f(-TRANSLATION, 0, 0));
+        SceneManager.activeCamera.movePosition(new Vector3f(-TRANSLATION, 0, 0));
     }
 
     @FXML
     public void handleCameraUp(ActionEvent actionEvent) {
-        camera.movePosition(new Vector3f(0, TRANSLATION, 0));
+        SceneManager.activeCamera.movePosition(new Vector3f(0, TRANSLATION, 0));
     }
 
     @FXML
     public void handleCameraDown(ActionEvent actionEvent) {
-        camera.movePosition(new Vector3f(0, -TRANSLATION, 0));
+        SceneManager.activeCamera.movePosition(new Vector3f(0, -TRANSLATION, 0));
     }
 }
