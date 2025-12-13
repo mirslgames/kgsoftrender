@@ -1,5 +1,6 @@
 package com.cgvsu;
 
+import com.cgvsu.math.vectors.Vector3f;
 import com.cgvsu.render_engine.RenderEngine;
 import javafx.fxml.FXML;
 import javafx.animation.Animation;
@@ -15,7 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.io.IOException;
 import java.io.File;
-import javax.vecmath.Vector3f;
+
 
 import com.cgvsu.model.Model;
 import com.cgvsu.objreader.ObjReader;
