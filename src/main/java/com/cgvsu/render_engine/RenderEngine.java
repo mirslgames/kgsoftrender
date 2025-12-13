@@ -1,6 +1,7 @@
 package com.cgvsu.render_engine;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 
 import com.cgvsu.math.matrixs.Matrix4f;
@@ -28,7 +29,13 @@ public class RenderEngine {
 
         Matrix4f modelViewProjectionMatrix = new Matrix4f(modelMatrix.getMatrix());
         modelViewProjectionMatrix.mul(viewMatrix);
+
         modelViewProjectionMatrix.mul(projectionMatrix);
+        /* System.out.println(Arrays.deepToString(modelViewProjectionMatrix.getMatrix()));
+        System.out.println("___________"); */
+
+
+
 
         final int nPolygons = mesh.polygons.size();
         for (int polygonInd = 0; polygonInd < nPolygons; ++polygonInd) {

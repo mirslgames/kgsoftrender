@@ -9,12 +9,7 @@ import javax.vecmath.Point2f;
 public class GraphicConveyor {
 
     public static Matrix4f rotateScaleTranslate() {
-        float[] matrix = new float[]{
-                1, 0, 0, 0,
-                0, 1, 0, 0,
-                0, 0, 1, 0,
-                0, 0, 0, 1};
-        return new Matrix4f(matrix);
+        return new Matrix4f();
     }
 
     public static Matrix4f lookAt(Vector3f eye, Vector3f target) {
@@ -22,6 +17,7 @@ public class GraphicConveyor {
     }
 
     public static Matrix4f lookAt(Vector3f eye, Vector3f target, Vector3f up) {
+        //создание системы координат камеры в мировой
         Vector3f resultX = new Vector3f();
         Vector3f resultY = new Vector3f();
         Vector3f resultZ = new Vector3f();

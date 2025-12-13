@@ -71,7 +71,7 @@ public class Matrix4f implements Matrix {
         return new Vector4f(x, y, z, w);
     }
 
-    public Matrix4f mul(Matrix4f matrix4F) {
+    public void mul(Matrix4f matrix4F) {
         Matrix4f result = new Matrix4f();
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
@@ -82,7 +82,7 @@ public class Matrix4f implements Matrix {
                 result.setValue(i, j, sum);
             }
         }
-        return result;
+        this.matrix = result.getMatrix();
     }
 
     @Override

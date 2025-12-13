@@ -64,7 +64,7 @@ public class Matrix3f implements Matrix {
         return new Vector3f(x, y, z);
     }
 
-    public Matrix3f multiplyOnMatrix(Matrix3f matrix3f) {
+    public void mul(Matrix3f matrix3f) {
         Matrix3f result = new Matrix3f();
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
@@ -75,7 +75,7 @@ public class Matrix3f implements Matrix {
                 result.setValue(i, j, sum);
             }
         }
-        return result;
+        this.matrix = result.getMatrix();
     }
 
     @Override
