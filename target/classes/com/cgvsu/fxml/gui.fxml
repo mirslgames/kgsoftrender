@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.*?>
 <?import javafx.scene.canvas.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.input.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.cgvsu.sceneview.GuiController">
+<AnchorPane prefHeight="800.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.cgvsu.sceneview.GuiController">
    <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
       <children>
           <MenuBar>
@@ -54,7 +55,7 @@
               </items>
             </Menu>
           </MenuBar>
-         <SplitPane dividerPositions="0.7192118226600985" prefHeight="481.0" prefWidth="814.0" VBox.vgrow="ALWAYS">
+         <SplitPane dividerPositions="0.7312186978297162" prefHeight="481.0" prefWidth="814.0" VBox.vgrow="ALWAYS">
            <items>
              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
                   <children>
@@ -75,7 +76,7 @@
                   <children>
                      <SplitPane dividerPositions="0.20964360587002095" layoutX="32.0" layoutY="40.0" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                        <items>
-                         <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="100.0" prefWidth="221.0">
+                         <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="100.0" prefWidth="292.0">
                               <children>
                                  <Label alignment="CENTER" layoutX="57.0" layoutY="6.0" text="Режимы отрисовки" />
                                  <VBox layoutX="8.0" layoutY="33.0" prefHeight="64.0" prefWidth="211.0">
@@ -88,21 +89,143 @@
                               </children></AnchorPane>
                          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="100.0" prefWidth="160.0">
                               <children>
-                                 <SplitPane dividerPositions="0.717741935483871" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                 <SplitPane dividerPositions="0.5728476821192053" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                    <items>
                                      <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="100.0" prefWidth="160.0">
                                           <children>
                                              <VBox layoutX="39.0" layoutY="32.0" prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                                 <children>
-                                                   <TitledPane animated="false" text="Модели">
+                                                   <TitledPane fx:id="modelsPane" animated="false" text="Модели">
                                                      <content>
-                                                       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
+                                                       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                                                            <children>
+                                                               <ScrollPane fx:id="modelsScrollPane" layoutX="-22.0" layoutY="-20.0" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                                                 <content>
+                                                                   <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="200.0" prefWidth="200.0">
+                                                                        <children>
+                                                                           <VBox fx:id="modelsBox" layoutX="-9.0" layoutY="-14.0" prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                                                              <children>
+                                                                                 <Button mnemonicParsing="false" onAction="#onModelButtonClick" text="Model1" />
+                                                                                 <Button mnemonicParsing="false" text="Button" />
+                                                                                 <Button mnemonicParsing="false" text="Button" />
+                                                                                 <Button mnemonicParsing="false" text="Button" />
+                                                                                 <Button mnemonicParsing="false" text="Button" />
+                                                                                 <Button mnemonicParsing="false" text="Button" />
+                                                                                 <Button mnemonicParsing="false" text="Button" />
+                                                                              </children>
+                                                                           </VBox>
+                                                                        </children>
+                                                                     </AnchorPane>
+                                                                 </content>
+                                                               </ScrollPane>
+                                                            </children></AnchorPane>
                                                      </content>
                                                    </TitledPane>
                                                 </children>
                                              </VBox>
                                           </children></AnchorPane>
-                                     <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="100.0" prefWidth="160.0" />
+                                     <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="335.0" prefWidth="290.0">
+                                          <children>
+                                             <VBox prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                                <children>
+                                                   <Label text="Действия над выбранным объектом" />
+                                                   <TitledPane fx:id="transformationTitledPane" animated="false" text="Трансформация">
+                                                     <content>
+                                                       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                                                            <children>
+                                                               <VBox layoutX="36.0" layoutY="-34.0" prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                                                  <children>
+                                                                     <HBox layoutX="10.0" layoutY="10.0" prefHeight="100.0" prefWidth="200.0">
+                                                                        <children>
+                                                                           <Label text="Позиция">
+                                                                              <HBox.margin>
+                                                                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                                              </HBox.margin>
+                                                                           </Label>
+                                                                           <Label text="x:">
+                                                                              <HBox.margin>
+                                                                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                                              </HBox.margin>
+                                                                           </Label>
+                                                                           <TextField fx:id="positionXTextField" prefHeight="25.0" prefWidth="41.0" />
+                                                                           <Label layoutX="74.0" layoutY="15.0" text="y:">
+                                                                              <HBox.margin>
+                                                                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                                              </HBox.margin>
+                                                                           </Label>
+                                                                           <TextField fx:id="positionYTextField" layoutX="88.0" layoutY="10.0" prefHeight="25.0" prefWidth="41.0" />
+                                                                           <Label layoutX="134.0" layoutY="15.0" text="z:">
+                                                                              <HBox.margin>
+                                                                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                                              </HBox.margin>
+                                                                           </Label>
+                                                                           <TextField fx:id="positionZTextField" layoutX="148.0" layoutY="10.0" prefHeight="25.0" prefWidth="41.0" />
+                                                                        </children>
+                                                                     </HBox>
+                                                                     <HBox layoutX="10.0" layoutY="10.0" prefHeight="100.0" prefWidth="200.0">
+                                                                        <children>
+                                                                           <Label text="Поворот">
+                                                                              <HBox.margin>
+                                                                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                                              </HBox.margin>
+                                                                           </Label>
+                                                                           <Label text="x:">
+                                                                              <HBox.margin>
+                                                                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                                              </HBox.margin>
+                                                                           </Label>
+                                                                           <TextField fx:id="rotationXTextField" prefHeight="25.0" prefWidth="41.0" />
+                                                                           <Label layoutX="74.0" layoutY="15.0" text="y:">
+                                                                              <HBox.margin>
+                                                                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                                              </HBox.margin>
+                                                                           </Label>
+                                                                           <TextField fx:id="rotationYTextField" layoutX="88.0" layoutY="10.0" prefHeight="25.0" prefWidth="41.0" />
+                                                                           <Label layoutX="134.0" layoutY="15.0" text="z:">
+                                                                              <HBox.margin>
+                                                                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                                              </HBox.margin>
+                                                                           </Label>
+                                                                           <TextField fx:id="rotationZTextField" layoutX="148.0" layoutY="10.0" prefHeight="25.0" prefWidth="41.0" />
+                                                                        </children>
+                                                                     </HBox>
+                                                                     <HBox layoutX="10.0" layoutY="90.0" prefHeight="100.0" prefWidth="200.0">
+                                                                        <children>
+                                                                           <Label text="Масштаб">
+                                                                              <HBox.margin>
+                                                                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                                              </HBox.margin>
+                                                                           </Label>
+                                                                           <Label text="x:">
+                                                                              <HBox.margin>
+                                                                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                                              </HBox.margin>
+                                                                           </Label>
+                                                                           <TextField fx:id="scaleXTextField" prefHeight="25.0" prefWidth="41.0" />
+                                                                           <Label layoutX="74.0" layoutY="15.0" text="y:">
+                                                                              <HBox.margin>
+                                                                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                                              </HBox.margin>
+                                                                           </Label>
+                                                                           <TextField fx:id="scaleYTextField" layoutX="88.0" layoutY="10.0" prefHeight="25.0" prefWidth="41.0" />
+                                                                           <Label layoutX="134.0" layoutY="15.0" text="z:">
+                                                                              <HBox.margin>
+                                                                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                                              </HBox.margin>
+                                                                           </Label>
+                                                                           <TextField fx:id="scaleZTextField" layoutX="148.0" layoutY="10.0" prefHeight="25.0" prefWidth="41.0" />
+                                                                        </children>
+                                                                     </HBox>
+                                                                  </children>
+                                                               </VBox>
+                                                            </children>
+                                                         </AnchorPane>
+                                                     </content>
+                                                   </TitledPane>
+                                                   <Button fx:id="deleteActiveEntityButton" mnemonicParsing="false" onAction="#onDeleteActiveEntityButtonClick" text="Удалить со сцены" />
+                                                </children>
+                                             </VBox>
+                                          </children></AnchorPane>
                                    </items>
                                  </SplitPane>
                               </children></AnchorPane>

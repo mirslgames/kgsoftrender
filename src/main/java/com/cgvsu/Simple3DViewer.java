@@ -1,5 +1,6 @@
 package com.cgvsu;
 
+import com.cgvsu.service.ThemeSettings;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -20,6 +21,8 @@ public class Simple3DViewer extends Application {
         stage.setMinHeight(900);
         viewport.prefWidthProperty().bind(scene.widthProperty());
         viewport.prefHeightProperty().bind(scene.heightProperty());
+
+
 
         stage.setTitle("KgSoftRender");
         stage.setScene(scene);
