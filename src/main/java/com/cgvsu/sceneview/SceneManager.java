@@ -44,7 +44,8 @@ public class SceneManager {
 
     }
 
-    public static void loadModelToScene(String modelName, Model model){
-        cacheNameSceneModels.put(modelName, model);
+    public static void loadModelToScene(Model model){
+        models.add(model);
+        cacheNameSceneModels.put(model.modelName, model);
     }
 }

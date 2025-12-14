@@ -93,7 +93,7 @@ public class GuiController {
         scaleYTextField.setOnKeyReleased(e -> onScaleYChanged());
         scaleZTextField.setOnKeyReleased(e -> onScaleZChanged());
 
-        SceneManager.loadModelToScene("Model1", new Model());
+        //SceneManager.loadModelToScene("Model1", new Model());
 
         ThemeSettings.setDefaultTheme();
         SceneManager.initialize();
@@ -274,10 +274,10 @@ public class GuiController {
         transformationTitledPane.setVisible(true);
     }
 
-    public void addModel(String name, Model model) {
-        SceneManager.cacheNameSceneModels.put(name, model);
+    public void addModel(Model model) {
+        SceneManager.loadModelToScene(model);
 
-        Button btn = new Button(name);
+        Button btn = new Button(model.modelName);
         btn.setMaxWidth(Double.MAX_VALUE);
         btn.setOnAction(this::onModelButtonClick);
         modelsBox.getChildren().add(btn);
