@@ -111,19 +111,6 @@ public class Vector3f implements Vector {
                 -EPS <= z - o.getZ() && z - o.getZ() <= EPS;
     }
 
-
-/*  public int compareTo(Vector3f o) {
-        float EPS = 10e-6F;
-        if (-EPS <= x - o.getX() && x - o.getX() <= EPS &&
-                -EPS <= y - o.getY() && y - o.getY() <= EPS &&
-                -EPS <= z - o.getZ() && z - o.getZ() <= EPS) {
-            return 0;
-        };
-        if (x > o.getX() && y > o.getY() && z > o.getX()) {
-            return 1;
-        }
-        return -1;
-    } */
 }
 
 

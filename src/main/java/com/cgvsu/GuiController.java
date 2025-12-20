@@ -78,6 +78,7 @@ public class GuiController {
 
         Path fileName = Path.of(file.getAbsolutePath());
 
+
         try {
             String fileContent = Files.readString(fileName);
             mesh = ObjReader.read(fileContent);

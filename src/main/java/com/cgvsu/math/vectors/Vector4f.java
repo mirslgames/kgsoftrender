@@ -66,8 +66,6 @@ public class Vector4f implements Vector, Comparable<Vector4f> {
         return x * v.getX() + y * v.getY() + z * v.getZ() + w * v.getW();
     }
 
-
-
     @Override
     public void divideByScalar(float number) {
         x /= number;

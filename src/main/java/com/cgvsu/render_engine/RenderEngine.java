@@ -1,16 +1,15 @@
 package com.cgvsu.render_engine;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 
 import com.cgvsu.math.matrixs.Matrix4f;
+import com.cgvsu.math.point.Point2f;
 import com.cgvsu.math.vectors.Vector3f;
 import javafx.scene.canvas.GraphicsContext;
 
 import com.cgvsu.model.Model;
 
-import javax.vecmath.Point2f;
 
 import static com.cgvsu.render_engine.GraphicConveyor.*;
 
@@ -53,18 +52,18 @@ public class RenderEngine {
 
             for (int vertexInPolygonInd = 1; vertexInPolygonInd < nVerticesInPolygon; ++vertexInPolygonInd) {
                 graphicsContext.strokeLine(
-                        resultPoints.get(vertexInPolygonInd - 1).x,
-                        resultPoints.get(vertexInPolygonInd - 1).y,
-                        resultPoints.get(vertexInPolygonInd).x,
-                        resultPoints.get(vertexInPolygonInd).y);
+                        resultPoints.get(vertexInPolygonInd - 1).getX(),
+                        resultPoints.get(vertexInPolygonInd - 1).getY(),
+                        resultPoints.get(vertexInPolygonInd).getX(),
+                        resultPoints.get(vertexInPolygonInd).getY());
             }
 
             if (nVerticesInPolygon > 0)
                 graphicsContext.strokeLine(
-                        resultPoints.get(nVerticesInPolygon - 1).x,
-                        resultPoints.get(nVerticesInPolygon - 1).y,
-                        resultPoints.get(0).x,
-                        resultPoints.get(0).y);
+                        resultPoints.get(nVerticesInPolygon - 1).getX(),
+                        resultPoints.get(nVerticesInPolygon - 1).getY(),
+                        resultPoints.get(0).getX(),
+                        resultPoints.get(0).getY());
         }
     }
 }

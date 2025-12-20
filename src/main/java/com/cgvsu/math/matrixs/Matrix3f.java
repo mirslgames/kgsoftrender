@@ -2,6 +2,7 @@ package com.cgvsu.math.matrixs;
 
 import com.cgvsu.math.interfaces.Matrix;
 import com.cgvsu.math.vectors.Vector3f;
+import com.cgvsu.math.vectors.Vector4f;
 
 
 public class Matrix3f implements Matrix {
@@ -64,6 +65,15 @@ public class Matrix3f implements Matrix {
         return new Vector3f(x, y, z);
     }
 
+    public Vector4f multiplyOnVector(Vector4f vector) {
+        float x = matrix[0][0] * vector.getX() + matrix[0][1] * vector.getY() + matrix[0][2] * vector.getZ();
+        float y = matrix[1][0] * vector.getX() + matrix[1][1] * vector.getY() + matrix[1][2] * vector.getZ();
+        float z = matrix[2][0] * vector.getX() + matrix[2][1] * vector.getY() + matrix[2][2] * vector.getZ();
+        float w = vector.getW();
+
+        return new Vector4f(x, y, z, w);
+    }
+
     public void mul(Matrix3f matrix3f) {
         Matrix3f result = new Matrix3f();
         for (int i = 0; i < 3; i++) {
@@ -76,6 +86,7 @@ public class Matrix3f implements Matrix {
             }
         }
         this.matrix = result.getMatrix();
+
     }
 
     @Override

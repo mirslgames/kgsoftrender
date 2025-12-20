@@ -1,6 +1,7 @@
 package com.cgvsu.math.matrixs;
 
 import com.cgvsu.math.interfaces.Matrix;
+import com.cgvsu.math.vectors.Vector3f;
 import com.cgvsu.math.vectors.Vector4f;
 
 
@@ -69,6 +70,14 @@ public class Matrix4f implements Matrix {
         float z = matrix[2][0] * vector.getX() + matrix[2][1] * vector.getY() + matrix[2][2] * vector.getZ() + matrix[2][3] * vector.getW();
         float w = matrix[3][0] * vector.getX() + matrix[3][1] * vector.getY() + matrix[3][2] * vector.getZ() + matrix[3][3] * vector.getW();
         return new Vector4f(x, y, z, w);
+    }
+
+    public Vector3f multiplyOnVector(Vector3f vector) {
+        final float x = (vector.getX() * matrix[0][0]) + (vector.getY() * matrix[1][0]) + (vector.getZ() * matrix[2][0]) + matrix[3][0];
+        final float y = (vector.getX() * matrix[0][1]) + (vector.getY() * matrix[1][1]) + (vector.getZ() * matrix[2][1]) + matrix[3][1];
+        final float z = (vector.getX() * matrix[0][2]) + (vector.getY() * matrix[1][2]) + (vector.getZ() * matrix[2][2]) + matrix[3][2];
+        final float w = (vector.getX() * matrix[0][3]) + (vector.getY() * matrix[1][3]) + (vector.getZ() * matrix[2][3]) + matrix[3][3];
+        return new Vector3f(x / w, y / w, z / w);
     }
 
     public void mul(Matrix4f matrix4F) {

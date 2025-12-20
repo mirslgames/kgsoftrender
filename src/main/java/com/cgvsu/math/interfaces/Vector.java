@@ -2,9 +2,6 @@ package com.cgvsu.math.interfaces;
 
 public interface Vector {
 
-    /*public default float[][] toMatrix() {
-        return new float[0];
-    }*/
 
     default void divideByScalar(float number) {
         return;
@@ -22,5 +19,4 @@ public interface Vector {
     default void normalize() {
         return;
     }
-
 }

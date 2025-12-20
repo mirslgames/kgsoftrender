@@ -2,9 +2,10 @@ package com.cgvsu.render_engine;
 
 
 import com.cgvsu.math.matrixs.Matrix4f;
+import com.cgvsu.math.point.Point2f;
 import com.cgvsu.math.vectors.Vector3f;
 
-import javax.vecmath.Point2f;
+
 
 public class GraphicConveyor {
 
@@ -17,7 +18,6 @@ public class GraphicConveyor {
     }
 
     public static Matrix4f lookAt(Vector3f eye, Vector3f target, Vector3f up) {
-        //создание системы координат камеры в мировой
         Vector3f resultX = new Vector3f();
         Vector3f resultY = new Vector3f();
         Vector3f resultZ = new Vector3f();
@@ -61,7 +61,6 @@ public class GraphicConveyor {
         return new Vector3f(x / w, y / w, z / w);
     }
 
-    //todo: Добавить класс точки в библиотеку Math
     public static Point2f vertexToPoint(final Vector3f vertex, final int width, final int height) {
         return new Point2f(vertex.getX() * width + width / 2.0F, -vertex.getY() * height + height / 2.0F);
     }
