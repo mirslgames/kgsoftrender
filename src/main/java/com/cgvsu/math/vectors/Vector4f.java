@@ -1,99 +1,46 @@
 package com.cgvsu.math.vectors;
 
-import com.cgvsu.math.interfaces.Vector;
 
+public class Vector4f extends AbstractVector<Vector4f> {
 
-public class Vector4f implements Vector, Comparable<Vector4f> {
-    private float x;
-    private float y;
-    private float z;
-    private float w;
-
-    public float getX() {
-        return x;
-    }
-
-    public float getY() {
-        return y;
-    }
-
-    public float getZ() {
-        return z;
-    }
-
-    public float getW() {
-        return w;
+    public Vector4f() {
+        super(4);
     }
 
     public Vector4f(float x, float y, float z, float w) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-        this.w = w;
+        super(new float[]{x, y, z, w});
     }
 
-    @Override
-    public float len() {
-        return (float) Math.sqrt(x * x + y * y + z * z + w * w);
+    public float getX() {
+        return getValue(0);
     }
 
-    @Override
-    public void normalize() {
-        float l = len();
-        if (l != 0) {
-            x = x / l;
-            y = y / l;
-            z = z / l;
-            w = w / l;
-        }
+    public float getY() {
+        return getValue(1);
     }
 
-    public void add(Vector4f v) {
-        x += v.getX();
-        y += v.getY();
-        z += v.getZ();
-        w += v.getW();
+    public float getZ() {
+        return getValue(2);
     }
 
-    public void sub(Vector4f v) {
-        x -= v.getX();
-        y -= v.getY();
-        z -= v.getZ();
-        w -= v.getW();
+    public float getW() {
+        return getValue(3);
     }
 
-    public float dot(Vector4f v) {
-        return x * v.getX() + y * v.getY() + z * v.getZ() + w * v.getW();
+    public void setX(float x) {
+        setValue(0, x);
     }
 
-    @Override
-    public void divideByScalar(float number) {
-        x /= number;
-        y /= number;
-        z /= number;
-        w /= number;
+    public void setY(float y) {
+        setValue(1, y);
     }
 
-    @Override
-    public void multiplyByScalar(float number) {
-        x *= number;
-        y *= number;
-        z *= number;
-        w *= number;
+    public void setZ(float z) {
+        setValue(2, z);
     }
 
-    @Override
-    public int compareTo(Vector4f o) {
-        float EPS = 10e-6F;
-        if (-EPS <= x - o.getX() && x - o.getX() <= EPS &&
-                -EPS <= y - o.getY() && y - o.getY() <= EPS &&
-                -EPS <= z - o.getZ() && z - o.getZ() <= EPS &&
-                -EPS <= w - o.getW() && w - o.getW() <= EPS) {
-            return 0;
-        };
-        if (x > o.getX() && y > o.getY() && z > o.getZ() && w > o.getW()) {
-            return 1;
-        }
-        return -1;
+    public void setW(float w) {
+        setValue(3, w);
     }
+
 }

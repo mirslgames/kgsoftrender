@@ -1,116 +1,51 @@
 package com.cgvsu.math.vectors;
 
-import com.cgvsu.math.interfaces.Vector;
 
-
-public class Vector3f implements Vector {
-    private float x;
-    private float y;
-    private float z;
-
-    public float getX() {
-        return x;
-    }
-
-    public float getY() {
-        return y;
-    }
-
-    public float getZ() {
-        return z;
+public class Vector3f extends AbstractVector<Vector3f> {
+    public Vector3f() {
+        super(3);
     }
 
     public Vector3f(float x, float y, float z) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
+        super(new float[]{x, y, z});
     }
 
-    public Vector3f() {
-        this.x = 1;
-        this.y = 1;
-        this.z = 1;
+    public float getX() {
+        return getValue(0);
     }
 
-    @Override
-    public float len() {
-        return (float) Math.sqrt(x * x + y * y + z * z);
+    public float getY() {
+        return getValue(1);
     }
 
-    @Override
-    public void normalize() {
-        float l = len();
-        if (l != 0) {
-            x = x / l;
-            y = y / l;
-            z = z / l;
-        }
+    public float getZ() {
+        return getValue(2);
     }
 
-    public void add(Vector3f v) {
-        x += v.getX();
-        y += v.getY();
-        z += v.getZ();
+    public void setX(float x) {
+        setValue(0, x);
     }
 
-    public void sub(Vector3f v) {
-        x -= v.getX();
-        y -= v.getY();
-        z -= v.getZ();
+    public void setY(float y) {
+        setValue(1, y);
     }
 
-    public void sub(Vector3f v1, Vector3f v2) {
-        x = v1.getX() - v2.getX();
-        y = v1.getY() - v2.getY();
-        z = v1.getZ() - v2.getZ();
+    public void setZ(float z) {
+        setValue(2, z);
     }
 
-    public float dot(Vector3f v) {
-        return x * v.getX() + y * v.getY() + z * v.getZ();
+    public Vector3f cross(Vector3f v) {
+        cross(this, v);
+        return this;
     }
-
-    public void cross(Vector3f v) {
-        this.x = y * v.getZ() - z * v.getY();
-        this.y = z * v.getX() - x * v.getZ();
-        this.z = x * v.getY() - y * v.getX();
+    public Vector3f cross(Vector3f a, Vector3f b) {
+        float x = a.getY() * b.getZ() - a.getZ() * b.getY();
+        float y = a.getZ() * b.getX() - a.getX() * b.getZ();
+        float z = a.getX() * b.getY() - a.getY() * b.getX();
+        setX(x);
+        setY(y);
+        setZ(z);
+        return this;
     }
-
-    public void cross(Vector3f v1, Vector3f v2) {
-        this.x = v1.getY() * v2.getZ() - v1.getZ() * v2.getY();
-        this.y = v1.getZ() * v2.getX() - v1.getX() * v2.getZ();
-        this.z = v1.getX() * v2.getY() - v1.getY() * v2.getX();
-    }
-
-    /* @Override
-    public float[][] toMatrix() {
-        return new float[][] {
-                {x, 0, 0},
-                {0, y, 0},
-                {0, 0, z}};
-    } */
-
-
-    @Override
-    public void divideByScalar(float number) {
-        x /= number;
-        y /= number;
-        z /= number;
-    }
-
-    @Override
-    public void multiplyByScalar(float number) {
-        x *= number;
-        y *= number;
-        z *= number;
-    }
-
-    public boolean equals(Vector3f o) {
-        float EPS = 10e-6F;
-        return  -EPS <= x - o.getX() && x - o.getX() <= EPS &&
-                -EPS <= y - o.getY() && y - o.getY() <= EPS &&
-                -EPS <= z - o.getZ() && z - o.getZ() <= EPS;
-    }
-
 }
-
 

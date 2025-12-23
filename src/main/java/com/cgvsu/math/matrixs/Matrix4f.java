@@ -1,107 +1,95 @@
 package com.cgvsu.math.matrixs;
 
-import com.cgvsu.math.interfaces.Matrix;
 import com.cgvsu.math.vectors.Vector3f;
 import com.cgvsu.math.vectors.Vector4f;
 
 
-public class Matrix4f implements Matrix {
-    private float[][] matrix = new float[4][4];
-
-    public Matrix4f(float[][] matrix) throws IllegalArgumentException {
-        if (matrix.length == 0) {
-            throw new IllegalArgumentException("Matrix's length must be 4x4, but get void matrix");
-        }
-        if (matrix.length != 4) {
-            throw new IllegalArgumentException(String.format("Matrix's length must be 4x4, but get %dx%d %n", matrix.length, matrix[0].length));
-        }
-        if (matrix[0].length != 4) {
-            throw new IllegalArgumentException(String.format("Matrix's length must be 4x4, but get %dx%d %n", matrix.length, matrix[0].length));
-        }
-        this.matrix = matrix;
-    }
+public class Matrix4f extends AbstractMatrix<Matrix4f> {
 
     public Matrix4f() {
-        this.matrix = new float[][] {
-                {1, 0, 0, 0},
-                {0, 1, 0, 0},
-                {0, 0, 1, 0},
-                {0, 0, 0, 1}
-        };
+        super(4);
+    }
+
+    public Matrix4f(float[][] matrix) {
+        super(validate(matrix));
     }
 
     public Matrix4f(float[] array) {
-        for (int i = 0; i < 4; i++) {
-            System.arraycopy(array, i * 4, matrix[i], 0, 4);
-        }
+        super(validate(array));
     }
 
-    public float[][] getMatrix() {
+    private static float[][] validate(float[][] matrix) {
+        if (matrix == null) {
+            throw new NullPointerException("Matrix is null");
+        }
+        if (matrix.length != 4) {
+            throw new IllegalArgumentException("Matrix must be 4x4");
+        }
+        for (float[] floats : matrix) {
+            if (floats == null) {
+                throw new NullPointerException("Row is null");
+            }
+            if (floats.length != 4) {
+                throw new IllegalArgumentException("Matrix must be 4x4");
+            }
+        }
         return matrix;
     }
 
-    public void setValue(int row, int column, float value) {
-        matrix[row][column] = value;
-    }
-
-    public float getValue(int row, int column) {
-        return matrix[row][column];
-    }
-
-    public void add(Matrix4f matrix4F) {
-        for (int i = 0; i < 4; i++) {
-            for(int j = 0; j < 4; j++) {
-                matrix[i][j] += matrix4F.getValue(i, j);
-            }
+    private static float[] validate(float[] array) {
+        if (array == null) {
+            throw new NullPointerException("Array is null");
         }
-    }
-
-    public void sub(Matrix4f matrix4F) {
-        for (int i = 0; i < 4; i++) {
-            for(int j = 0; j < 4; j++) {
-                matrix[i][j] -= matrix4F.getValue(i, j);
-            }
+        if (array.length != 16) {
+            throw  new IllegalArgumentException("Length of array for Matrix4f must be 16");
         }
+        return array;
     }
 
     public Vector4f multiplyOnVector(Vector4f vector) {
-        float x = matrix[0][0] * vector.getX() + matrix[0][1] * vector.getY() + matrix[0][2] * vector.getZ() + matrix[0][3] * vector.getW();
-        float y = matrix[1][0] * vector.getX() + matrix[1][1] * vector.getY() + matrix[1][2] * vector.getZ() + matrix[1][3] * vector.getW();
-        float z = matrix[2][0] * vector.getX() + matrix[2][1] * vector.getY() + matrix[2][2] * vector.getZ() + matrix[2][3] * vector.getW();
-        float w = matrix[3][0] * vector.getX() + matrix[3][1] * vector.getY() + matrix[3][2] * vector.getZ() + matrix[3][3] * vector.getW();
-        return new Vector4f(x, y, z, w);
+        return multiplyOnVector(this, vector);
     }
 
     public Vector3f multiplyOnVector(Vector3f vector) {
-        final float x = (vector.getX() * matrix[0][0]) + (vector.getY() * matrix[1][0]) + (vector.getZ() * matrix[2][0]) + matrix[3][0];
-        final float y = (vector.getX() * matrix[0][1]) + (vector.getY() * matrix[1][1]) + (vector.getZ() * matrix[2][1]) + matrix[3][1];
-        final float z = (vector.getX() * matrix[0][2]) + (vector.getY() * matrix[1][2]) + (vector.getZ() * matrix[2][2]) + matrix[3][2];
-        final float w = (vector.getX() * matrix[0][3]) + (vector.getY() * matrix[1][3]) + (vector.getZ() * matrix[2][3]) + matrix[3][3];
+        return multiplyOnVector(this, vector);
+    }
+
+    public static Vector4f multiplyOnVector(Matrix4f matrix4f, Vector4f vector4f) {
+        float x = matrix4f.getValue(0, 0) * vector4f.getX() + matrix4f.getValue(0, 1) * vector4f.getY() +
+                matrix4f.getValue(0, 2) * vector4f.getZ() + matrix4f.getValue(0, 3) * vector4f.getW();
+        float y = matrix4f.getValue(1, 0) * vector4f.getX() + matrix4f.getValue(1, 1) * vector4f.getY() +
+                matrix4f.getValue(1, 2) * vector4f.getZ() + matrix4f.getValue(1, 3) * vector4f.getW();
+        float z = matrix4f.getValue(2, 0) * vector4f.getX() + matrix4f.getValue(2, 1) * vector4f.getY() +
+                matrix4f.getValue(2, 2) * vector4f.getZ() + matrix4f.getValue(2, 3) * vector4f.getW();
+        float w = matrix4f.getValue(3, 0) * vector4f.getX() + matrix4f.getValue(3, 1) * vector4f.getY() +
+                matrix4f.getValue(3, 2) * vector4f.getZ() + matrix4f.getValue(3, 3) * vector4f.getW();
+
+        return new Vector4f(x, y, z, w);
+    }
+
+    public static Vector3f multiplyOnVector(Matrix4f matrix4f, Vector3f vector3f) {
+        float x = vector3f.getX() * matrix4f.getValue(0, 0) +
+                vector3f.getY() * matrix4f.getValue(0, 1) +
+                vector3f.getZ() * matrix4f.getValue(0, 2) +
+                matrix4f.getValue(0, 3);
+
+        float y = vector3f.getX() * matrix4f.getValue(1, 0) +
+                vector3f.getY() * matrix4f.getValue(1, 1) +
+                vector3f.getZ() * matrix4f.getValue(1, 2) +
+                matrix4f.getValue(1, 3);
+
+        float z = vector3f.getX() * matrix4f.getValue(2, 0) +
+                vector3f.getY() * matrix4f.getValue(2, 1) +
+                vector3f.getZ() * matrix4f.getValue(2, 2) +
+                matrix4f.getValue(2, 3);
+
+        float w = vector3f.getX() * matrix4f.getValue(3, 0) +
+                vector3f.getY() * matrix4f.getValue(3, 1) +
+                vector3f.getZ() * matrix4f.getValue(3, 2) +
+                matrix4f.getValue(3, 3);
+        if (Math.abs(w) < EPS) {
+            return new Vector3f(x, y, z);
+        }
         return new Vector3f(x / w, y / w, z / w);
-    }
-
-    public void mul(Matrix4f matrix4F) {
-        Matrix4f result = new Matrix4f();
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                float sum = 0;
-                for (int k = 0; k < 4; k++) {
-                    sum += matrix[i][k] * matrix4F.getValue(k, j);
-                }
-                result.setValue(i, j, sum);
-            }
-        }
-        this.matrix = result.getMatrix();
-    }
-
-    @Override
-    public void transposition() {
-        Matrix4f result = new Matrix4f();
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                result.setValue(i, j, matrix[j][i]);
-            }
-        }
-        matrix = result.getMatrix();
     }
 }
