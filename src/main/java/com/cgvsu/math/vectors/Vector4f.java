@@ -98,4 +98,43 @@ public class Vector4f implements Vector, Comparable<Vector4f> {
         }
         return -1;
     }
+    public Vector4f added(Vector4f v) {
+        float rx = x + v.getX();
+        float ry = y + v.getY();
+        float rz = z + v.getZ();
+        float rw = w + v.getW();
+        return new Vector4f(rx, ry,rz, rw);
+    }
+
+    public Vector4f subtracted(Vector4f v) {
+        float rx = x - v.getX();
+        float ry = y - v.getY();
+        float rz = z - v.getZ();
+        float rw = w - v.getW();
+        return new Vector4f(rx, ry, rz, rw);
+    }
+
+    public Vector4f normalized() {
+        float l = len();
+        if (l == 0) {
+            return new Vector4f(0,0,0, 0);
+        }
+        return new Vector4f(x / l, y / l, z / l, w / l);
+    }
+
+    public Vector4f multipliedByScalar(float number) {
+        float rx = x * number;
+        float ry = y * number;
+        float rz = z * number;
+        float rw = w * number;
+        return new Vector4f(rx, ry, rz, rw);
+    }
+
+    public Vector4f dividedByScalar(float number) {
+        float rx =  x / number;
+        float ry =  y / number;
+        float rz = z / number;
+        float rw = w / number;
+        return new Vector4f(rx, ry, rz, rw);
+    }
 }

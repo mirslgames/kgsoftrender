@@ -76,4 +76,33 @@ public class Vector2f implements Vector, Comparable<Vector2f> {
         }
         return -1;
     }
+    public Vector2f added(Vector2f v) {
+        float rx = x + v.getX();
+        float ry = y + v.getY();
+        return new Vector2f(rx, ry);
+    }
+
+    public Vector2f subtracted(Vector2f v) {
+        float rx = x - v.getX();
+        float ry = y - v.getY();
+        return new Vector2f(rx, ry);
+    }
+
+    public Vector2f normalized() {
+        float l = len();
+        return new Vector2f(x / l, y / l);
+    }
+
+    public Vector2f multipliedByScalar(float number) {
+        float rx = x * number;
+        float ry = y * number;
+        return new Vector2f(rx, ry);
+    }
+
+    public Vector2f dividedByScalar(float number) {
+        float rx =  x / number;
+        float ry =  y / number;
+        return new Vector2f(rx, ry);
+    }
+
 }

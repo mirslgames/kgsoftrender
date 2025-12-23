@@ -124,6 +124,49 @@ public class Vector3f implements Vector {
         }
         return -1;
     } */
+    public Vector3f added(Vector3f v) {
+        float rx = x + v.getX();
+        float ry = y + v.getY();
+        float rz = z + v.getZ();
+        return new Vector3f(rx, ry,rz);
+    }
+
+    public Vector3f subtracted(Vector3f v) {
+        float rx = x - v.getX();
+        float ry = y - v.getY();
+        float rz = z - v.getZ();
+        return new Vector3f(rx, ry, rz);
+    }
+
+    public Vector3f normalized() {
+        float l = len();
+        if (l == 0) {
+            return new Vector3f(0,0,0);
+        }
+        return new Vector3f(x / l, y / l, z / l);
+    }
+
+    public Vector3f multipliedByScalar(float number) {
+        float rx = x * number;
+        float ry = y * number;
+        float rz = z * number;
+        return new Vector3f(rx, ry, rz);
+    }
+
+    public Vector3f dividedByScalar(float number) {
+        float rx =  x / number;
+        float ry =  y / number;
+        float rz = z / number;
+        return new Vector3f(rx, ry, rz);
+    }
+    public Vector3f crossed(Vector3f v) {
+        float rx = y * v.getZ() - z * v.getY();
+        float ry = z * v.getX() - x * v.getZ();
+        float rz = x * v.getY() - y * v.getX();
+        return new Vector3f(rx, ry, rz);
+    }
+
 }
+
 
 

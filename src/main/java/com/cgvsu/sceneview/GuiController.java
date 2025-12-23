@@ -1,5 +1,6 @@
 package com.cgvsu.sceneview;
 
+import com.cgvsu.math.vectors.Vector3f;
 import com.cgvsu.render_engine.RenderEngine;
 import com.cgvsu.service.ThemeSettings;
 import javafx.fxml.FXML;
@@ -24,7 +25,7 @@ import java.io.IOException;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Optional;
-import javax.vecmath.Vector3f;
+
 
 import com.cgvsu.model.Model;
 import com.cgvsu.objreader.ObjReader;
