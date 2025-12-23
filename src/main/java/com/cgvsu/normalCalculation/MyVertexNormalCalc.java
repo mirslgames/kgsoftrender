@@ -1,8 +1,7 @@
 package com.cgvsu.normalCalculation;
 
-import com.cgvsu.math.Vector3f;
+import com.cgvsu.math.vectors.Vector3f;
 import com.cgvsu.model.Model;
-import com.cgvsu.model.Polygon;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,42 +9,79 @@ import java.util.List;
 import static com.cgvsu.normalCalculation.VectorMultiply.calculatePolygonNormal;
 import static com.cgvsu.normalCalculation.VectorMultiply.computePolygonArea;
 
-public class MyVertexNormalCalc implements VertexNormals<Vector3f, Model> {
+public class MyVertexNormalCalc implements VertexNormals<Model> {
 
     @Override
-    public  List<Vector3f> calculateVertexNormals(Model model) {
+    public void calculateVertexNormals(Model model) {
         int vertexCount = model.vertices.size();
-        boolean isOneBased = model.polygons.get(0).getVertexIndices().get(0) == 1;
 
-        List<Vector3f> vertexNormals = new ArrayList<>();
-        List<Float> vertexWeights = new ArrayList<>();
+        // Инициализация структур для накопления
+        List<Vector3f> vertexNormals = new ArrayList<>(vertexCount);
+        List<Float> vertexWeights = new ArrayList<>(vertexCount);
+
         for (int i = 0; i < vertexCount; i++) {
-            vertexNormals.add(new Vector3f(0, 0, 0));
-            vertexWeights.add(0f);
+            vertexNormals.add(new Vector3f(0, 0, 0)); // Нулевой вектор
+            vertexWeights.add(0f); // Нулевой вес
         }
 
-        for (Polygon polygon : model.polygons) {
-            Vector3f polygonNormal = calculatePolygonNormal(polygon, model.vertices);
-            float area = computePolygonArea(polygon, model.vertices);
+        // 2. Обработка каждого полигона
+        int polyCount = model.polygonBoundaries.size();
 
-            for (Integer vertexIndex : polygon.getVertexIndices()) {
-                int idx = isOneBased ? vertexIndex - 1 : vertexIndex;
-                if (idx < 0 || idx >= vertexCount) continue;
+        for (int polyIdx = 0; polyIdx < polyCount; polyIdx++) {
+            int startOfPolygon = model.polygonBoundaries.get(polyIdx);
+            int endOfPolygon = (polyIdx == polyCount - 1)
+                    ? model.polygons.size()
+                    : model.polygonBoundaries.get(polyIdx + 1);
 
-                Vector3f weighted = polygonNormal.multiply(area);
-                vertexNormals.set(idx, vertexNormals.get(idx).add(weighted));
-                vertexWeights.set(idx, vertexWeights.get(idx) + area);
+
+            if (endOfPolygon - startOfPolygon < 3) {
+                continue;
+            }
+
+            Vector3f polygonNormal = calculatePolygonNormal(
+                    model.vertices,
+                    model.polygons,
+                    startOfPolygon,
+                    endOfPolygon
+            );
+
+            float area = computePolygonArea(
+                    model.vertices,
+                    model.polygons,
+                    startOfPolygon,
+                    endOfPolygon
+            );
+
+            for (int j = startOfPolygon; j < endOfPolygon; j++) {
+                int idx = model.polygons.get(j);
+
+
+                if (idx < 0 || idx >= vertexCount) {
+                    continue;
+                }
+
+                Vector3f weighted = polygonNormal.multipliedByScalar(area);
+                Vector3f currentNormal = vertexNormals.get(idx);
+                vertexNormals.set(idx, currentNormal.added(weighted));
+
+                // Обновляем вес
+                float currentWeight = vertexWeights.get(idx);
+                vertexWeights.set(idx, currentWeight + area);
             }
         }
+
 
         for (int i = 0; i < vertexCount; i++) {
             float weight = vertexWeights.get(i);
+
             if (weight > 0) {
-                Vector3f averaged = vertexNormals.get(i).divide(weight).normalize();
-                vertexNormals.set(i, averaged);
+                Vector3f averaged = vertexNormals.get(i).dividedByScalar(weight).normalized();
+                // Сохраняем нормаль в вершину модели
+                model.vertices.get(i).setNormal(averaged);
+            } else {
+                // Если вершина не участвовала ни в одном полигоне
+                model.vertices.get(i).setNormal((new Vector3f(0, 0, 0)));
             }
         }
-
-        return vertexNormals;
     }
 }

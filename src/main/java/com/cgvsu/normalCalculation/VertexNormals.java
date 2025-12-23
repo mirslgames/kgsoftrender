@@ -2,9 +2,9 @@ package com.cgvsu.normalCalculation;
 
 import java.util.List;
 
-public interface VertexNormals<T, V> {
+public interface VertexNormals<V> {
 
-    public List<T> calculateVertexNormals(V Model);
+    public void calculateVertexNormals(V Model);
 
 
 }
