@@ -1,18 +1,15 @@
 package com.cgvsu.model;
-import com.cgvsu.math.Vector2f;
-import com.cgvsu.math.Vector3f;
 
 import java.util.*;
 
 public class Model {
 
     public String modelName;
-    public ArrayList<Vector3f> vertices = new ArrayList<Vector3f>();
-    public ArrayList<Vector2f> textureVertices = new ArrayList<Vector2f>();
-    public ArrayList<Vector3f> normals = new ArrayList<Vector3f>();
-    public ArrayList<Polygon> polygons = new ArrayList<Polygon>();
-
-
+    public ArrayList<Vertex> vertices = new ArrayList<>(); //Вершины у модельки
+    public ArrayList<Integer> polygons = new ArrayList<Integer>(); //Индексы на конкретные вершины из списка для полигонов
+    public ArrayList<Integer> polygonsBoundaries = new ArrayList<>(); //Номер индекса с которого идут вершины для данного полигона (старт)
+    public boolean hasTexture;
+    //todo: Добавить поле для самой текстуры + подумать над режимами отрисовки
 
     public Model(){
 
