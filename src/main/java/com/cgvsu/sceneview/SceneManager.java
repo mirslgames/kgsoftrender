@@ -8,6 +8,7 @@ import javafx.scene.control.TextField;
 import javax.vecmath.Vector3f;
 import java.util.ArrayList;
 import java.util.Dictionary;
+import java.util.HashMap;
 import java.util.Hashtable;
 
 public class SceneManager {
@@ -15,12 +16,16 @@ public class SceneManager {
     public static ArrayList<Camera> cameras;
     public static Model activeModel;
     public static ArrayList<Model> models = new ArrayList<>();
-    public static Dictionary<String, Model> cacheNameSceneModels = new Hashtable<>();
+    public static Dictionary<String, Model> cacheNameSceneModels = new Hashtable<>(); // чтобы быстро найти по имени модель а не перебирать все загруженные
+    public static HashMap<String, Integer> historyModelName = new HashMap<>();
+    //todo: Подумать как организовать источник света + SceneEntity
+
 
     public static boolean drawMesh;
     public static boolean useTexture;
     public static boolean useLight;
 
+    //Для выбранной текущей модели возможно переходник для SceneEntity
     public static float positionXValue;
     public static float positionYValue;
     public static float positionZValue;

@@ -33,15 +33,15 @@ public class RenderEngine {
                     ? mesh.polygonsBoundaries.get(polygonInd + 1)
                     : mesh.polygons.size();
 
-            final int nVerticesInPolygon = endIndex - startIndex; //Под новую архитектуру модели считаем сколько  у полигона вершин
+            final int nVerticesInPolygon = endIndex - startIndex; //Под новую архитектуру модели считаем сколько у полигона вершин
 
             ArrayList<Point2f> resultPoints = new ArrayList<>();
 
             for (int i = startIndex; i < endIndex; ++i) {
-                int vertexIndex = mesh.polygons.get(i); // индекс в mesh.vertices
+                int vertexIndex = mesh.polygons.get(i);
                 Vertex vertex = mesh.vertices.get(vertexIndex);
 
-                Vector3f pos = vertex.position; // позиция вершины
+                Vector3f pos = vertex.position;
                 javax.vecmath.Vector3f posVecmath = new javax.vecmath.Vector3f(pos.x, pos.y, pos.z);
 
                 Point2f resultPoint = vertexToPoint(

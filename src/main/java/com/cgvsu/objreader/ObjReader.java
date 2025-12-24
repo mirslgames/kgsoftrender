@@ -4,12 +4,16 @@ import com.cgvsu.math.Vector2f;
 import com.cgvsu.math.Vector3f;
 import com.cgvsu.model.Model;
 import com.cgvsu.model.Vertex;
+import com.cgvsu.sceneview.SceneManager;
+import javafx.scene.Scene;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
 
 public class ObjReader {
+
+	//todo: Доделать ридер, добавить врайтер для модельки, а также тестами покрыть
 
 	private static final String OBJ_VERTEX_TOKEN = "v";
 	private static final String OBJ_TEXTURE_TOKEN = "vt";
@@ -57,8 +61,17 @@ public class ObjReader {
 		}
 
 		result = constructModelFromReadData(readVertices, readTextureVertices, readNormals, readPolygonsIndices);
-		result.modelName =  filename.substring(0, filename.length() - 4); //Удаляем .obj
-		//todo: Сделать некий пул имен истории в программе чтобы избежать конфликта одинаковых имен
+		String targetModelName =  filename.substring(0, filename.length() - 4); //Удаляем .obj
+		result.modelName = validateAndCorrectDuplicateModelName(targetModelName);
+		return result;
+	}
+
+	protected static String validateAndCorrectDuplicateModelName(String targetModelName){
+		String result = targetModelName;
+		if (SceneManager.historyModelName.containsKey(targetModelName)){
+			int c = SceneManager.historyModelName.get(targetModelName);
+			result += String.format(" (%d)", ++c);
+		}
 		return result;
 	}
 

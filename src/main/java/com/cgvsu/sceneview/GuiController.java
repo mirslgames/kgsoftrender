@@ -74,7 +74,7 @@ public class GuiController {
     private TextField scaleZTextField;
 
 
-    private Model mesh = null;
+    //private Model mesh = null;
 
     private Timeline timeline;
 
@@ -124,9 +124,14 @@ public class GuiController {
         sceneCanvas.getGraphicsContext2D().clearRect(0, 0, width, height);
         SceneManager.activeCamera.setAspectRatio((float) (width / height));
 
-        if (mesh != null) {
-            RenderEngine.render(sceneCanvas.getGraphicsContext2D(), SceneManager.activeCamera, mesh, (int) width, (int) height);
+
+        for(Model model : SceneManager.models){
+            RenderEngine.render(sceneCanvas.getGraphicsContext2D(), SceneManager.activeCamera, model, (int) width, (int) height);
         }
+        //ВАРИАНТ рендерить только активную модель
+        /*if (SceneManager.activeModel != null) {
+            RenderEngine.render(sceneCanvas.getGraphicsContext2D(), SceneManager.activeCamera, SceneManager.activeModel, (int) width, (int) height);
+        }*/
     }
 
     private float parseFloat(TextField textField) {
@@ -203,7 +208,17 @@ public class GuiController {
 
         try {
             String fileContent = Files.readString(fileName);
-            mesh = ObjReader.read(fileContent, fileName.getFileName().toString());
+            Model mesh = ObjReader.read(fileContent, fileName.getFileName().toString());
+            if(SceneManager.historyModelName.containsKey(mesh.modelName)){
+                int c = SceneManager.historyModelName.get(mesh.modelName);
+                SceneManager.historyModelName.put(mesh.modelName, ++c);
+            } else{
+                SceneManager.historyModelName.put(mesh.modelName, 0);
+            }
+
+            //Добавление кнопки
+            addModel(mesh);
+            SceneManager.activeModel = mesh;
             // todo: обработка ошибок
         } catch (IOException exception) {
 
