@@ -1,5 +1,6 @@
 package com.cgvsu.math.matrixs;
 
+import com.cgvsu.Main;
 import com.cgvsu.math.vectors.Vector3f;
 import com.cgvsu.math.vectors.Vector4f;
 
@@ -18,6 +19,11 @@ public class Matrix3f extends AbstractMatrix<Matrix3f> {
     public Matrix3f(float[] array) {
         super(validate(array));
 
+    }
+
+    @Override
+    protected Matrix3f create(float[][] matrix) {
+        return new Matrix3f(matrix);
     }
 
     private static float[] validate(float[] array) {
@@ -70,6 +76,16 @@ public class Matrix3f extends AbstractMatrix<Matrix3f> {
         float z = matrix3f.getValue(2, 0) * vector3f.getX() + matrix3f.getValue(2, 1) * vector3f.getY() + matrix3f.getValue(2, 2) * vector3f.getZ();
 
         return new Vector3f(x, y, z);
+    }
+
+    public Vector3f multipliedOnVector(Vector3f vector) {
+        Matrix3f matrix3f = this.copy();
+        return matrix3f.multiplyOnVector(vector);
+    }
+
+    public Vector4f multipliedOnVector(Vector4f vector) {
+        Matrix3f matrix3f = this.copy();
+        return matrix3f.multiplyOnVector(vector);
     }
 
 }

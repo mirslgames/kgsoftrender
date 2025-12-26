@@ -18,6 +18,11 @@ public class Matrix4f extends AbstractMatrix<Matrix4f> {
         super(validate(array));
     }
 
+    @Override
+    protected Matrix4f create(float[][] matrix) {
+        return new Matrix4f(matrix);
+    }
+
     private static float[][] validate(float[][] matrix) {
         if (matrix == null) {
             throw new NullPointerException("Matrix is null");
@@ -91,5 +96,15 @@ public class Matrix4f extends AbstractMatrix<Matrix4f> {
             return new Vector3f(x, y, z);
         }
         return new Vector3f(x / w, y / w, z / w);
+    }
+
+    public Vector4f multipliedOnVector(Vector4f vector4f) {
+        Matrix4f matrix4f = this.copy();
+        return matrix4f.multiplyOnVector(vector4f);
+    }
+
+    public Vector3f multipliedOnVector(Vector3f vector3f) {
+        Matrix4f matrix4f = this.copy();
+        return matrix4f.multiplyOnVector(vector3f);
     }
 }

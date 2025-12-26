@@ -20,6 +20,14 @@ public abstract class AbstractVector <T extends AbstractVector<T>>{
         this.coordinates = coordinates.clone();
     }
 
+    protected abstract T create(float[] coordinates);
+
+    public T copy() {
+        float[] coordinates = new float[size];
+        System.arraycopy(this.coordinates, 0, coordinates, 0, size);
+        return create(coordinates);
+
+    }
     public float getValue(int i) {
         return coordinates[i];
     }
@@ -29,7 +37,6 @@ public abstract class AbstractVector <T extends AbstractVector<T>>{
     }
 
     public float len() {
-
         float sum = 0;
         for (int i = 0; i < coordinates.length; i++) {
             sum += coordinates[i] * coordinates[i];
@@ -39,7 +46,7 @@ public abstract class AbstractVector <T extends AbstractVector<T>>{
 
     public T normalize() {
         float l = len();
-        if (l != 0) {
+        if (Math.abs(l) < EPS) {
             for (int i = 0; i < coordinates.length; i++) {
                 coordinates[i] = coordinates[i] / l;
             }
@@ -79,7 +86,7 @@ public abstract class AbstractVector <T extends AbstractVector<T>>{
         return res;
     }
 
-    public T divideByScalar(float number) {
+    public T divide(float number) {
         if (Math.abs(number) < EPS) {
             throw new IllegalArgumentException("Divide by zero");
         }
@@ -89,7 +96,7 @@ public abstract class AbstractVector <T extends AbstractVector<T>>{
         return (T) this;
     }
 
-    public T multiplyByScalar(float number) {
+    public T multiply(float number) {
         for (int i = 0; i < size; i++) {
             coordinates[i] *= number;
         }
@@ -115,5 +122,30 @@ public abstract class AbstractVector <T extends AbstractVector<T>>{
             coordinates[i] = a.getValue(i) - b.getValue(i);
         }
         return (T) this;
+    }
+
+    public T normalized() {
+        T vector = this.copy();
+        return vector.normalize();
+    }
+
+    public T added(T elem) {
+        T vector = this.copy();
+        return vector.add(elem);
+    }
+
+    public T subbed(T elem) {
+        T vector = this.copy();
+        return vector.sub(elem);
+    }
+
+    public T divided(float number) {
+        T vector = this.copy();
+        return vector.divide(number);
+    }
+
+    public T multiplied(float number) {
+        T vector = this.copy();
+        return vector.multiply(number);
     }
 }

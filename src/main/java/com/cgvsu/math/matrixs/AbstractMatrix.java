@@ -38,6 +38,7 @@ public abstract class AbstractMatrix<T extends AbstractMatrix<T>> {
         }
     }
 
+
     public AbstractMatrix(float[] array) {
         if (array == null) {
             throw new NullPointerException("Array is null");
@@ -51,6 +52,12 @@ public abstract class AbstractMatrix<T extends AbstractMatrix<T>> {
             System.arraycopy(array, i * size, m[i], 0, size);
         }
         this.matrix = m;
+    }
+
+    protected abstract T create(float[][] matrix);
+
+    public T copy() {
+        return create(getMatrix());
     }
 
     public float[][] getMatrix() {
@@ -79,8 +86,8 @@ public abstract class AbstractMatrix<T extends AbstractMatrix<T>> {
         return (T) this;
     }
 
-    public T mul(T elem) {
-        mul((T) this, elem);
+    public T multiply(T elem) {
+        multiply((T) this, elem);
         return (T) this;
     }
 
@@ -95,7 +102,7 @@ public abstract class AbstractMatrix<T extends AbstractMatrix<T>> {
         return (T) this;
     }
 
-    public T mul(T a, T b) {
+    public T multiply(T a, T b) {
         if (a.size != b.size || this.size != a.size) {
             throw new IllegalArgumentException("Different matrix sizes");
         }
@@ -135,5 +142,25 @@ public abstract class AbstractMatrix<T extends AbstractMatrix<T>> {
             }
         }
         return (T) this;
+    }
+
+    public T transposed() {
+        T matrix = this.copy();
+        return matrix.transpose();
+    }
+
+    public T added(T elem) {
+        T matrix = this.copy();
+        return matrix.add(elem);
+    }
+
+    public T subbed(T elem) {
+        T matrix = this.copy();
+        return matrix.sub(elem);
+    }
+
+    public T multiplied(T elem) {
+        T matrix = this.copy();
+        return matrix.multiply(elem);
     }
 }

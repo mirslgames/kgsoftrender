@@ -3,7 +3,6 @@ package com.cgvsu.render_engine;
 import java.util.ArrayList;
 
 
-import com.cgvsu.math.matrixs.Matrix3f;
 import com.cgvsu.math.matrixs.Matrix4f;
 import com.cgvsu.math.point.Point2f;
 import com.cgvsu.math.vectors.Vector3f;
@@ -28,9 +27,9 @@ public class RenderEngine {
         Matrix4f projectionMatrix = camera.getProjectionMatrix();
 
         Matrix4f modelViewProjectionMatrix = new Matrix4f(modelMatrix.getMatrix());
-        modelViewProjectionMatrix.mul(viewMatrix);
+        modelViewProjectionMatrix.multiply(viewMatrix);
 
-        modelViewProjectionMatrix.mul(projectionMatrix);
+        modelViewProjectionMatrix.multiply(projectionMatrix);
         /* System.out.println(Arrays.deepToString(modelViewProjectionMatrix.getMatrix()));
         System.out.println("___________"); */
 

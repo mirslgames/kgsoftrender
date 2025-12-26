@@ -10,6 +10,11 @@ public class Vector3f extends AbstractVector<Vector3f> {
         super(new float[]{x, y, z});
     }
 
+    @Override
+    protected Vector3f create(float[] coordinates) {
+        return new Vector3f(coordinates[0], coordinates[1], coordinates[2]);
+    }
+
     public float getX() {
         return getValue(0);
     }
@@ -46,6 +51,11 @@ public class Vector3f extends AbstractVector<Vector3f> {
         setY(y);
         setZ(z);
         return this;
+    }
+
+    public Vector3f crossed(Vector3f v) {
+        Vector3f vector3f = this.copy();
+        return vector3f.cross(v);
     }
 }
 

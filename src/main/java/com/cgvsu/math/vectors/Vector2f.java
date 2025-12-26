@@ -11,6 +11,11 @@ public class Vector2f extends AbstractVector<Vector2f> {
         super(new float[]{x, y});
     }
 
+    @Override
+    protected Vector2f create(float[] coordinates) {
+        return new Vector2f(coordinates[0], coordinates[1]);
+    }
+
     public float getX() {
         return getValue(0);
     }
