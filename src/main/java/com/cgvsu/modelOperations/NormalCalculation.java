@@ -47,7 +47,7 @@ public class NormalCalculation {
             normal.normalize();
         }
         return normal;
-}
+    }
 
 //    public static Vector3f ensureRightHanded(Vector3f v1, Vector3f v2, Vector3f v3, Vector3f normal) {
 //

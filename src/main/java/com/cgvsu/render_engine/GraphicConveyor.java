@@ -6,6 +6,7 @@ import com.cgvsu.math.vectors.Vector3f;
 
 import javax.vecmath.Point2f;
 
+
 public class GraphicConveyor {
 
     public static Matrix4f rotateScaleTranslate() {

@@ -8,6 +8,7 @@ import javafx.scene.control.TextField;
 
 import java.util.ArrayList;
 import java.util.Dictionary;
+import java.util.HashMap;
 import java.util.Hashtable;
 
 public class SceneManager {
@@ -16,6 +17,7 @@ public class SceneManager {
     public static Model activeModel;
     public static ArrayList<Model> models = new ArrayList<>();
     public static Dictionary<String, Model> cacheNameSceneModels = new Hashtable<>();
+    public static HashMap<String, Integer> historyModelName = new HashMap<>();
 
     public static boolean drawMesh;
     public static boolean useTexture;

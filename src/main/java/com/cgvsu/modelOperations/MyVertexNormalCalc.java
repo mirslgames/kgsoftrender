@@ -25,13 +25,13 @@ public class MyVertexNormalCalc implements VertexNormals<Model> {
         }
 
         // 2. Обработка каждого полигона
-        int polyCount = model.polygonBoundaries.size();
+        int polyCount = model.polygonsBoundaries.size();
 
         for (int polyIdx = 0; polyIdx < polyCount; polyIdx++) {
-            int startOfPolygon = model.polygonBoundaries.get(polyIdx);
+            int startOfPolygon = model.polygonsBoundaries.get(polyIdx);
             int endOfPolygon = (polyIdx == polyCount - 1)
                     ? model.polygons.size()
-                    : model.polygonBoundaries.get(polyIdx + 1);
+                    : model.polygonsBoundaries.get(polyIdx + 1);
 
 
             if (endOfPolygon - startOfPolygon < 3) {

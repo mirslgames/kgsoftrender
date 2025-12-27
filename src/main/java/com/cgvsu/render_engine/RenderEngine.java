@@ -6,9 +6,11 @@ import java.util.Arrays;
 
 import com.cgvsu.math.matrixs.Matrix4f;
 import com.cgvsu.math.vectors.Vector3f;
+import com.cgvsu.model.Vertex;
 import javafx.scene.canvas.GraphicsContext;
 
 import com.cgvsu.model.Model;
+
 
 import javax.vecmath.Point2f;
 
@@ -29,25 +31,31 @@ public class RenderEngine {
 
         Matrix4f modelViewProjectionMatrix = new Matrix4f(modelMatrix.getMatrix());
         modelViewProjectionMatrix.mul(viewMatrix);
-
         modelViewProjectionMatrix.mul(projectionMatrix);
-        /* System.out.println(Arrays.deepToString(modelViewProjectionMatrix.getMatrix()));
-        System.out.println("___________"); */
 
-
-
-
-        final int nPolygons = mesh.polygons.size();
+        final int nPolygons = mesh.polygonsBoundaries.size();
         for (int polygonInd = 0; polygonInd < nPolygons; ++polygonInd) {
-            final int nVerticesInPolygon = mesh.polygons.get(polygonInd).getVertexIndices().size();
+            final int startIndex = mesh.polygonsBoundaries.get(polygonInd);
+            final int endIndex = (polygonInd + 1 < nPolygons)
+                    ? mesh.polygonsBoundaries.get(polygonInd + 1)
+                    : mesh.polygons.size();
+
+            final int nVerticesInPolygon = endIndex - startIndex; //Под новую архитектуру модели считаем сколько у полигона вершин
 
             ArrayList<Point2f> resultPoints = new ArrayList<>();
-            for (int vertexInPolygonInd = 0; vertexInPolygonInd < nVerticesInPolygon; ++vertexInPolygonInd) {
-                Vector3f vertex = mesh.vertices.get(mesh.polygons.get(polygonInd).getVertexIndices().get(vertexInPolygonInd));
 
-                Vector3f vertexVecmath = new Vector3f(vertex.getX(), vertex.getY(), vertex.getZ());
+            for (int i = startIndex; i < endIndex; ++i) {
+                int vertexIndex = mesh.polygons.get(i);
+                Vertex vertex = mesh.vertices.get(vertexIndex);
 
-                Point2f resultPoint = vertexToPoint(multiplyMatrix4ByVector3(modelViewProjectionMatrix, vertexVecmath), width, height);
+                Vector3f pos = vertex.position;
+                Vector3f posVecmath = new Vector3f(pos.getX(), pos.getY(), pos.getZ());
+
+                Point2f resultPoint = vertexToPoint(
+                        multiplyMatrix4ByVector3(modelViewProjectionMatrix, posVecmath),
+                        width, height
+                );
+
                 resultPoints.add(resultPoint);
             }
 
