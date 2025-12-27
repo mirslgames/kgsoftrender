@@ -1,18 +1,13 @@
-package com.cgvsu.normalCalculation;
+package com.cgvsu.modelOperations;
 
 import com.cgvsu.math.vectors.Vector3f;
-import com.cgvsu.model.Model;
 
 import com.cgvsu.model.Vertex;
 
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 
-public class VectorMultiply {
+public class NormalCalculation {
 
 
 //    public static Vector3f getModelCenter(List<Vector3f> vertices) {

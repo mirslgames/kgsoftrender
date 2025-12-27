@@ -1,4 +1,4 @@
-package com.cgvsu.normalCalculation;
+package com.cgvsu.modelOperations;
 
 import com.cgvsu.math.vectors.Vector3f;
 import com.cgvsu.model.Model;
@@ -6,8 +6,8 @@ import com.cgvsu.model.Model;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.cgvsu.normalCalculation.VectorMultiply.calculatePolygonNormal;
-import static com.cgvsu.normalCalculation.VectorMultiply.computePolygonArea;
+import static com.cgvsu.modelOperations.NormalCalculation.calculatePolygonNormal;
+import static com.cgvsu.modelOperations.NormalCalculation.computePolygonArea;
 
 public class MyVertexNormalCalc implements VertexNormals<Model> {
 

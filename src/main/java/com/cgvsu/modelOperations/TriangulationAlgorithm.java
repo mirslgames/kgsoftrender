@@ -1,12 +1,9 @@
-package com.cgvsu.normalCalculation;
+package com.cgvsu.modelOperations;
 
-
-import com.cgvsu.model.Vertex;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 public class TriangulationAlgorithm {
     public static List<List<Integer>> triangulate( List<Integer> polygon){

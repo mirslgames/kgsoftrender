@@ -1,6 +1,4 @@
-package com.cgvsu.normalCalculation;
-
-import java.util.List;
+package com.cgvsu.modelOperations;
 
 public interface VertexNormals<V> {
 
