@@ -5,6 +5,7 @@ module com.cgvsu {
     requires java.desktop;
 
 
+
     opens com.cgvsu to javafx.fxml;
     exports com.cgvsu;
     exports com.cgvsu.sceneview;

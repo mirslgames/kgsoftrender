@@ -34,6 +34,8 @@ import com.cgvsu.model.Model;
 import com.cgvsu.objreader.ObjReader;
 import com.cgvsu.render_engine.Camera;
 
+import static java.nio.file.Path.*;
+
 public class GuiController {
 
     final private float TRANSLATION = 0.5F;
