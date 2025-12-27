@@ -4,6 +4,7 @@ package com.cgvsu.objreader;
 import com.cgvsu.math.vectors.Vector2f;
 import com.cgvsu.math.vectors.Vector3f;
 import com.cgvsu.model.Model;
+import com.cgvsu.model.Vertex;
 
 import java.util.ArrayList;
 import java.util.Arrays;

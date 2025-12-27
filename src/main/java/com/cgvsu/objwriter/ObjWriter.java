@@ -50,14 +50,14 @@ public class ObjWriter {
 
             //Запись вершин по порядку
             for (Vertex v : model.vertices) {
-                writer.write(String.format(Locale.US, "v %f %f %f\n", v.position.x, v.position.y, v.position.z));
+                writer.write(String.format(Locale.US, "v %f %f %f\n", v.position.getX(), v.position.getY(), v.position.getZ()));
             }
             writer.write("\n");
 
             //Запись текстурных координат
             if(hasTexCoords){
                 for (Vertex v : model.vertices) {
-                    writer.write(String.format(Locale.US, "vt %f %f\n", v.textureCoordinate.x, v.textureCoordinate.y));
+                    writer.write(String.format(Locale.US, "vt %f %f\n", v.textureCoordinate.getX(), v.textureCoordinate.getY()));
                 }
                 writer.write("\n");
             }
