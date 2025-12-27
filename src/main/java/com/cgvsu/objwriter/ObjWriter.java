@@ -62,11 +62,11 @@ public class ObjWriter {
                 writer.write("\n");
             }
 
-            //Запись нормалей вершин
-            for (Vertex v : model.vertices) {
+            //Запись нормалей вершин (Жду калькулятор нормалей от леши)
+            /*for (Vertex v : model.vertices) {
                 writer.write(String.format(Locale.US, "vn %f %f %f\n", v.normal.x, v.normal.y, v.normal.z));
             }
-            writer.write("\n");
+            writer.write("\n");*/
 
             //Запись полигонов
             int polygonsCount = model.polygonsBoundaries.size();
@@ -99,7 +99,7 @@ public class ObjWriter {
             }
 
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException("Failed to write OBJ to " + filePath, e);
         }
         return true;
