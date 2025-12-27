@@ -1,6 +1,8 @@
 package com.cgvsu.sceneview;
 
+import com.cgvsu.objwriter.ObjWriter;
 import com.cgvsu.render_engine.RenderEngine;
+import com.cgvsu.service.ShortcutsSettings;
 import com.cgvsu.service.ThemeSettings;
 import javafx.fxml.FXML;
 import javafx.animation.Animation;
@@ -12,6 +14,7 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -72,6 +75,10 @@ public class GuiController {
     private TextField scaleYTextField;
     @FXML
     private TextField scaleZTextField;
+    @FXML
+    private MenuItem saveModeMenuItem;
+    @FXML
+    private MenuItem openModeMenuItem;
 
 
     //private Model mesh = null;
@@ -93,7 +100,8 @@ public class GuiController {
         scaleYTextField.setOnKeyReleased(e -> onScaleYChanged());
         scaleZTextField.setOnKeyReleased(e -> onScaleZChanged());
 
-        //SceneManager.loadModelToScene("Model1", new Model());
+        openModeMenuItem.setAccelerator(KeyCombination.keyCombination(ShortcutsSettings.openModel));
+        saveModeMenuItem.setAccelerator(KeyCombination.keyCombination(ShortcutsSettings.saveModel));
 
         ThemeSettings.setDefaultTheme();
         SceneManager.initialize();
@@ -191,7 +199,17 @@ public class GuiController {
         SceneManager.scaleZValue = parseFloat(scaleZTextField);
     }
 
+    @FXML
+    private void onSaveModelMenuItemClick(){
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Model (*.obj)", "*.obj"));
+        fileChooser.setTitle("Save Model");
 
+        File file = fileChooser.showSaveDialog((Stage) sceneCanvas.getScene().getWindow());
+        Path fileName = Path.of(file.getAbsolutePath());
+        ObjWriter.writeModelToFile(SceneManager.activeModel, fileName.toString());
+
+    }
 
     @FXML
     private void onOpenModelMenuItemClick() {
@@ -208,7 +226,7 @@ public class GuiController {
 
         try {
             String fileContent = Files.readString(fileName);
-            Model mesh = ObjReader.read(fileContent, fileName.getFileName().toString());
+            Model mesh = ObjReader.read(fileContent, fileName.getFileName().toString(), SceneManager.historyModelName);
             if(SceneManager.historyModelName.containsKey(mesh.modelName)){
                 int c = SceneManager.historyModelName.get(mesh.modelName);
                 SceneManager.historyModelName.put(mesh.modelName, ++c);

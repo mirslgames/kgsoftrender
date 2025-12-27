@@ -9,6 +9,7 @@ import javafx.scene.Scene;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Scanner;
 
 public class ObjReader {
@@ -20,7 +21,7 @@ public class ObjReader {
 	private static final String OBJ_NORMAL_TOKEN = "vn";
 	private static final String OBJ_FACE_TOKEN = "f";
 
-	public static Model read(String fileContent, String filename) {
+	public static Model read(String fileContent, String filename, HashMap<String, Integer> historyModelName) {
 		Model result = new Model();
 
 		ArrayList<Vector3f> readVertices = new ArrayList<>();
@@ -62,14 +63,14 @@ public class ObjReader {
 
 		result = constructModelFromReadData(readVertices, readTextureVertices, readNormals, readPolygonsIndices);
 		String targetModelName =  filename.substring(0, filename.length() - 4); //Удаляем .obj
-		result.modelName = validateAndCorrectDuplicateModelName(targetModelName);
+		result.modelName = validateAndCorrectDuplicateModelName(targetModelName, historyModelName);
 		return result;
 	}
 
-	protected static String validateAndCorrectDuplicateModelName(String targetModelName){
+	protected static String validateAndCorrectDuplicateModelName(String targetModelName, HashMap<String, Integer> historyModelName){
 		String result = targetModelName;
-		if (SceneManager.historyModelName.containsKey(targetModelName)){
-			int c = SceneManager.historyModelName.get(targetModelName);
+		if (historyModelName.containsKey(targetModelName)){
+			int c = historyModelName.get(targetModelName);
 			result += String.format(" (%d)", ++c);
 		}
 		return result;

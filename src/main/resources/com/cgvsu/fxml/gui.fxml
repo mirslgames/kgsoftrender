@@ -11,11 +11,12 @@
       <children>
           <MenuBar>
               <Menu mnemonicParsing="false" text="File">
-                  <MenuItem mnemonicParsing="false" onAction="#onOpenModelMenuItemClick" text="Load Model">
+                  <MenuItem fx:id="openModeMenuItem" mnemonicParsing="false" onAction="#onOpenModelMenuItemClick" text="Load Model">
                   <accelerator>
                       <KeyCodeCombination alt="UP" code="F" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
                   </accelerator>
                   </MenuItem>
+               <MenuItem fx:id="saveModeMenuItem" mnemonicParsing="false" onAction="#onSaveModelMenuItemClick" text="Save model" />
               </Menu>
               <Menu mnemonicParsing="false" text="Camera Options">
                   <MenuItem mnemonicParsing="false" onAction="#handleCameraForward" text="Forward">
