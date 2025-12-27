@@ -1,7 +1,7 @@
 package com.cgvsu.model;
 
-import com.cgvsu.math.Vector2f;
-import com.cgvsu.math.Vector3f;
+import com.cgvsu.math.vectors.Vector2f;
+import com.cgvsu.math.vectors.Vector3f;
 
 public class Vertex {
     public Vector3f position;
