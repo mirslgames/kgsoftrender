@@ -4,9 +4,6 @@ package com.cgvsu.objreader;
 import com.cgvsu.math.vectors.Vector2f;
 import com.cgvsu.math.vectors.Vector3f;
 import com.cgvsu.model.Model;
-import com.cgvsu.model.Vertex;
-import com.cgvsu.sceneview.SceneManager;
-import javafx.scene.Scene;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -78,9 +75,9 @@ public class ObjReader {
 	}
 
 	protected static Model constructModelFromReadData(ArrayList<Vector3f> readVertices,
-													  ArrayList<Vector2f> readTextureVertices,
-													  ArrayList<Vector3f> readNormals,
-													  ArrayList<ArrayList<Integer>[]> readPolygonsIndices){
+		ArrayList<Vector2f> readTextureVertices,
+		ArrayList<Vector3f> readNormals,
+		ArrayList<ArrayList<Integer>[]> readPolygonsIndices){
 
 		Model result = new Model();
 
@@ -89,7 +86,9 @@ public class ObjReader {
 
 			ArrayList<Vertex> modelVertices = new ArrayList<>();
 			ArrayList<Integer> modelVertexIndices = new ArrayList<>();
-			ArrayList<Integer> modelPolygonsIndices = new ArrayList<>();for(int i = 0; i < readVertices.size(); i++){
+			ArrayList<Integer> modelPolygonsIndices = new ArrayList<>();
+
+			for(int i = 0; i < readVertices.size(); i++){
 				Vertex currentVertex = new Vertex();
 				currentVertex.position = readVertices.get(i);
 				currentVertex.normal = null;
@@ -125,16 +124,16 @@ public class ObjReader {
 	}
 
 	protected static boolean checkReadData(ArrayList<Vector3f> readVertices,
-										   ArrayList<Vector2f> readTextureVertices,
-										   ArrayList<Vector3f> readNormals,
-										   ArrayList<ArrayList<Integer>[]> readPolygonsIndices){
+		ArrayList<Vector2f> readTextureVertices,
+		ArrayList<Vector3f> readNormals,
+		ArrayList<ArrayList<Integer>[]> readPolygonsIndices){
 
 		if (readVertices == null || readVertices.isEmpty()){
 			return false;
 		}
-    /*if (!readTextureVertices.isEmpty() && readVertices.size() != readTextureVertices.size()){
-      return false;
-    }*/
+		/*if (!readTextureVertices.isEmpty() && readVertices.size() != readTextureVertices.size()){
+			return false;
+		}*/
 
 		return true;
 	}
@@ -188,6 +187,7 @@ public class ObjReader {
 		ArrayList<Integer> onePolygonVertexIndices = new ArrayList<Integer>();
 		ArrayList<Integer> onePolygonTextureVertexIndices = new ArrayList<Integer>();
 		ArrayList<Integer> onePolygonNormalIndices = new ArrayList<Integer>();
+
 		for (String s : wordsInLineWithoutToken) {
 			if (s.contains("//")){
 				parseFaceWordDoubleSlash(s, onePolygonVertexIndices, onePolygonNormalIndices, lineInd);
@@ -204,9 +204,9 @@ public class ObjReader {
 
 
 	protected static void parseFaceWordDoubleSlash(String wordInLine,
-												   ArrayList<Integer> onePolygonVertexIndices,
-												   ArrayList<Integer> onePolygonNormalIndices,
-												   int lineInd){
+		ArrayList<Integer> onePolygonVertexIndices,
+		ArrayList<Integer> onePolygonNormalIndices,
+		int lineInd){
 
 		try {
 			String[] wordIndices = wordInLine.split("//");
