@@ -2,6 +2,7 @@ package com.cgvsu.sceneview;
 
 import com.cgvsu.objwriter.ObjWriter;
 import com.cgvsu.math.vectors.Vector3f;
+import com.cgvsu.render_engine.GraphicConveyor;
 import com.cgvsu.render_engine.RenderEngine;
 import com.cgvsu.service.ShortcutsSettings;
 import com.cgvsu.service.ThemeSettings;
@@ -28,6 +29,14 @@ import java.io.IOException;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Optional;
+
+import javafx.application.Platform;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+
+import java.util.Set;
 
 
 import com.cgvsu.model.Model;
@@ -80,14 +89,16 @@ public class GuiController {
     private MenuItem saveModeMenuItem;
     @FXML
     private MenuItem openModeMenuItem;
-
-
+    @FXML
+    private MenuBar menuBar;
+    @FXML
+    private Button applyTransformButton;
 
     private Timeline timeline;
 
-
     @FXML
     private void initialize() {
+
         positionXTextField.setOnKeyReleased(e -> onPositionXChanged());
         positionYTextField.setOnKeyReleased(e -> onPositionYChanged());
         positionZTextField.setOnKeyReleased(e -> onPositionZChanged());
@@ -103,7 +114,10 @@ public class GuiController {
         openModeMenuItem.setAccelerator(KeyCombination.keyCombination(ShortcutsSettings.openModel));
         saveModeMenuItem.setAccelerator(KeyCombination.keyCombination(ShortcutsSettings.saveModel));
 
-        ThemeSettings.setDefaultTheme();
+        Platform.runLater(() -> {
+            ThemeSettings.setLightTheme();
+            applyTheme();
+        });
         SceneManager.initialize();
 
         sceneCanvas.setFocusTraversable(true);
@@ -123,17 +137,20 @@ public class GuiController {
 
         timeline.getKeyFrames().add(frame);
         timeline.play();
+
     }
 
     private void renderFrame() {
         double width = sceneCanvas.getWidth();
         double height = sceneCanvas.getHeight();
 
-        sceneCanvas.getGraphicsContext2D().clearRect(0, 0, width, height);
+        var gc = sceneCanvas.getGraphicsContext2D();
+        gc.setFill(javafx.scene.paint.Color.web(ThemeSettings.canvasBackgroundColor));
+        gc.fillRect(0, 0, width, height);
         SceneManager.activeCamera.setAspectRatio((float) (width / height));
 
 
-        for(Model model : SceneManager.models){
+        for (Model model : SceneManager.models) {
             RenderEngine.render(sceneCanvas.getGraphicsContext2D(), SceneManager.activeCamera, model, (int) width, (int) height);
         }
         //ВАРИАНТ рендерить только активную модель
@@ -152,6 +169,63 @@ public class GuiController {
             //todo:обработка ошибок
         }
         return 0;
+    }
+
+    @FXML
+    private void onLightThemeMenuItemClick() {
+        ThemeSettings.setLightTheme();
+        applyTheme();
+    }
+
+    @FXML
+    private void onDarkThemeMenuItemClick() {
+        ThemeSettings.setDarkTheme();
+        applyTheme();
+    }
+
+    private void applyTheme() {
+        Scene scene = sceneCanvas.getScene();
+        if (scene == null) return;
+
+        Parent root = scene.getRoot();
+        root.setStyle(ThemeSettings.rootStyle);
+
+        applyStyle(root, ".split-pane", ThemeSettings.splitPaneStyle);
+        applyStyle(root, ".split-pane-divider", ThemeSettings.splitDividerStyle);
+
+        applyStyle(root, ".anchor-pane", ThemeSettings.paneStyle);
+        applyStyle(root, ".vbox", ThemeSettings.paneStyle);
+        applyStyle(root, ".hbox", ThemeSettings.paneStyle);
+
+        applyStyle(root, ".menu-bar", ThemeSettings.menuBarStyle);
+
+        applyStyle(root, ".label", ThemeSettings.labelStyle);
+        applyStyle(root, ".check-box", ThemeSettings.checkBoxStyle);
+        applyStyle(root, ".text-field", ThemeSettings.textFieldStyle);
+
+        applyStyle(root, ".button", ThemeSettings.buttonStyle);
+        if (activeButton != null) {
+            activeButton.setStyle(ThemeSettings.activeButtonStyle);
+        }
+
+        applyStyle(root, ".titled-pane > .title", ThemeSettings.titledPaneTitleStyle);
+        applyStyle(root, ".titled-pane > .title > .text", ThemeSettings.titledPaneTitleTextStyle);
+        applyStyle(root, ".titled-pane > *.content", ThemeSettings.titledPaneContentStyle);
+
+        applyStyle(root, ".scroll-pane", ThemeSettings.scrollPaneStyle);
+        applyStyle(root, ".scroll-pane .viewport", ThemeSettings.scrollPaneViewportStyle);
+
+        applyStyle(root, ".scroll-bar", ThemeSettings.scrollBarStyle);
+        applyStyle(root, ".scroll-bar .thumb", ThemeSettings.scrollBarThumbStyle);
+
+        Platform.runLater(() -> applyStyle(root, ".menu-bar .label", ThemeSettings.menuBarLabelStyle));
+    }
+
+    private void applyStyle(Node root, String selector, String style) {
+        Set<Node> nodes = root.lookupAll(selector);
+        for (Node n : nodes) {
+            n.setStyle(style);
+        }
     }
 
     @FXML
@@ -200,7 +274,12 @@ public class GuiController {
     }
 
     @FXML
-    private void onSaveModelMenuItemClick(){
+    private void onApplyTransformButtonClick(){
+
+    }
+
+    @FXML
+    private void onSaveModelMenuItemClick() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Model (*.obj)", "*.obj"));
         fileChooser.setTitle("Save Model");
@@ -227,10 +306,10 @@ public class GuiController {
         try {
             String fileContent = Files.readString(fileName);
             Model mesh = ObjReader.read(fileContent, fileName.getFileName().toString(), SceneManager.historyModelName);
-            if(SceneManager.historyModelName.containsKey(mesh.modelName)){
+            if (SceneManager.historyModelName.containsKey(mesh.modelName)) {
                 int c = SceneManager.historyModelName.get(mesh.modelName);
                 SceneManager.historyModelName.put(mesh.modelName, ++c);
-            } else{
+            } else {
                 SceneManager.historyModelName.put(mesh.modelName, 0);
             }
 
@@ -298,7 +377,7 @@ public class GuiController {
         SceneManager.activeModel = model;
 
         if (activeButton != null) {
-            activeButton.setStyle("");
+            activeButton.setStyle(ThemeSettings.buttonStyle);
         }
         activeButton = button;
         activeButton.setStyle(ThemeSettings.activeButtonStyle);
@@ -313,6 +392,10 @@ public class GuiController {
         Button btn = new Button(model.modelName);
         btn.setMaxWidth(Double.MAX_VALUE);
         btn.setOnAction(this::onModelButtonClick);
+
+        modelButtons.add(btn);
+        btn.setStyle(ThemeSettings.buttonStyle);
+
         modelsBox.getChildren().add(btn);
     }
 
