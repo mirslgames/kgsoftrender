@@ -18,6 +18,10 @@ public class SceneManager {
     public static ArrayList<Model> models = new ArrayList<>();
     public static Dictionary<String, Model> cacheNameSceneModels = new Hashtable<>(); // чтобы быстро найти по имени модель а не перебирать все загруженные
     public static HashMap<String, Integer> historyModelName = new HashMap<>();
+
+    //Задел на будущее подумать как сохранять исходную модель и модель преобразованную
+    public static ArrayList<Model> originalModels = new ArrayList<>();
+    public static Dictionary<String, Model> originalcacheNameSceneModels = new Hashtable<>();
     //todo: Подумать как организовать источник света + SceneEntity
 
 

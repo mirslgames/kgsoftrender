@@ -27,7 +27,9 @@ public class RenderEngine {
             final int width,
             final int height)
     {
-        Matrix4f modelMatrix = rotateScaleTranslate();
+        Matrix4f modelMatrix = rotateScaleTranslate(mesh.scaleXValue, mesh.scaleYValue, mesh.scaleZValue,
+                mesh.rotationXValue, mesh.rotationYValue, mesh.rotationZValue,
+                mesh.positionXValue, mesh.positionYValue, mesh.positionZValue);
         Matrix4f viewMatrix = camera.getViewMatrix();
         Matrix4f projectionMatrix = camera.getProjectionMatrix();
 
