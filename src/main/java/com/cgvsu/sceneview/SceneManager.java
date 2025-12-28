@@ -27,6 +27,8 @@ public class SceneManager {
 
     public static boolean isSceneEntitySelect;
 
+    public static float lightIntensity;
+
 
     public static void initialize(){
         activeCamera = new Camera(

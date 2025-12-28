@@ -86,6 +86,12 @@
                                        <CheckBox fx:id="drawMeshCheckBox" mnemonicParsing="false" text="Рисовать полигональную сетку" />
                                        <CheckBox fx:id="useTextureCheckBox" mnemonicParsing="false" text="Использовать текстуру" />
                                        <CheckBox fx:id="useLightCheckBox" mnemonicParsing="false" text="Использовать освещение" />
+                                       <Label fx:id="lightIntensityLabel" text="Интенсивность освещения">
+                                          <VBox.margin>
+                                             <Insets top="5.0" />
+                                          </VBox.margin>
+                                       </Label>
+                                       <Slider fx:id="lightIntensitySlider" blockIncrement="0.01" max="1.0" prefWidth="152.0" value="1.0" />
                                     </children>
                                  </VBox>
                               </children></AnchorPane>

@@ -87,11 +87,23 @@ public class GuiController {
     private MenuBar menuBar;
     @FXML
     private Button applyTransformButton;
+    @FXML
+    private Label lightIntensityLabel;
+    @FXML
+    private Slider lightIntensitySlider;
 
     private Timeline timeline;
 
     @FXML
     private void initialize() {
+
+        lightIntensityLabel.textProperty().bind(
+                lightIntensitySlider.valueProperty().asString("%.2f")
+        );
+
+        lightIntensitySlider.valueProperty().addListener((obs, oldV, newV) -> {
+            SceneManager.lightIntensity = newV.floatValue();
+        });
 
         positionXTextField.setOnKeyReleased(e -> onPositionXChanged());
         positionYTextField.setOnKeyReleased(e -> onPositionYChanged());
