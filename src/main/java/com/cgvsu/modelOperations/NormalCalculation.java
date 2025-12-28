@@ -35,8 +35,8 @@ public class NormalCalculation {
         Vector3f pos1 = v1.position;
         Vector3f pos2 = v2.position;
         Vector3f pos3 = v3.position;
-        Vector3f edge1 = pos2.subtracted(pos1);
-        Vector3f edge2 = pos3.subtracted(pos1);
+        Vector3f edge1 = pos2.subbed(pos1);
+        Vector3f edge2 = pos3.subbed(pos1);
         Vector3f normal = edge1.crossed(edge2);
 
 
