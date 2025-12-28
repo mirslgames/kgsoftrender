@@ -38,7 +38,6 @@ public abstract class AbstractMatrix<T extends AbstractMatrix<T>> {
         }
     }
 
-
     public AbstractMatrix(float[] array) {
         if (array == null) {
             throw new NullPointerException("Array is null");
@@ -52,6 +51,51 @@ public abstract class AbstractMatrix<T extends AbstractMatrix<T>> {
             System.arraycopy(array, i * size, m[i], 0, size);
         }
         this.matrix = m;
+    }
+
+    @Override
+    public final boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        AbstractMatrix<?> other = (AbstractMatrix<?>) o;
+        if (this.size != other.size) return false;
+
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                if (Float.compare(this.matrix[i][j], other.matrix[i][j]) != 0) return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public final int hashCode() {
+        int result = getClass().hashCode();
+        result = 31 * result + size;
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                result = 31 * result + Float.hashCode(matrix[i][j]);
+            }
+        }
+        return result;
+    }
+
+    public final boolean equalsEps(AbstractMatrix<?> other, float eps) {
+        if (other == null) return false;
+        if (this.size != other.size) return false;
+        if (!this.getClass().equals(other.getClass())) return false; // по желанию
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                if (Math.abs(this.matrix[i][j] - other.matrix[i][j]) > eps) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    public final boolean equalsEps(AbstractMatrix<?> other) {
+        return equalsEps(other, EPS);
     }
 
     protected abstract T create(float[][] matrix);

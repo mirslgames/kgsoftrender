@@ -31,9 +31,9 @@ public class RenderEngine {
         Matrix4f viewMatrix = camera.getViewMatrix();
         Matrix4f projectionMatrix = camera.getProjectionMatrix();
 
-        Matrix4f modelViewProjectionMatrix = new Matrix4f(modelMatrix.getMatrix());
+        Matrix4f modelViewProjectionMatrix = new Matrix4f(projectionMatrix.getMatrix());
         modelViewProjectionMatrix.multiply(viewMatrix);
-        modelViewProjectionMatrix.multiply(projectionMatrix);
+        modelViewProjectionMatrix.multiply(modelMatrix);
 
         final int nPolygons = mesh.polygonsBoundaries.size();
         for (int polygonInd = 0; polygonInd < nPolygons; ++polygonInd) {
@@ -54,7 +54,7 @@ public class RenderEngine {
                 Vector3f posVecmath = new Vector3f(pos.getX(), pos.getY(), pos.getZ());
 
                 Point2f resultPoint = vertexToPoint(
-                        multiplyMatrix4ByVector3(modelViewProjectionMatrix, posVecmath), width, height
+                        modelViewProjectionMatrix.multiplyOnVector(posVecmath), width, height
                 );
 
 

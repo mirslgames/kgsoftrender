@@ -15,6 +15,46 @@ public abstract class AbstractVector <T extends AbstractVector<T>>{
         } */
     }
 
+    @Override
+    public final boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        AbstractVector<?> other = (AbstractVector<?>) o;
+
+        if (this.size != other.size) return false;
+
+        for (int i = 0; i < size; i++) {
+            if (Float.compare(this.getValue(i), other.getValue(i)) != 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public final int hashCode() {
+        int result = getClass().hashCode();
+        result = 31 * result + size;
+        for (int i = 0; i < size; i++) {
+            result = 31 * result + Float.hashCode(getValue(i));
+        }
+        return result;
+    }
+
+    public final boolean equalsEps(AbstractVector<?> other, float eps) {
+        if (other == null) return false;
+        if (this.size != other.size) return false;
+        if (!this.getClass().equals(other.getClass())) return false;
+
+        for (int i = 0; i < size; i++) {
+            if (Math.abs(this.getValue(i) - other.getValue(i)) > eps) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     protected AbstractVector(float[] coordinates) {
         this.size = coordinates.length;
         this.coordinates = coordinates.clone();
