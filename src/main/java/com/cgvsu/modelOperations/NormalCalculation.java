@@ -1,92 +1,92 @@
-//package com.cgvsu.modelOperations;
-//
-//import com.cgvsu.math.vectors.Vector3f;
-//
-//import com.cgvsu.model.Vertex;
-//
-//
-//import java.util.List;
-//
-//public class NormalCalculation {
-//
-//
-////    public static Vector3f getModelCenter(List<Vector3f> vertices) {
-////        Vector3f sum = new Vector3f(0, 0, 0);
-////        for (Vector3f v : vertices) {
-////            sum = sum.add(v);
-////        }
-////        return sum.divide(vertices.size());
-////    }
-//    public static Vector3f calculatePolygonNormal(List<Vertex> vertices, List<Integer> polygon, int start, int end) {
-//        if (start - end + 1 < 3) return new Vector3f(0, 0, 0);
-//
-//        int i1 = polygon.get(start);
-//        int i2 = polygon.get(start + 1);
-//        int i3 = polygon.get(start + 2);
-//
-//        if (i1 >= vertices.size() || i2 >= vertices.size() || i3 >= vertices.size()) {
-//            return new Vector3f(0, 0, 0);
+package com.cgvsu.modelOperations;
+
+import com.cgvsu.math.vectors.Vector3f;
+
+import com.cgvsu.model.Vertex;
+
+
+import java.util.List;
+
+public class NormalCalculation {
+
+
+//    public static Vector3f getModelCenter(List<Vector3f> vertices) {
+//        Vector3f sum = new Vector3f(0, 0, 0);
+//        for (Vector3f v : vertices) {
+//            sum = sum.add(v);
 //        }
+//        return sum.divide(vertices.size());
+//    }
+    public static Vector3f calculatePolygonNormal(List<Vertex> vertices, List<Integer> polygon, int start, int end) {
+        if (start - end + 1 < 3) return new Vector3f(0, 0, 0);
+
+        int i1 = polygon.get(start);
+        int i2 = polygon.get(start + 1);
+        int i3 = polygon.get(start + 2);
+
+        if (i1 >= vertices.size() || i2 >= vertices.size() || i3 >= vertices.size()) {
+            return new Vector3f(0, 0, 0);
+        }
+
+        Vertex v1 = vertices.get(i1);
+        Vertex v2 = vertices.get(i2);
+        Vertex v3 = vertices.get(i3);
+
+        Vector3f pos1 = v1.position;
+        Vector3f pos2 = v2.position;
+        Vector3f pos3 = v3.position;
+        Vector3f edge1 = pos2.subbed(pos1);
+        Vector3f edge2 = pos3.subbed(pos1);
+        Vector3f normal = edge1.crossed(edge2);
+
+
+        if (normal.len() < 1e-6f) {
+            float ref = (float)(1.0 / Math.sqrt(3.0));
+            normal = new Vector3f(ref, ref, ref);
+        } else {
+            normal.normalize();
+        }
+        return normal;
+    }
+
+//    public static Vector3f ensureRightHanded(Vector3f v1, Vector3f v2, Vector3f v3, Vector3f normal) {
 //
-//        Vertex v1 = vertices.get(i1);
-//        Vertex v2 = vertices.get(i2);
-//        Vertex v3 = vertices.get(i3);
-//
-//        Vector3f pos1 = v1.position;
-//        Vector3f pos2 = v2.position;
-//        Vector3f pos3 = v3.position;
-//        Vector3f edge1 = pos2.subtracted(pos1);
-//        Vector3f edge2 = pos3.subtracted(pos1);
-//        Vector3f normal = edge1.crossed(edge2);
-//
-//
-//        if (normal.len() < 1e-6f) {
-//            float ref = (float)(1.0 / Math.sqrt(3.0));
-//            normal = new Vector3f(ref, ref, ref);
-//        } else {
-//            normal.normalize();
+//        if (!isRightHanded(v1, v2, v3)) {
+//            normal = normal.multiply(-1);
 //        }
-//        return normal;
+//        return normal.normalize();
 //    }
-//
-////    public static Vector3f ensureRightHanded(Vector3f v1, Vector3f v2, Vector3f v3, Vector3f normal) {
-////
-////        if (!isRightHanded(v1, v2, v3)) {
-////            normal = normal.multiply(-1);
-////        }
-////        return normal.normalize();
-////    }
-//
-//    public static boolean isRightHanded(Vector3f v1, Vector3f v2, Vector3f v3) {
-//
-//        Vector3f edge1 = v2.subtracted(v1);
-//        Vector3f edge2 = v3.subtracted(v1);
-//
-//        Vector3f normal = edge1.crossed(edge2);
-//        Vector3f reference = new Vector3f(0, 1, 0);
-//
-//        return normal.dot(reference) >= 0;
-//    }
-//    public static float computePolygonArea( List<Vertex> vertices, List<Integer> polygon, int start, int end) {
-//        if (end - start + 1 < 3) return 0f;
-//
-//        int i1 = polygon.get(start);
-//        int i2 = polygon.get(start + 1);
-//        int i3 = polygon.get(start + 2);
-//
-//        if (i1 >= vertices.size() || i2 >= vertices.size() || i3 >= vertices.size()) {
-//
-//            return 0f;
-//        }
-//
-//        Vector3f v1 = vertices.get(i1).position;
-//        Vector3f v2 = vertices.get(i2).position;
-//        Vector3f v3 = vertices.get(i3).position;
-//
-//        Vector3f edge1 = v2.subtracted(v1);
-//        Vector3f edge2 = v3.subtracted(v1);
-//        return edge1.crossed(edge2).len() * 0.5f;
-//    }
+
+    public static boolean isRightHanded(Vector3f v1, Vector3f v2, Vector3f v3) {
+
+        Vector3f edge1 = v2.subbed(v1);
+        Vector3f edge2 = v3.subbed(v1);
+
+        Vector3f normal = edge1.crossed(edge2);
+        Vector3f reference = new Vector3f(0, 1, 0);
+
+        return normal.dot(reference) >= 0;
+    }
+    public static float computePolygonArea( List<Vertex> vertices, List<Integer> polygon, int start, int end) {
+        if (end - start + 1 < 3) return 0f;
+
+        int i1 = polygon.get(start);
+        int i2 = polygon.get(start + 1);
+        int i3 = polygon.get(start + 2);
+
+        if (i1 >= vertices.size() || i2 >= vertices.size() || i3 >= vertices.size()) {
+
+            return 0f;
+        }
+
+        Vector3f v1 = vertices.get(i1).position;
+        Vector3f v2 = vertices.get(i2).position;
+        Vector3f v3 = vertices.get(i3).position;
+
+        Vector3f edge1 = v2.subbed(v1);
+        Vector3f edge2 = v3.subbed(v1);
+        return edge1.crossed(edge2).len() * 0.5f;
+    }
 //    public static void main(String[] args) throws IOException, ReaderException {
 //        Path fileName = Path.of("D:/SecondProject/Task3/ObjNormalCreate/src/com/cgvsu/Penguin.obj");
 //        System.out.println("EXISTS=" + Files.exists(fileName) + ", FILE=" + fileName.toAbsolutePath());
@@ -158,4 +158,4 @@
 //        Path fileNameRes = Path.of("D:/SecondProject/Task3/ObjNormalCreate/src/com/cgvsu/Penguin_test.obj");
 //        ObjWriter.writeModelToFile(newModel,fileNameRes.toString());
 //    }
-//}
+}
