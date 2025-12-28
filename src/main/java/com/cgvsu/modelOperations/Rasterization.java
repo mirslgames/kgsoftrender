@@ -153,6 +153,108 @@ public class Rasterization {
     }
 
     /**
+     *
+     * @param t1 текстурная координата
+     * @param z1 глубина для конкретной вершины
+     * @param barycentric барицентрики для полигона
+     * @return интерполированную врешину, которая учитывает перспективу в 3d пространстве
+     */
+    public static Vector2f interpolateWithPerspective(
+            Vector2f t1, Vector2f t2, Vector2f t3,
+            float z1, float z2, float z3,
+            float[] barycentric) {
+
+        if (barycentric == null || barycentric.length < 3 ||
+                t1 == null || t2 == null || t3 == null) {
+            return new Vector2f(0, 0);
+        }
+
+        float alpha = barycentric[0];
+        float beta = barycentric[1];
+        float gamma = barycentric[2];
+
+        // Вычисляем 1/z для каждой вершины
+        float one_over_z1 = 1.0f / z1;
+        float one_over_z2 = 1.0f / z2;
+        float one_over_z3 = 1.0f / z3;
+
+        // Вычисляем u/z и v/z для каждой вершины
+        float u_over_z1 = t1.getX() * one_over_z1;
+        float v_over_z1 = t1.getY() * one_over_z1;
+
+        float u_over_z2 = t2.getX() * one_over_z2;
+        float v_over_z2 = t2.getY() * one_over_z2;
+
+        float u_over_z3 = t3.getX() * one_over_z3;
+        float v_over_z3 = t3.getY() * one_over_z3;
+
+        // Линейная интерполяция в экранном пространстве
+        float u_over_z = alpha * u_over_z1 + beta * u_over_z2 + gamma * u_over_z3;
+        float v_over_z = alpha * v_over_z1 + beta * v_over_z2 + gamma * v_over_z3;
+        float one_over_z = alpha * one_over_z1 + beta * one_over_z2 + gamma * one_over_z3;
+
+        // Восстановление правильных координат
+        float u = u_over_z / one_over_z;
+        float v = v_over_z / one_over_z;
+
+        return new Vector2f(u, v);
+    }
+
+    /**
+     * Метод интерполирует нормаль с учётом глубины, корректно отображает её на 3d пространство
+     * @param v1 вершина полигона
+     * @param z1 глубина этой вершины
+     * @param barycentric барицентрики для вершин полигона
+     * @return нормаль в конкретной точке по барицентрикам
+     */
+    public static Vector3f interpolateNormalWithPerspective(
+            Vertex v1, Vertex v2, Vertex v3,
+            float z1, float z2, float z3,
+            float[] barycentric) {
+
+        if (barycentric == null || barycentric.length < 3 ||
+                v1 == null || v2 == null || v3 == null ||
+                v1.normal == null || v2.normal == null || v3.normal == null) {
+            return new Vector3f(0, 1, 0); // нормаль по умолчанию
+        }
+
+        float alpha = barycentric[0];
+        float beta = barycentric[1];
+        float gamma = barycentric[2];
+
+        // 1/z для каждой вершины
+        float one_over_z1 = 1.0f / z1;
+        float one_over_z2 = 1.0f / z2;
+        float one_over_z3 = 1.0f / z3;
+
+        // Вычисляем normal/z для каждой вершины
+        float nx_over_z1 = v1.normal.getX() * one_over_z1;
+        float ny_over_z1 = v1.normal.getY() * one_over_z1;
+        float nz_over_z1 = v1.normal.getZ() * one_over_z1;
+
+        float nx_over_z2 = v2.normal.getX() * one_over_z2;
+        float ny_over_z2 = v2.normal.getY() * one_over_z2;
+        float nz_over_z2 = v2.normal.getZ() * one_over_z2;
+
+        float nx_over_z3 = v3.normal.getX() * one_over_z3;
+        float ny_over_z3 = v3.normal.getY() * one_over_z3;
+        float nz_over_z3 = v3.normal.getZ() * one_over_z3;
+
+        // Интерполяция
+        float nx_over_z = alpha * nx_over_z1 + beta * nx_over_z2 + gamma * nx_over_z3;
+        float ny_over_z = alpha * ny_over_z1 + beta * ny_over_z2 + gamma * ny_over_z3;
+        float nz_over_z = alpha * nz_over_z1 + beta * nz_over_z2 + gamma * nz_over_z3;
+        float one_over_z = alpha * one_over_z1 + beta * one_over_z2 + gamma * one_over_z3;
+
+        // Восстановление
+        float nx = nx_over_z / one_over_z;
+        float ny = ny_over_z / one_over_z;
+        float nz = nz_over_z / one_over_z;
+
+        return new Vector3f(nx, ny, nz).normalize();
+    }
+
+    /**
      * Находит ограничивающий прямоугольник (bounding box) для треугольника.
      * 
      * @param v1, v2, v3 вершины треугольника в экранных координатах
@@ -198,7 +300,6 @@ public class Rasterization {
                 
                 // Проверяем, находится ли пиксель внутри треугольника
                 if (isInsideTriangle(barycentric)) {
-                    // Интерполируем глубину (Z)
                     float z = interpolate(z1, z2, z3, barycentric);
                     
                     // Интерполируем текстурные координаты
@@ -207,16 +308,17 @@ public class Rasterization {
                         vertex1.textureCoordinate != null && 
                         vertex2.textureCoordinate != null && 
                         vertex3.textureCoordinate != null) {
-                        texCoord = interpolate(
+                        texCoord = interpolateWithPerspective(
                             vertex1.textureCoordinate, 
                             vertex2.textureCoordinate, 
-                            vertex3.textureCoordinate, 
+                            vertex3.textureCoordinate,
+                            z1, z2, z3,
                             barycentric
                         );
                     }
                     
                     // Интерполируем нормаль
-                    Vector3f normal = interpolateNormal(vertex1, vertex2, vertex3, barycentric);
+                    Vector3f normal = interpolateNormalWithPerspective(vertex1, vertex2, vertex3, z1, z2, z3, barycentric);
                     
                     // Вызываем callback
                     // Используется для отрисовки
@@ -242,4 +344,5 @@ public class Rasterization {
         void onPixel(int x, int y, float z, float[] barycentric, Vector2f texCoord, Vector3f normal);
     }
 }
+
 
