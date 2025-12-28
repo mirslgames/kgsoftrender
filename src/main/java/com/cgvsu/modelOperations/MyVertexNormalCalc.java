@@ -60,7 +60,7 @@ public class MyVertexNormalCalc implements VertexNormals<Model> {
                     continue;
                 }
 
-                Vector3f weighted = polygonNormal.multiplied(area);
+                Vector3f weighted = polygonNormal.multiply(area);
                 Vector3f currentNormal = vertexNormals.get(idx);
                 vertexNormals.set(idx, currentNormal.added(weighted));
 
