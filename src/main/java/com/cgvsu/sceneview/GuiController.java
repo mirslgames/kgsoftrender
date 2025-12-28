@@ -2,7 +2,6 @@ package com.cgvsu.sceneview;
 
 import com.cgvsu.objwriter.ObjWriter;
 import com.cgvsu.math.vectors.Vector3f;
-import com.cgvsu.render_engine.GraphicConveyor;
 import com.cgvsu.render_engine.RenderEngine;
 import com.cgvsu.service.ShortcutsSettings;
 import com.cgvsu.service.ThemeSettings;
@@ -27,21 +26,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.io.IOException;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Optional;
+import java.util.*;
 
 import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.Parent;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
-
-import java.util.Set;
 
 
 import com.cgvsu.model.Model;
 import com.cgvsu.objreader.ObjReader;
-import com.cgvsu.render_engine.Camera;
 
 public class GuiController {
 
@@ -65,6 +58,7 @@ public class GuiController {
     private TitledPane transformationTitledPane;
 
     private final ArrayList<Button> modelButtons = new ArrayList<>();
+    public static Dictionary<String, Button> cacheNameSceneModelButtons = new Hashtable<>();
     private Button activeButton;
 
     @FXML
@@ -230,64 +224,98 @@ public class GuiController {
 
     @FXML
     private void onPositionXChanged() {
-        SceneManager.positionXValue = parseFloat(positionXTextField);
+        if(SceneManager.activeModel != null){
+            SceneManager.activeModel.positionXValue = parseFloat(positionXTextField);
+        }
+
     }
 
     @FXML
     private void onPositionYChanged() {
-        SceneManager.positionYValue = parseFloat(positionYTextField);
+        if(SceneManager.activeModel != null) {
+            SceneManager.activeModel.positionYValue = parseFloat(positionYTextField);
+        }
     }
 
     @FXML
     private void onPositionZChanged() {
-        SceneManager.positionZValue = parseFloat(positionZTextField);
+        if(SceneManager.activeModel != null) {
+            SceneManager.activeModel.positionZValue = parseFloat(positionZTextField);
+        }
     }
 
     @FXML
     private void onRotationXChanged() {
-        SceneManager.rotationXValue = parseFloat(rotationXTextField);
+        if(SceneManager.activeModel != null) {
+            SceneManager.activeModel.rotationXValue = parseFloat(rotationXTextField);
+        }
     }
 
     @FXML
     private void onRotationYChanged() {
-        SceneManager.rotationYValue = parseFloat(rotationYTextField);
+        if(SceneManager.activeModel != null) {
+            SceneManager.activeModel.rotationYValue = parseFloat(rotationYTextField);
+        }
     }
 
     @FXML
     private void onRotationZChanged() {
-        SceneManager.rotationZValue = parseFloat(rotationZTextField);
+        if(SceneManager.activeModel != null) {
+            SceneManager.activeModel.rotationZValue = parseFloat(rotationZTextField);
+        }
     }
 
     @FXML
     private void onScaleXChanged() {
-        SceneManager.scaleXValue = parseFloat(scaleXTextField);
+        if(SceneManager.activeModel != null) {
+            SceneManager.activeModel.scaleXValue = parseFloat(scaleXTextField);
+        }
     }
 
     @FXML
     private void onScaleYChanged() {
-        SceneManager.scaleYValue = parseFloat(scaleYTextField);
+        if(SceneManager.activeModel != null) {
+            SceneManager.activeModel.scaleYValue = parseFloat(scaleYTextField);
+        }
     }
 
     @FXML
     private void onScaleZChanged() {
-        SceneManager.scaleZValue = parseFloat(scaleZTextField);
+        if(SceneManager.activeModel != null) {
+            SceneManager.activeModel.scaleZValue = parseFloat(scaleZTextField);
+        }
     }
 
     @FXML
     private void onApplyTransformButtonClick(){
+        //Для теста ручного
+        /*String text = SceneManager.activeModel.positionXValue + "\n" +
+                SceneManager.activeModel.positionYValue + "\n" +
+                SceneManager.activeModel.positionZValue + "\n" +
+                SceneManager.activeModel.rotationXValue + "\n" +
+                SceneManager.activeModel.rotationYValue + "\n" +
+                SceneManager.activeModel.rotationZValue + "\n" +
+                SceneManager.activeModel.scaleXValue + "\n" +
+                SceneManager.activeModel.scaleYValue + "\n" +
+                SceneManager.activeModel.scaleZValue + "\n";
 
+        showWarning(text);*/
     }
 
     @FXML
     private void onSaveModelMenuItemClick() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Model (*.obj)", "*.obj"));
-        fileChooser.setTitle("Save Model");
 
-        File file = fileChooser.showSaveDialog((Stage) sceneCanvas.getScene().getWindow());
-        Path fileName = Path.of(file.getAbsolutePath());
-        ObjWriter.writeModelToFile(SceneManager.activeModel, fileName.toString());
+        if(SceneManager.activeModel == null){
+            showWarning("Выберите конкретную модель");
+        } else {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Model (*.obj)", "*.obj"));
+            fileChooser.setTitle("Save Model");
 
+            File file = fileChooser.showSaveDialog((Stage) sceneCanvas.getScene().getWindow());
+            Path fileName = Path.of(file.getAbsolutePath());
+            ObjWriter.writeModelToFile(SceneManager.activeModel, fileName.toString());
+        }
     }
 
     @FXML
@@ -306,19 +334,23 @@ public class GuiController {
         try {
             String fileContent = Files.readString(fileName);
             Model mesh = ObjReader.read(fileContent, fileName.getFileName().toString(), SceneManager.historyModelName);
-            if (SceneManager.historyModelName.containsKey(mesh.modelName)) {
-                int c = SceneManager.historyModelName.get(mesh.modelName);
-                SceneManager.historyModelName.put(mesh.modelName, ++c);
-            } else {
-                SceneManager.historyModelName.put(mesh.modelName, 0);
-            }
+            validateAndCorrectDuplicateModelName(mesh);
 
             //Добавление кнопки
-            addModel(mesh);
-            SceneManager.activeModel = mesh;
+            addModelButton(mesh);
             // todo: обработка ошибок
         } catch (IOException exception) {
 
+        }
+    }
+
+    protected static void validateAndCorrectDuplicateModelName(Model targetModel){
+        if (SceneManager.historyModelName.containsKey(targetModel.modelName)){
+            int c = SceneManager.historyModelName.get(targetModel.modelName);
+            SceneManager.historyModelName.put(targetModel.modelName, ++c);
+            targetModel.modelName += String.format(" (%d)", c);
+        } else{
+            SceneManager.historyModelName.put(targetModel.modelName, 0);
         }
     }
 
@@ -358,9 +390,23 @@ public class GuiController {
 
     @FXML
     private void onDeleteActiveEntityButtonClick(ActionEvent event) {
+        String deletedModelName = SceneManager.activeModel.modelName;
+        boolean result = SceneManager.removeModelFromScene(SceneManager.activeModel);
+        if (result){
+            Button currentDelButton = cacheNameSceneModelButtons.get(deletedModelName);
 
-        deleteActiveEntityButton.setVisible(false);
-        transformationTitledPane.setVisible(false);
+            cacheNameSceneModelButtons.remove(deletedModelName);
+            modelButtons.remove(currentDelButton);
+            modelsBox.getChildren().remove(currentDelButton);
+            if(activeButton.getText().equals(deletedModelName)){
+                activeButton = null;
+            }
+
+            deleteActiveEntityButton.setVisible(false);
+            transformationTitledPane.setVisible(false);
+        }
+
+
     }
 
     @FXML
@@ -382,11 +428,26 @@ public class GuiController {
         activeButton = button;
         activeButton.setStyle(ThemeSettings.activeButtonStyle);
 
+        setTextFieldModelTransform(model);
+
         deleteActiveEntityButton.setVisible(true);
         transformationTitledPane.setVisible(true);
     }
 
-    public void addModel(Model model) {
+    private void setTextFieldModelTransform(Model model){
+        positionXTextField.setText(""+model.positionXValue);
+        positionYTextField.setText(""+model.positionYValue);
+        positionZTextField.setText(""+model.positionZValue);
+        rotationXTextField.setText(""+model.rotationXValue);
+        rotationYTextField.setText(""+model.rotationYValue);
+        rotationZTextField.setText(""+model.rotationZValue);
+        scaleXTextField.setText(""+model.scaleXValue);
+        scaleYTextField.setText(""+model.scaleYValue);
+        scaleZTextField.setText(""+model.scaleZValue);
+
+    }
+
+    private void addModelButton(Model model) {
         SceneManager.loadModelToScene(model);
 
         Button btn = new Button(model.modelName);
@@ -394,9 +455,11 @@ public class GuiController {
         btn.setOnAction(this::onModelButtonClick);
 
         modelButtons.add(btn);
+        cacheNameSceneModelButtons.put(model.modelName, btn);
         btn.setStyle(ThemeSettings.buttonStyle);
 
         modelsBox.getChildren().add(btn);
+
     }
 
 

@@ -1,0 +1,245 @@
+package com.cgvsu.modelOperations;
+
+import com.cgvsu.math.point.Point2f;
+import com.cgvsu.math.vectors.Vector2f;
+import com.cgvsu.math.vectors.Vector3f;
+import com.cgvsu.model.Vertex;
+
+/**
+ * Класс для растеризации треугольников с использованием барицентрических координат.
+ * Предоставляет методы для вычисления барицентрических координат и интерполяции значений.
+ * В последствии сюда можно будем засунуть растеризацию прямых для отрисовыванаия сетки
+ */
+public class Rasterization {
+
+    /**
+     * Вычисляет барицентрические координаты точки относительно треугольника.
+     * 
+     * @param point точка для которой вычисляются координаты (в экранных координатах)
+     * @param v1, v2, v3 вершины треугольника в экранных координатах (Point2f)
+     * @return массив [alpha, beta, gamma] - барицентрические координаты для конкретного треугольника
+     */
+    public static float[] calculateBarycentricCoordinates(Point2f point, Point2f v1, Point2f v2, Point2f v3) {
+        float x = point.getX();
+        float y = point.getY();
+        
+        float x1 = v1.getX(), y1 = v1.getY();
+        float x2 = v2.getX(), y2 = v2.getY();
+        float x3 = v3.getX(), y3 = v3.getY();
+
+        // Вычисляем барицентрические координаты через площади
+        // Используем решение системы 3 на 3 с 3 уравнениями
+        // x = alpha*x1 + beta*x2 + gamma*x3
+        // y = alpha*y1 + beta*y2 + gamma*y3
+        // 1 = alpha + beta  + gamma
+        float denom = (y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3);
+        
+        if (Math.abs(denom) < 1e-10f) {
+             //Вырожденные случай
+            return new float[]{0, 0, 0};
+        }
+
+        float alpha = ((y2 - y3) * (x - x3) + (x3 - x2) * (y - y3)) / denom;
+        float beta = ((y3 - y1) * (x - x3) + (x1 - x3) * (y - y3)) / denom;
+        float gamma = 1.0f - alpha - beta;
+
+        return new float[]{alpha, beta, gamma};
+    }
+
+    /**
+     * Проверяет, находится ли точка внутри треугольника используя барицентрические координаты.
+     * 
+     * @param barycentric барицентрические координаты [alpha, beta, gamma]
+     * @return true если точка внутри треугольника
+     */
+    public static boolean isInsideTriangle(float[] barycentric) {
+        if (barycentric == null || barycentric.length < 3) {
+            return false;
+        }
+        
+        float alpha = barycentric[0];
+        float beta = barycentric[1];
+        float gamma = barycentric[2];
+        
+        // Точка внутри если все координаты >= 0 и их сумма ≈ 1
+        float sum = alpha + beta + gamma;
+        return alpha >= -1e-5f && beta >= -1e-5f && gamma >= -1e-5f && 
+               Math.abs(sum - 1.0f) < 1e-5f;
+    }
+
+    /**
+     * Интерполирует скалярное значение по барицентрическим координатам.
+     * 
+     * @param v1, v2, v3 значения в вершинах треугольника
+     * @param barycentric барицентрические координаты [alpha, beta, gamma]
+     * @return интерполированное значение
+     */
+    public static float interpolate(float v1, float v2, float v3, float[] barycentric) {
+        if (barycentric == null || barycentric.length < 3) {
+            return 0.0f;
+        }
+        
+        float alpha = barycentric[0];
+        float beta = barycentric[1];
+        float gamma = barycentric[2];
+        
+        return alpha * v1 + beta * v2 + gamma * v3;
+    }
+
+    /**
+     * Интерполирует вектор Vector3f по барицентрическим координатам.
+     * Используется для интерполяции векторов, конкретно в нашем проекте для нормалей.
+     * 
+     * @param v1, v2, v3 векторы в вершинах треугольника
+     * @param barycentric барицентрические координаты [alpha, beta, gamma]
+     * @return интерполированный вектор
+     */
+    public static Vector3f interpolate(Vector3f v1, Vector3f v2, Vector3f v3, float[] barycentric) {
+        if (barycentric == null || barycentric.length < 3 || v1 == null || v2 == null || v3 == null) {
+            return new Vector3f(0, 0, 0);
+        }
+        
+        float alpha = barycentric[0];
+        float beta = barycentric[1];
+        float gamma = barycentric[2];
+        
+        // Интерполируем каждую компоненту
+        float x = alpha * v1.getX() + beta * v2.getX() + gamma * v3.getX();
+        float y = alpha * v1.getY() + beta * v2.getY() + gamma * v3.getY();
+        float z = alpha * v1.getZ() + beta * v2.getZ() + gamma * v3.getZ();
+        
+        return new Vector3f(x, y, z);
+    }
+
+    /**
+     * Интерполирует вектор Vector2f по барицентрическим координатам.
+     * Используется для интерполяции текстурных координат.
+     * 
+     * @param t1, t2, t3 векторы в вершинах треугольника
+     * @param barycentric барицентрические координаты [alpha, beta, gamma]
+     * @return интерполированный вектор
+     */
+    public static Vector2f interpolate(Vector2f t1, Vector2f t2, Vector2f t3, float[] barycentric) {
+        if (barycentric == null || barycentric.length < 3 || t1 == null || t2 == null || t3 == null) {
+            return new Vector2f(0, 0);
+        }
+        
+        float alpha = barycentric[0];
+        float beta = barycentric[1];
+        float gamma = barycentric[2];
+        
+        float u = alpha * t1.getX() + beta * t2.getX() + gamma * t3.getX();
+        float v = alpha * t1.getY() + beta * t2.getY() + gamma * t3.getY();
+        
+        return new Vector2f(u, v);
+    }
+
+    /**
+     * Интерполирует нормаль вершины по барицентрическим координатам.
+     * Нормализует результат для получения корректной нормали.
+     * 
+     * @param v1, v2, v3 вершины треугольника
+     * @param barycentric барицентрические координаты [alpha, beta, gamma]
+     * @return интерполированная и нормализованная нормаль
+     */
+    public static Vector3f interpolateNormal(Vertex v1, Vertex v2, Vertex v3, float[] barycentric) {
+        if (v1 == null || v2 == null || v3 == null || 
+            v1.normal == null || v2.normal == null || v3.normal == null) {
+            return new Vector3f(0, 1, 0); // Дефолтная нормаль
+        }
+        
+        Vector3f interpolated = interpolate(v1.normal, v2.normal, v3.normal, barycentric);
+        return interpolated.normalized();
+    }
+
+    /**
+     * Находит ограничивающий прямоугольник (bounding box) для треугольника.
+     * 
+     * @param v1, v2, v3 вершины треугольника в экранных координатах
+     * @return массив [minX, minY, maxX, maxY]
+     */
+    public static int[] getBoundingBox(Point2f v1, Point2f v2, Point2f v3) {
+        int minX = (int) Math.floor(Math.min(Math.min(v1.getX(), v2.getX()), v3.getX()));
+        int maxX = (int) Math.ceil(Math.max(Math.max(v1.getX(), v2.getX()), v3.getX()));
+        int minY = (int) Math.floor(Math.min(Math.min(v1.getY(), v2.getY()), v3.getY()));
+        int maxY = (int) Math.ceil(Math.max(Math.max(v1.getY(), v2.getY()), v3.getY()));
+        
+        return new int[]{minX, minY, maxX, maxY};
+    }
+
+    /**
+     * Растеризует треугольник, вызывая callback для каждого пикселя внутри треугольника.
+     * 
+     * @param v1, v2, v3 вершины треугольника в экранных координатах (Point2f)
+     * @param z1, z2, z3 глубины вершин (для Z-буфера)
+     * @param vertex1 оригинальные вершины модели (для интерполяции нормалей и текстур)
+     * @param pixelCallback callback функция, вызываемая для каждого пикселя
+     */
+    public static void rasterizeTriangle(
+            Point2f v1, Point2f v2, Point2f v3,
+            float z1, float z2, float z3,
+            Vertex vertex1, Vertex vertex2, Vertex vertex3,
+            PixelCallback pixelCallback) {
+        
+        // Находим границу полигона(треугольника)
+        int[] bbox = getBoundingBox(v1, v2, v3);
+        int minX = bbox[0];
+        int minY = bbox[1];
+        int maxX = bbox[2];
+        int maxY = bbox[3];
+
+        // Проходим по всем пикселям в ограничивающем прямоугольнике
+        for (int y = minY; y <= maxY; y++) {
+            for (int x = minX; x <= maxX; x++) {
+                Point2f pixel = new Point2f(x, y);
+                
+                // Вычисляем барицентрические координаты
+                float[] barycentric = calculateBarycentricCoordinates(pixel, v1, v2, v3);
+                
+                // Проверяем, находится ли пиксель внутри треугольника
+                if (isInsideTriangle(barycentric)) {
+                    // Интерполируем глубину (Z)
+                    float z = interpolate(z1, z2, z3, barycentric);
+                    
+                    // Интерполируем текстурные координаты
+                    Vector2f texCoord = null;
+                    if (vertex1 != null && vertex2 != null && vertex3 != null &&
+                        vertex1.textureCoordinate != null && 
+                        vertex2.textureCoordinate != null && 
+                        vertex3.textureCoordinate != null) {
+                        texCoord = interpolate(
+                            vertex1.textureCoordinate, 
+                            vertex2.textureCoordinate, 
+                            vertex3.textureCoordinate, 
+                            barycentric
+                        );
+                    }
+                    
+                    // Интерполируем нормаль
+                    Vector3f normal = interpolateNormal(vertex1, vertex2, vertex3, barycentric);
+                    
+                    // Вызываем callback
+                    // Используется для отрисовки
+                    pixelCallback.onPixel(x, y, z, barycentric, texCoord, normal);
+                }
+            }
+        }
+    }
+
+    /**
+     * Интерфейс callback для обработки пикселей при растеризации.
+     */
+    public interface PixelCallback {
+        /**
+         * Вызывается для каждого пикселя внутри треугольника.
+         * 
+         * @param x, y координаты пикселя в экранных координатах
+         * @param z интерполированная глубина (для Z-буфера)
+         * @param barycentric барицентрические координаты [alpha, beta, gamma]
+         * @param texCoord интерполированные текстурные координаты (может быть null)
+         * @param normal интерполированная нормаль (может быть null)
+         */
+        void onPixel(int x, int y, float z, float[] barycentric, Vector2f texCoord, Vector3f normal);
+    }
+}
+

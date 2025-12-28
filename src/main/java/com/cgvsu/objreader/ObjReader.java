@@ -5,6 +5,7 @@ import com.cgvsu.math.vectors.Vector2f;
 import com.cgvsu.math.vectors.Vector3f;
 import com.cgvsu.model.Model;
 import com.cgvsu.model.Vertex;
+import com.cgvsu.modelOperations.MyVertexNormalCalc;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,16 +63,8 @@ public class ObjReader {
 
 		result = constructModelFromReadData(readVertices, readTextureVertices, readNormals, readPolygonsIndices);
 		String targetModelName =  filename.substring(0, filename.length() - 4); //Удаляем .obj
-		result.modelName = validateAndCorrectDuplicateModelName(targetModelName, historyModelName);
-		return result;
-	}
-
-	protected static String validateAndCorrectDuplicateModelName(String targetModelName, HashMap<String, Integer> historyModelName){
-		String result = targetModelName;
-		if (historyModelName.containsKey(targetModelName)){
-			int c = historyModelName.get(targetModelName);
-			result += String.format(" (%d)", ++c);
-		}
+		result.modelName = targetModelName;
+		//result.modelName = validateAndCorrectDuplicateModelName(targetModelName, historyModelName);
 		return result;
 	}
 
@@ -97,10 +90,10 @@ public class ObjReader {
 				modelVertices.add(currentVertex);
 			}
 
-			if (readNormals.isEmpty()){
-				//Надо рассчитать нормали вершин у модельки (пометить флаг в классе модельки а просчитать позже)
-				//Возможно сделать так что мы всегда игнорируем считанные нормали вершин и сами перерасчитываем их
-			}
+			/*if (readNormals.isEmpty()){
+
+			}*/
+
 			if (readTextureVertices.isEmpty()){
 				//Помечаем что модель без текстуры в классе model
 			}
@@ -118,6 +111,10 @@ public class ObjReader {
 			result.vertices = modelVertices;
 			result.polygons = modelVertexIndices;
 			result.polygonsBoundaries = modelPolygonsIndices;
+
+			//мы всегда игнорируем считанные нормали вершин и сами перерасчитываем их
+			MyVertexNormalCalc calc = new MyVertexNormalCalc();
+			calc.calculateVertexNormals(result);
 		}
 
 		//Сделать обработку ошибки при загрузке модели

@@ -2,6 +2,7 @@ package com.cgvsu.objwriter;
 
 import com.cgvsu.model.Model;
 import com.cgvsu.model.Vertex;
+import com.cgvsu.modelOperations.MyVertexNormalCalc;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -36,6 +37,9 @@ public class ObjWriter {
         if(!hasNormals){
             //Перерассчитываем нормали
             //Мы при чтении не учитываем нормали из файла но чтобы записанная модель, могла использоваться в других программах корректно стоит нормали записывать тоже по умолчанию
+            MyVertexNormalCalc calc = new MyVertexNormalCalc();
+            calc.calculateVertexNormals(model);
+
         }
 
         //Поскольку мы добавлять текстурные координаты не можем в программе, то если модель не имела текстуру при загрузке, то и при сохранении ей не нужны текстурные корды
@@ -62,11 +66,10 @@ public class ObjWriter {
                 writer.write("\n");
             }
 
-            //Запись нормалей вершин (Жду калькулятор нормалей от леши)
-            /*for (Vertex v : model.vertices) {
-                writer.write(String.format(Locale.US, "vn %f %f %f\n", v.normal.x, v.normal.y, v.normal.z));
+            for (Vertex v : model.vertices) {
+                writer.write(String.format(Locale.US, "vn %f %f %f\n", v.normal.getX(), v.normal.getY(), v.normal.getZ()));
             }
-            writer.write("\n");*/
+            writer.write("\n");
 
             //Запись полигонов
             int polygonsCount = model.polygonsBoundaries.size();
