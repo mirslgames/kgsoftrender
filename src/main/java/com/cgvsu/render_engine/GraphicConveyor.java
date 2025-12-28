@@ -9,10 +9,69 @@ import java.util.Arrays;
 
 public class GraphicConveyor {
 
-    public static Matrix4f rotateScaleTranslate() {
-        return new Matrix4f();
+    public static Matrix4f rotateScaleTranslate(
+            float sx, float sy, float sz,
+            float dx, float dy, float dz,
+            float tx, float ty, float tz
+    ) {
+        Matrix4f scaleMatrix = new Matrix4f(new float[] {
+                sx, 0, 0, 0,
+                0, sy, 0, 0,
+                0, 0, sz, 0,
+                0, 0, 0, 1
+        });
+        Matrix4f rotateMatrix = rotate(dx, dy, dz);
+
+        Matrix4f translate = new Matrix4f(new float[] {
+                1, 0, 0, tx,
+                0, 1, 0, ty,
+                0, 0, 1, tz,
+                0, 0, 0, 1
+        });
+
+        translate.multiply(rotateMatrix);
+        translate.multiply(scaleMatrix);
+
+        return translate;
     }
-    
+
+    public static Matrix4f rotateScaleTranslate() {
+        return  rotateScaleTranslate(1, 1, 1, 0, 0,0, 0,0,0);
+    }
+
+     public static Matrix4f rotate(float dx, float dy, float dz) {
+        dx = (float) Math.toRadians(dx);
+        dy = (float) Math.toRadians(dy);
+        dz = (float) Math.toRadians(dz);
+
+        Matrix4f rotateZMatrix = new Matrix4f(new float[] {
+                (float) Math.cos(dz), (float) Math.sin(dz), 0, 0,
+                (float) -Math.sin(dz), (float) Math.cos(dz), 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1
+        });
+
+        Matrix4f rotateYMatrix = new Matrix4f(new float[] {
+                (float) Math.cos(dy), 0, (float) Math.sin(dy), 0,
+                0, 1, 0, 0,
+                (float) -Math.sin(dy), 0, (float) Math.cos(dy), 0,
+                0, 0, 0, 1
+
+        });
+
+        Matrix4f rotateXMatrix = new Matrix4f(new float[] {
+                1, 0, 0, 0,
+                0, (float) Math.cos(dx), (float) Math.sin(dx), 0,
+                0, (float) -Math.sin(dx), (float) Math.cos(dx), 0,
+                0, 0, 0, 1
+
+        });
+        Matrix4f result = new Matrix4f(rotateZMatrix.getMatrix());
+        result.multiply(rotateYMatrix);
+        result.multiply(rotateXMatrix);
+        return result;
+    }
+
     public static Matrix4f lookAt(Vector3f eye, Vector3f target) {
         return lookAt(eye, target, new Vector3f(0F, 1.0F, 0F));
     }
