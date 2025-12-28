@@ -25,19 +25,9 @@ public class SceneManager {
     public static boolean useTexture;
     public static boolean useLight;
 
-    //Для выбранной текущей модели возможно переходник для SceneEntity
-    public static float positionXValue;
-    public static float positionYValue;
-    public static float positionZValue;
-    public static float rotationXValue;
-    public static float rotationYValue;
-    public static float rotationZValue;
-    public static float scaleXValue;
-    public static float scaleYValue;
-    public static float scaleZValue;
-
-
     public static boolean isSceneEntitySelect;
+
+    public static float lightIntensity;
 
 
     public static void initialize(){
@@ -52,5 +42,28 @@ public class SceneManager {
     public static void loadModelToScene(Model model){
         models.add(model);
         cacheNameSceneModels.put(model.modelName, model);
+    }
+
+
+    public static boolean removeModelFromScene(Model model) {
+        if (model == null) return false;
+        return removeModelFromScene(model.modelName);
+    }
+
+    public static boolean removeModelFromScene(String modelName) {
+        if (modelName == null) return false;
+
+        Model model = cacheNameSceneModels.get(modelName);
+        if (model == null) return false;
+
+        models.remove(model);
+        cacheNameSceneModels.remove(modelName);
+
+        if (activeModel.modelName.equals(model.modelName)) {
+            activeModel = null;
+            isSceneEntitySelect = false;
+        }
+        //historyModelName не трогаем
+        return true;
     }
 }

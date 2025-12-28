@@ -8,10 +8,12 @@ import com.cgvsu.math.point.Point2f;
 import com.cgvsu.math.point.Point3f;
 import com.cgvsu.math.vectors.Vector3f;
 import com.cgvsu.model.Vertex;
+import com.cgvsu.service.ThemeSettings;
 import javafx.scene.canvas.GraphicsContext;
 import com.cgvsu.render_engine.GraphicConveyor.*;
 
 import com.cgvsu.model.Model;
+import javafx.scene.paint.Color;
 
 
 import static com.cgvsu.render_engine.GraphicConveyor.*;
@@ -58,6 +60,9 @@ public class RenderEngine {
 
                 resultPoints.add(resultPoint);
             }
+
+            graphicsContext.setStroke(Color.web(ThemeSettings.wireframeColor));
+            graphicsContext.setLineWidth(ThemeSettings.wireframeWidth);
 
             for (int vertexInPolygonInd = 1; vertexInPolygonInd < nVerticesInPolygon; ++vertexInPolygonInd) {
                 graphicsContext.strokeLine(

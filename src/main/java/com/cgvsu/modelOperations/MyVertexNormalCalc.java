@@ -80,7 +80,7 @@ public class MyVertexNormalCalc implements VertexNormals<Model> {
                 model.vertices.get(i).normal = averaged;
             } else {
                 // Если вершина не участвовала ни в одном полигоне
-                model.vertices.get(i).normal = (new Vector3f(0, 0, 0));
+                model.vertices.get(i).normal = new Vector3f(0, 0, 0);
             }
         }
     }

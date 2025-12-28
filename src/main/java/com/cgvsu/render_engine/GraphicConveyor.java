@@ -10,6 +10,8 @@ import com.cgvsu.math.vectors.Vector3f;
 
 public class GraphicConveyor {
 
+    
+
     public static Matrix4f rotateScaleTranslate() {
         return new Matrix4f();
     }
