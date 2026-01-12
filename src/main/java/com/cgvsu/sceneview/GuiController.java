@@ -42,6 +42,9 @@ public class GuiController {
 
     final private float TRANSLATION = 0.5F;
 
+    //todo: убрать кнопку применить или переделать под нее
+    //todo: убрать возможность ввода  букв в TextField
+
     @FXML
     AnchorPane canvasParentAnchorPane;
     @FXML
@@ -239,64 +242,63 @@ public class GuiController {
     @FXML
     private void onPositionXChanged() {
         if(SceneManager.activeModel != null){
-            SceneManager.activeModel.positionXValue = parseFloat(positionXTextField);
+            SceneManager.activeModel.currentTransform.positionX = parseFloat(positionXTextField);
         }
-
     }
 
     @FXML
     private void onPositionYChanged() {
         if(SceneManager.activeModel != null) {
-            SceneManager.activeModel.positionYValue = parseFloat(positionYTextField);
+            SceneManager.activeModel.currentTransform.positionY = parseFloat(positionYTextField);
         }
     }
 
     @FXML
     private void onPositionZChanged() {
         if(SceneManager.activeModel != null) {
-            SceneManager.activeModel.positionZValue = parseFloat(positionZTextField);
+            SceneManager.activeModel.currentTransform.positionZ = parseFloat(positionZTextField);
         }
     }
 
     @FXML
     private void onRotationXChanged() {
         if(SceneManager.activeModel != null) {
-            SceneManager.activeModel.rotationXValue = parseFloat(rotationXTextField);
+            SceneManager.activeModel.currentTransform.rotationX = parseFloat(rotationXTextField);
         }
     }
 
     @FXML
     private void onRotationYChanged() {
         if(SceneManager.activeModel != null) {
-            SceneManager.activeModel.rotationYValue = parseFloat(rotationYTextField);
+            SceneManager.activeModel.currentTransform.rotationY = parseFloat(rotationYTextField);
         }
     }
 
     @FXML
     private void onRotationZChanged() {
         if(SceneManager.activeModel != null) {
-            SceneManager.activeModel.rotationZValue = parseFloat(rotationZTextField);
+            SceneManager.activeModel.currentTransform.rotationZ = parseFloat(rotationZTextField);
         }
     }
 
     @FXML
     private void onScaleXChanged() {
         if(SceneManager.activeModel != null) {
-            SceneManager.activeModel.scaleXValue = parseFloat(scaleXTextField);
+            SceneManager.activeModel.currentTransform.scaleX = parseFloat(scaleXTextField);
         }
     }
 
     @FXML
     private void onScaleYChanged() {
         if(SceneManager.activeModel != null) {
-            SceneManager.activeModel.scaleYValue = parseFloat(scaleYTextField);
+            SceneManager.activeModel.currentTransform.scaleY = parseFloat(scaleYTextField);
         }
     }
 
     @FXML
     private void onScaleZChanged() {
         if(SceneManager.activeModel != null) {
-            SceneManager.activeModel.scaleZValue = parseFloat(scaleZTextField);
+            SceneManager.activeModel.currentTransform.scaleZ = parseFloat(scaleZTextField);
         }
     }
 
@@ -449,15 +451,15 @@ public class GuiController {
     }
 
     private void setTextFieldModelTransform(Model model){
-        positionXTextField.setText(""+model.positionXValue);
-        positionYTextField.setText(""+model.positionYValue);
-        positionZTextField.setText(""+model.positionZValue);
-        rotationXTextField.setText(""+model.rotationXValue);
-        rotationYTextField.setText(""+model.rotationYValue);
-        rotationZTextField.setText(""+model.rotationZValue);
-        scaleXTextField.setText(""+model.scaleXValue);
-        scaleYTextField.setText(""+model.scaleYValue);
-        scaleZTextField.setText(""+model.scaleZValue);
+        positionXTextField.setText(""+model.currentTransform.positionX);
+        positionYTextField.setText(""+model.currentTransform.positionY);
+        positionZTextField.setText(""+model.currentTransform.positionZ);
+        rotationXTextField.setText(""+model.currentTransform.rotationX);
+        rotationYTextField.setText(""+model.currentTransform.rotationY);
+        rotationZTextField.setText(""+model.currentTransform.rotationZ);
+        scaleXTextField.setText(""+model.currentTransform.scaleX);
+        scaleYTextField.setText(""+model.currentTransform.scaleY);
+        scaleZTextField.setText(""+model.currentTransform.scaleZ);
 
     }
 
