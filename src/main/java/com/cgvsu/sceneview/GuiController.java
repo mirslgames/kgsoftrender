@@ -349,7 +349,7 @@ public class GuiController {
 
         try {
             String fileContent = Files.readString(fileName);
-            Model mesh = ObjReader.read(fileContent, fileName.getFileName().toString(), SceneManager.historyModelName);
+            Model mesh = ObjReader.readModelFromFile(fileContent, fileName.getFileName().toString(), SceneManager.historyModelName);
             validateAndCorrectDuplicateModelName(mesh);
 
             //Добавление кнопки

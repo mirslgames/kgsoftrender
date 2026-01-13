@@ -52,14 +52,14 @@ class ObjReaderTest {
         // АГААА! Вот тест, который говорит, что у метода нет проверки на более, чем 3 числа
         // А такой случай лучше не игнорировать, а сообщать пользователю, что у него что-то не так
         // ассерт, чтобы не забыть про тест:
-        Assertions.assertTrue(false);
+        //Assertions.assertTrue(false);
 
 
         ArrayList<String> wordsInLineWithoutToken = new ArrayList<>(Arrays.asList("1.0", "2.0", "3.0", "4.0"));
         try {
             ObjReader.parseVertex(wordsInLineWithoutToken, 10);
         } catch (ObjReaderException exception) {
-            String expectedError = "";
+            String expectedError = "Error parsing OBJ file on line: 10. Более 3 координат у вершины";
             Assertions.assertEquals(expectedError, exception.getMessage());
         }
     }

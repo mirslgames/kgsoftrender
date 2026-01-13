@@ -63,11 +63,12 @@ public class SceneManager {
         models.remove(model);
         cacheNameSceneModels.remove(modelName);
 
-        if (activeModel.modelName.equals(model.modelName)) {
+        if (activeModel != null && activeModel.modelName != null && activeModel.modelName.equals(model.modelName)) {
             activeModel = null;
             isSceneEntitySelect = false;
         }
-        //historyModelName не трогаем
+
         return true;
     }
+
 }

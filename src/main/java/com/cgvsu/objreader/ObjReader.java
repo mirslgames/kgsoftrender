@@ -21,7 +21,7 @@ public class ObjReader {
 	private static final String OBJ_NORMAL_TOKEN = "vn";
 	private static final String OBJ_FACE_TOKEN = "f";
 
-	public static Model read(String fileContent, String filename, HashMap<String, Integer> historyModelName) {
+	public static Model readModelFromFile(String fileContent, String filename, HashMap<String, Integer> historyModelName) {
 		Model result = new Model();
 
 		ArrayList<Vector3f> readVertices = new ArrayList<>();
@@ -138,6 +138,10 @@ public class ObjReader {
 
 	// Всем методам кроме основного я поставил модификатор доступа protected, чтобы обращаться к ним в тестах
 	protected static Vector3f parseVertex(final ArrayList<String> wordsInLineWithoutToken, int lineInd) {
+		//todo: проверка на более 3 числа
+		if (wordsInLineWithoutToken.size() > 3){
+			throw new ObjReaderException("Более 3 координат у вершины", lineInd);
+		}
 		try {
 			return new Vector3f(
 					Float.parseFloat(wordsInLineWithoutToken.get(0)),
