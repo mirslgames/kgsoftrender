@@ -354,19 +354,25 @@ public class GuiController {
 
             //Добавление кнопки
             addModelButton(mesh);
-            // todo: обработка ошибок
-        } catch (IOException exception) {
 
+        } catch (Exception exception) {
+            showError(exception.getMessage());
         }
     }
 
+
     protected static void validateAndCorrectDuplicateModelName(Model targetModel){
-        if (SceneManager.historyModelName.containsKey(targetModel.modelName)){
-            int c = SceneManager.historyModelName.get(targetModel.modelName);
-            SceneManager.historyModelName.put(targetModel.modelName, ++c);
-            targetModel.modelName += String.format(" (%d)", c);
-        } else{
-            SceneManager.historyModelName.put(targetModel.modelName, 0);
+        try {
+            if (SceneManager.historyModelName.containsKey(targetModel.modelName)) {
+                int c = SceneManager.historyModelName.get(targetModel.modelName);
+                SceneManager.historyModelName.put(targetModel.modelName, ++c);
+                targetModel.modelName += String.format(" (%d)", c);
+            } else {
+                SceneManager.historyModelName.put(targetModel.modelName, 0);
+            }
+        }
+        catch (Exception exception){
+            throw new RuntimeException("Ошибка при проверки и корректировки дубликата имени модельки");
         }
     }
 
