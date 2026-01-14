@@ -21,6 +21,10 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
+
+import java.util.function.UnaryOperator;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,9 +45,6 @@ import static java.nio.file.Path.*;
 public class GuiController {
 
     final private float TRANSLATION = 0.5F;
-
-    //todo: убрать кнопку применить или переделать под нее
-    //todo: убрать возможность ввода  букв в TextField
 
     @FXML
     AnchorPane canvasParentAnchorPane;
@@ -110,6 +111,7 @@ public class GuiController {
             SceneManager.lightIntensity = newV.floatValue();
         });
 
+
         positionXTextField.setOnKeyReleased(e -> onPositionXChanged());
         positionYTextField.setOnKeyReleased(e -> onPositionYChanged());
         positionZTextField.setOnKeyReleased(e -> onPositionZChanged());
@@ -122,12 +124,30 @@ public class GuiController {
         scaleYTextField.setOnKeyReleased(e -> onScaleYChanged());
         scaleZTextField.setOnKeyReleased(e -> onScaleZChanged());
 
+        installNumericFloatFilter(positionXTextField);
+        installNumericFloatFilter(positionYTextField);
+        installNumericFloatFilter(positionZTextField);
+
+        installNumericFloatFilter(rotationXTextField);
+        installNumericFloatFilter(rotationYTextField);
+        installNumericFloatFilter(rotationZTextField);
+
+        installNumericFloatFilter(scaleXTextField);
+        installNumericFloatFilter(scaleYTextField);
+        installNumericFloatFilter(scaleZTextField);
+
+
         openModeMenuItem.setAccelerator(KeyCombination.keyCombination(ShortcutsSettings.openModel));
         saveModeMenuItem.setAccelerator(KeyCombination.keyCombination(ShortcutsSettings.saveModel));
 
         Platform.runLater(() -> {
             ThemeSettings.setLightTheme();
             applyTheme();
+
+            Scene scene = sceneCanvas.getScene();
+            if (scene != null) {
+                installHoverForAllButtons(scene.getRoot());
+            }
         });
         SceneManager.initialize();
 
@@ -170,6 +190,28 @@ public class GuiController {
         }*/
     }
 
+    private void installNumericFloatFilter(TextField tf) {
+        if (tf == null) return;
+
+        UnaryOperator<TextFormatter.Change> filter = change -> {
+            String newText = change.getControlNewText();
+
+            // Разрешаем как промежуточный ввод
+            if (newText.equals("-") || newText.equals("-.") || newText.equals("-,")) return change;
+
+            // Полноценное число:
+            // 123
+            // -123
+            // 12.34
+            // -12,34
+            if (newText.matches("-?\\d+([\\.,]\\d*)?")) return change;
+
+            return null; //Запрещаем другие изменения и также пустую строчку
+        };
+
+        tf.setTextFormatter(new TextFormatter<>(filter));
+    }
+
     private float parseFloat(TextField textField) {
         String s = textField.getText();
         s = s.trim().replace(',', '.');
@@ -177,7 +219,7 @@ public class GuiController {
         try {
             return Float.parseFloat(s);
         } catch (NumberFormatException e) {
-            //todo:обработка ошибок
+            showError(e.getMessage());
         }
         return 0;
     }
@@ -230,6 +272,12 @@ public class GuiController {
         applyStyle(root, ".scroll-bar .thumb", ThemeSettings.scrollBarThumbStyle);
 
         Platform.runLater(() -> applyStyle(root, ".menu-bar .label", ThemeSettings.menuBarLabelStyle));
+
+        if (applyTransformButton != null) {
+            applyTransformButton.setStyle(
+                    applyTransformButton.isHover() ? ThemeSettings.buttonHoverStyle : ThemeSettings.buttonStyle
+            );
+        }
     }
 
     private void applyStyle(Node root, String selector, String style) {
@@ -302,8 +350,61 @@ public class GuiController {
         }
     }
 
+    private void installHoverForButton(ButtonBase button) {
+        if (button == null) return;
+
+        button.setOnMouseEntered(e -> {
+            if (button == activeButton) {
+                button.setStyle(ThemeSettings.activeButtonStyle);
+            } else {
+                button.setStyle(ThemeSettings.buttonHoverStyle);
+            }
+        });
+
+        button.setOnMouseExited(e -> {
+            if (button == activeButton) {
+                button.setStyle(ThemeSettings.activeButtonStyle);
+            } else {
+                button.setStyle(ThemeSettings.buttonStyle);
+            }
+        });
+    }
+
+    private void installHoverForAllButtons(Parent root) {
+        if (root == null) return;
+
+        Set<Node> nodes = root.lookupAll(".button");
+        for (Node n : nodes) {
+            if (n instanceof ButtonBase b) {
+                installHoverForButton(b);
+
+                if (b == activeButton) {
+                    b.setStyle(ThemeSettings.activeButtonStyle);
+                } else {
+                    b.setStyle(b.isHover() ? ThemeSettings.buttonHoverStyle : ThemeSettings.buttonStyle);
+                }
+            }
+        }
+    }
+
+
     @FXML
     private void onApplyTransformButtonClick(){
+        //Вариант если через кнопку применить
+        /*if(SceneManager.activeModel != null) {
+            SceneManager.activeModel.currentTransform.positionX = parseFloat(positionXTextField);
+            SceneManager.activeModel.currentTransform.positionY = parseFloat(positionYTextField);
+            SceneManager.activeModel.currentTransform.positionZ = parseFloat(positionZTextField);
+            SceneManager.activeModel.currentTransform.rotationX = parseFloat(rotationXTextField);
+            SceneManager.activeModel.currentTransform.rotationY = parseFloat(rotationYTextField);
+            SceneManager.activeModel.currentTransform.rotationZ = parseFloat(rotationZTextField);
+            SceneManager.activeModel.currentTransform.scaleX = parseFloat(scaleXTextField);
+            SceneManager.activeModel.currentTransform.scaleY = parseFloat(scaleYTextField);
+            SceneManager.activeModel.currentTransform.scaleZ = parseFloat(scaleZTextField);
+        } else{
+            showWarning("Не выбрана конкретная модель");
+        }*/
+
         //Для теста ручного
         /*String text = SceneManager.activeModel.positionXValue + "\n" +
                 SceneManager.activeModel.positionYValue + "\n" +

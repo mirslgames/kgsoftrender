@@ -17,6 +17,7 @@ public class ThemeSettings {
 
     public static String buttonStyle;
     public static String activeButtonStyle;
+    public static String buttonHoverStyle;
 
     public static String titledPaneTitleStyle;
     public static String titledPaneTitleTextStyle;
@@ -69,6 +70,14 @@ public class ThemeSettings {
                         "-fx-border-color: #CBD5E1;" +
                         "-fx-border-radius: 4;" +
                         "-fx-background-radius: 4;";
+
+        buttonHoverStyle =
+                "-fx-background-color: #E2E8F0;" +
+                        "-fx-text-fill: #111827;" +
+                        "-fx-border-color: #94A3B8;" +
+                        "-fx-border-radius: 4;" +
+                        "-fx-background-radius: 4;";
+
         activeButtonStyle =
                 "-fx-background-color: #BFDBFE;" +
                         "-fx-text-fill: #0F172A;" +
@@ -135,6 +144,14 @@ public class ThemeSettings {
                         "-fx-border-color: #334155;" +
                         "-fx-border-radius: 4;" +
                         "-fx-background-radius: 4;";
+
+        buttonHoverStyle =
+                "-fx-background-color: #2B3B4F;" +
+                        "-fx-text-fill: #E5E7EB;" +
+                        "-fx-border-color: #475569;" +
+                        "-fx-border-radius: 4;" +
+                        "-fx-background-radius: 4;";
+
         activeButtonStyle =
                 "-fx-background-color: #3B82F6;" +
                         "-fx-text-fill: white;" +

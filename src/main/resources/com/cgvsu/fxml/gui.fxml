@@ -214,7 +214,7 @@
                                                                            <TextField fx:id="scaleZTextField" layoutX="148.0" layoutY="10.0" prefHeight="25.0" prefWidth="41.0" />
                                                                         </children>
                                                                      </HBox>
-                                                                     <Button fx:id="applyTransformButton" mnemonicParsing="false" onAction="#onApplyTransformButtonClick" text="Применить" />
+                                                                     <Button fx:id="applyTransformButton" mnemonicParsing="false" onAction="#onApplyTransformButtonClick" text="Применить" visible="false" />
                                                                   </children>
                                                                </VBox>
                                                             </children>

@@ -14,8 +14,6 @@ import java.util.Scanner;
 
 public class ObjReader {
 
-	//todo: Доделать ридер, а также тестами покрыть
-
 	private static final String OBJ_VERTEX_TOKEN = "v";
 	private static final String OBJ_TEXTURE_TOKEN = "vt";
 	private static final String OBJ_NORMAL_TOKEN = "vn";
