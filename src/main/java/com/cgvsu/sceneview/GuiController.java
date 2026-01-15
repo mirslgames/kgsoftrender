@@ -18,12 +18,15 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.function.UnaryOperator;
 
 import java.nio.file.Files;
@@ -97,6 +100,8 @@ public class GuiController {
     private Label lightIntensityLabel;
     @FXML
     private Slider lightIntensitySlider;
+    @FXML
+    private TextArea logTextArea;
 
     private Timeline timeline;
 
@@ -227,57 +232,77 @@ public class GuiController {
     @FXML
     private void onLightThemeMenuItemClick() {
         ThemeSettings.setLightTheme();
+        logTextArea.setStyle(String.format("-fx-text-fill: black;"));
+        //todo: Доделать стили и добавить туда TextArea
         applyTheme();
     }
 
     @FXML
     private void onDarkThemeMenuItemClick() {
         ThemeSettings.setDarkTheme();
+        logTextArea.setStyle(String.format("-fx-text-fill: white;"));
         applyTheme();
     }
 
     private void applyTheme() {
-        Scene scene = sceneCanvas.getScene();
-        if (scene == null) return;
+        try {
+            Scene scene = sceneCanvas.getScene();
+            if (scene == null) return;
 
-        Parent root = scene.getRoot();
-        root.setStyle(ThemeSettings.rootStyle);
+            Parent root = scene.getRoot();
+            root.setStyle(ThemeSettings.rootStyle);
 
-        applyStyle(root, ".split-pane", ThemeSettings.splitPaneStyle);
-        applyStyle(root, ".split-pane-divider", ThemeSettings.splitDividerStyle);
+            applyStyle(root, ".split-pane", ThemeSettings.splitPaneStyle);
+            applyStyle(root, ".split-pane-divider", ThemeSettings.splitDividerStyle);
 
-        applyStyle(root, ".anchor-pane", ThemeSettings.paneStyle);
-        applyStyle(root, ".vbox", ThemeSettings.paneStyle);
-        applyStyle(root, ".hbox", ThemeSettings.paneStyle);
+            applyStyle(root, ".anchor-pane", ThemeSettings.paneStyle);
+            applyStyle(root, ".vbox", ThemeSettings.paneStyle);
+            applyStyle(root, ".hbox", ThemeSettings.paneStyle);
 
-        applyStyle(root, ".menu-bar", ThemeSettings.menuBarStyle);
+            applyStyle(root, ".menu-bar", ThemeSettings.menuBarStyle);
 
-        applyStyle(root, ".label", ThemeSettings.labelStyle);
-        applyStyle(root, ".check-box", ThemeSettings.checkBoxStyle);
-        applyStyle(root, ".text-field", ThemeSettings.textFieldStyle);
+            applyStyle(root, ".label", ThemeSettings.labelStyle);
+            applyStyle(root, ".check-box", ThemeSettings.checkBoxStyle);
+            applyStyle(root, ".text-field", ThemeSettings.textFieldStyle);
 
-        applyStyle(root, ".button", ThemeSettings.buttonStyle);
-        if (activeButton != null) {
-            activeButton.setStyle(ThemeSettings.activeButtonStyle);
+            applyStyle(root, ".button", ThemeSettings.buttonStyle);
+            if (activeButton != null) {
+                activeButton.setStyle(ThemeSettings.activeButtonStyle);
+            }
+
+            applyStyle(root, ".titled-pane > .title", ThemeSettings.titledPaneTitleStyle);
+            applyStyle(root, ".titled-pane > .title > .text", ThemeSettings.titledPaneTitleTextStyle);
+            applyStyle(root, ".titled-pane > *.content", ThemeSettings.titledPaneContentStyle);
+
+            applyStyle(root, ".scroll-pane", ThemeSettings.scrollPaneStyle);
+            applyStyle(root, ".scroll-pane .viewport", ThemeSettings.scrollPaneViewportStyle);
+
+            applyStyle(root, ".scroll-bar", ThemeSettings.scrollBarStyle);
+            applyStyle(root, ".scroll-bar .thumb", ThemeSettings.scrollBarThumbStyle);
+
+            Platform.runLater(() -> applyStyle(root, ".menu-bar .label", ThemeSettings.menuBarLabelStyle));
+
+            if (applyTransformButton != null) {
+                applyTransformButton.setStyle(
+                        applyTransformButton.isHover() ? ThemeSettings.buttonHoverStyle : ThemeSettings.buttonStyle
+                );
+            }
         }
-
-        applyStyle(root, ".titled-pane > .title", ThemeSettings.titledPaneTitleStyle);
-        applyStyle(root, ".titled-pane > .title > .text", ThemeSettings.titledPaneTitleTextStyle);
-        applyStyle(root, ".titled-pane > *.content", ThemeSettings.titledPaneContentStyle);
-
-        applyStyle(root, ".scroll-pane", ThemeSettings.scrollPaneStyle);
-        applyStyle(root, ".scroll-pane .viewport", ThemeSettings.scrollPaneViewportStyle);
-
-        applyStyle(root, ".scroll-bar", ThemeSettings.scrollBarStyle);
-        applyStyle(root, ".scroll-bar .thumb", ThemeSettings.scrollBarThumbStyle);
-
-        Platform.runLater(() -> applyStyle(root, ".menu-bar .label", ThemeSettings.menuBarLabelStyle));
-
-        if (applyTransformButton != null) {
-            applyTransformButton.setStyle(
-                    applyTransformButton.isHover() ? ThemeSettings.buttonHoverStyle : ThemeSettings.buttonStyle
-            );
+        catch (Exception exception){
+            showError("Ошибка при применении темы");
         }
+    }
+
+    private void appendLog(String level, String text) {
+        String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+        String line = String.format("[%s] [%s] %s%n", time, level, text);
+
+        Platform.runLater(() -> {
+            logTextArea.appendText(line);
+
+
+            logTextArea.positionCaret(logTextArea.getText().length());
+        });
     }
 
     private void applyStyle(Node root, String selector, String style) {
@@ -422,45 +447,63 @@ public class GuiController {
     @FXML
     private void onSaveModelMenuItemClick() {
 
-        if(SceneManager.activeModel == null){
-            showWarning("Выберите конкретную модель");
-        } else {
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Model (*.obj)", "*.obj"));
-            fileChooser.setTitle("Save Model");
+        try {
+            if (SceneManager.activeModel == null) {
+                showWarning("Выберите конкретную модель");
+            } else {
+                FileChooser fileChooser = new FileChooser();
+                fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Model (*.obj)", "*.obj"));
+                fileChooser.setTitle("Save Model");
 
-            File file = fileChooser.showSaveDialog((Stage) sceneCanvas.getScene().getWindow());
-            Path fileName = Path.of(file.getAbsolutePath());
-            ObjWriter.writeModelToFile(SceneManager.activeModel, fileName.toString());
+                File file = fileChooser.showSaveDialog((Stage) sceneCanvas.getScene().getWindow());
+                Path fileName = Path.of(file.getAbsolutePath());
+                ObjWriter.writeModelToFile(SceneManager.activeModel, fileName.toString());
+                logInfo(String.format("Модель %s была успешно сохранена", SceneManager.activeModel.modelName));
+            }
+        }
+        catch(Exception exception){
+            showError(exception.getMessage());
         }
     }
 
     @FXML
     private void onOpenModelMenuItemClick() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Model (*.obj)", "*.obj"));
-        fileChooser.setTitle("Load Model");
-
-        File file = fileChooser.showOpenDialog((Stage) sceneCanvas.getScene().getWindow());
-        if (file == null) {
-            return;
-        }
-
-        Path fileName = Path.of(file.getAbsolutePath());
-
         try {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Model (*.obj)", "*.obj"));
+            fileChooser.setTitle("Load Model");
+
+            File file = fileChooser.showOpenDialog((Stage) sceneCanvas.getScene().getWindow());
+            if (file == null) {
+                return;
+            }
+
+            Path fileName = Path.of(file.getAbsolutePath());
+
+
             String fileContent = Files.readString(fileName);
             Model mesh = ObjReader.readModelFromFile(fileContent, fileName.getFileName().toString(), SceneManager.historyModelName);
             validateAndCorrectDuplicateModelName(mesh);
 
             //Добавление кнопки
             addModelButton(mesh);
-
+            logInfo(String.format("Модель %s была успешно загружена", mesh.modelName));
         } catch (Exception exception) {
             showError(exception.getMessage());
         }
     }
 
+    public void logInfo(String text) {
+        appendLog("INFO", text);
+    }
+
+    public void logWarning(String text) {
+        appendLog("WARN", text);
+    }
+
+    public void logError(String text) {
+        appendLog("ERROR", text);
+    }
 
     protected static void validateAndCorrectDuplicateModelName(Model targetModel){
         try {

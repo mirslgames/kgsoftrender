@@ -100,7 +100,7 @@ public class ObjWriter {
 
 
         } catch (Exception e) {
-            throw new RuntimeException("Failed to write OBJ to " + filePath, e);
+            throw new RuntimeException("Ошибка записи в OBJ файл " + filePath, e);
         }
         return true;
     }
