@@ -11,4 +11,12 @@ public class Vertex {
     public boolean equals(Vertex vertex) {
         return vertex.position.equals(position);
     }
+
+    public Vertex(float x, float y, float z){
+        position = new Vector3f(x, y, z);
+    }
+
+    public Vertex(){
+        position = new Vector3f(0,0,0);
+    }
 }

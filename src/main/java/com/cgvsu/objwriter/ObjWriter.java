@@ -21,8 +21,6 @@ public class ObjWriter {
         //Следует проверять что количество текстурных координат совпадает с вершинами
         //Если у какой то отдельной вершины нет vt но в целом у модели есть текстура то мейби стоит записать туда (0,0) чтобы не поехала индексация
 
-        //Также возможно стоит вынести запись вершин, нормалей и vt в отдельный метод для тестов
-
         String fileName = model.modelName + ".obj";
 
         boolean hasTexCoords = false;
@@ -35,14 +33,13 @@ public class ObjWriter {
         }
 
         if(!hasNormals){
-            //Перерассчитываем нормали
-            //Мы при чтении не учитываем нормали из файла но чтобы записанная модель, могла использоваться в других программах корректно стоит нормали записывать тоже по умолчанию
+            //Мы при чтении не учитываем нормали из файла, но чтобы записанная модель, могла использоваться в других программах корректно стоит нормали перерассчитывать тоже по умолчанию
             MyVertexNormalCalc calc = new MyVertexNormalCalc();
             calc.calculateVertexNormals(model);
 
         }
 
-        //Поскольку мы добавлять текстурные координаты не можем в программе, то если модель не имела текстуру при загрузке, то и при сохранении ей не нужны текстурные корды
+        //Поскольку текстурные координаты мы не можем добавлять в программе, то если модель не имела текстуру при загрузке, то и при сохранении ей не нужны текстурные корды
         hasTexCoords = hasTexCoords && model.hasTexture;
 
         Path path = Paths.get(filePath);
@@ -84,12 +81,12 @@ public class ObjWriter {
                 for (int i = start; i < end; i++) {
                     int vertexIndex = model.polygons.get(i);
 
-                    // OBJ индексы начинаются с 1
+                    //OBJ индексы начинаются с 1
                     int objIndex = vertexIndex + 1;
 
                     faceLine.append(" ");
 
-                    // У нас формат может быть либо v/vt/vn либо v//vn
+                    //У нас формат может быть либо v/vt/vn либо v//vn
                     if (hasTexCoords) {
                         faceLine.append(objIndex).append("/").append(objIndex).append("/").append(objIndex);
                     } else{
@@ -103,7 +100,7 @@ public class ObjWriter {
 
 
         } catch (Exception e) {
-            throw new RuntimeException("Failed to write OBJ to " + filePath, e);
+            throw new RuntimeException("Ошибка записи в OBJ файл " + filePath, e);
         }
         return true;
     }
