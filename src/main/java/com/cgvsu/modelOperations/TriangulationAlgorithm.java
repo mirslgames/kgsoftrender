@@ -6,16 +6,29 @@ import java.util.Arrays;
 import java.util.List;
 
 public class TriangulationAlgorithm {
-    public static List<List<Integer>> triangulate(List<Integer> polygon){
-        List<Integer> copy = new ArrayList<>(polygon);
-        int n = copy.size();
+    public static List<List<Integer>> triangulate(List<Integer> polygon) {
+        List<List<Integer>> triangles = new ArrayList<>();
+        int n = polygon.size();
 
-        // вообще не нужно делать "чётность". Но если хочешь оставить логику:
-        if (n % 2 == 1) {
-            copy.add(copy.get(n - 1)); // дублируем последний индекс вершины
+        System.out.println("  triangulate called with polygon of size " + n + ": " + polygon);
+
+        // Простая триангуляция веером от первой вершины
+        if (n >= 3) {
+            // Первый треугольник
+            triangles.add(Arrays.asList(polygon.get(0), polygon.get(1), polygon.get(2)));
+
+            // Остальные треугольники
+            for (int i = 3; i < n; i++) {
+                triangles.add(Arrays.asList(polygon.get(0), polygon.get(i-1), polygon.get(i)));
+            }
+        } else {
+            System.err.println("  WARNING: Polygon with less than 3 vertices!");
         }
-        return triangulateEven(copy);
+
+        System.out.println("  Returning " + triangles.size() + " triangles");
+        return triangles;
     }
+
     public static List<List<Integer>> triangulateEven(List<Integer> polygon) {
         List<List<Integer>> triangles = new ArrayList<>();
 

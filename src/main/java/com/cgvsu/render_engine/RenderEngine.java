@@ -95,9 +95,9 @@ public class RenderEngine {
             final int width,
             final int height)
     {
-        Matrix4f modelMatrix = rotateScaleTranslate(mesh.scaleXValue, mesh.scaleYValue, mesh.scaleZValue,
-                mesh.rotationXValue, mesh.rotationYValue, mesh.rotationZValue,
-                mesh.positionXValue, mesh.positionYValue, mesh.positionZValue);
+        Matrix4f modelMatrix = rotateScaleTranslate(mesh.currentTransform.scaleX, mesh.currentTransform.scaleY, mesh.currentTransform.scaleZ,
+                mesh.currentTransform.rotationX, mesh.currentTransform.rotationY, mesh.currentTransform.rotationZ,
+                mesh.currentTransform.positionX, mesh.currentTransform.positionY, mesh.currentTransform.positionZ);
         Matrix4f viewMatrix = camera.getViewMatrix();
         Matrix4f projectionMatrix = camera.getProjectionMatrix();
 
@@ -222,11 +222,10 @@ public class RenderEngine {
             final Camera camera,
             final Model mesh,
             final int width,
-            final int height)
-    {
-        Matrix4f modelMatrix = rotateScaleTranslate(mesh.scaleXValue, mesh.scaleYValue, mesh.scaleZValue,
-                mesh.rotationXValue, mesh.rotationYValue, mesh.rotationZValue,
-                mesh.positionXValue, mesh.positionYValue, mesh.positionZValue);
+            final int height) {
+        Matrix4f modelMatrix = rotateScaleTranslate(mesh.currentTransform.scaleX, mesh.currentTransform.scaleY, mesh.currentTransform.scaleZ,
+                mesh.currentTransform.rotationX, mesh.currentTransform.rotationY, mesh.currentTransform.rotationZ,
+                mesh.currentTransform.positionX, mesh.currentTransform.positionY, mesh.currentTransform.positionZ);
         Matrix4f viewMatrix = camera.getViewMatrix();
         Matrix4f projectionMatrix = camera.getProjectionMatrix();
 
@@ -242,10 +241,6 @@ public class RenderEngine {
             final int endIndex = (polygonInd + 1 < nPolygons)
                     ? mesh.polygonsBoundaries.get(polygonInd + 1)
                     : mesh.polygons.size();
-            if (polygonInd < 5) {
-                System.out.println("poly " + polygonInd + " count=" + (endIndex - startIndex)
-                        + " start=" + startIndex + " end=" + endIndex);
-            }
             // Собираем вершины полигона
             ArrayList<Point2f> projectedPoints = new ArrayList<>();
             ArrayList<Float> depths = new ArrayList<>();
@@ -320,8 +315,7 @@ public class RenderEngine {
                     };
                     Rasterization.rasterizeTriangle(p1, p2, p3, z1, z2, z3, v1, v2, v3, callback);
                 }
-            }
-            else if (SceneManager.drawMesh){
+            } else if (SceneManager.drawMesh) {
                 // Режим wireframe: рисуем линии между собранными вершинами
                 graphicsContext.setStroke(Color.web(ThemeSettings.wireframeColor));
                 graphicsContext.setLineWidth(ThemeSettings.wireframeWidth);

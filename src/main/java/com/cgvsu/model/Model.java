@@ -83,6 +83,7 @@ public class Model {
         }
         throw new RuntimeException("Прочитанные данные не корректны");
     }
+
     public void triangulate() {
         ArrayList<Integer> newPolygons = new ArrayList<>();
         ArrayList<Integer> newBoundaries = new ArrayList<>();
@@ -92,10 +93,9 @@ public class Model {
             int end = (i + 1 < polygonsBoundaries.size()) ? polygonsBoundaries.get(i + 1) : polygons.size();
             List<Integer> polygon = new ArrayList<>(polygons.subList(start, end));
 
-            System.out.println("Original polygon " + i + " indices: " + polygon);
 
             List<List<Integer>> triangles = TriangulationAlgorithm.triangulate(polygon);
-            System.out.println("Triangles for polygon " + i + ": " + triangles);
+
 
             for (List<Integer> tri : triangles) {
                 newBoundaries.add(newPolygons.size());
@@ -105,10 +105,6 @@ public class Model {
 
         polygons = newPolygons;
         polygonsBoundaries = newBoundaries;
-
-        System.out.println("After triangulation: total triangles = " + newBoundaries.size());
-        System.out.println("Indices: " + newPolygons);
     }
-
 }
 
