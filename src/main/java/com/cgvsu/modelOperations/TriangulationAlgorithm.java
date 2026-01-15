@@ -6,16 +6,15 @@ import java.util.Arrays;
 import java.util.List;
 
 public class TriangulationAlgorithm {
-    public static List<List<Integer>> triangulate( List<Integer> polygon){
-        int n = polygon.size();
+    public static List<List<Integer>> triangulate(List<Integer> polygon){
+        List<Integer> copy = new ArrayList<>(polygon);
+        int n = copy.size();
 
+        // вообще не нужно делать "чётность". Но если хочешь оставить логику:
         if (n % 2 == 1) {
-            // Для нечетного - дублируем последнюю вершину
-            polygon.add(n - 1);
-            return triangulateEven(polygon);
-        } else {
-            return triangulateEven( polygon);
+            copy.add(copy.get(n - 1)); // дублируем последний индекс вершины
         }
+        return triangulateEven(copy);
     }
     public static List<List<Integer>> triangulateEven(List<Integer> polygon) {
         List<List<Integer>> triangles = new ArrayList<>();
@@ -25,14 +24,11 @@ public class TriangulationAlgorithm {
         for (int step = 1; step < n; step *= 2) {
             for (int i = 0; i < n-2*step+1; i += step * 2) {
                 if (i + step < n) {
-                    int i1 = i;
-                    int i2 = i + step;
-                    int i3 = (i + 2 * step) % n;
+                    int i1 = polygon.get(i);        // Берем индекс вершины из списка полигона
+                    int i2 = polygon.get(i + step);
+                    int i3 = polygon.get((i + 2 * step) % n);
 
-                    if (!polygon.get(i1).equals(polygon.get(i2)) &&
-                            !polygon.get(i2).equals(polygon.get(i3)) &&
-                            !polygon.get(i1).equals(polygon.get(i3))) {
-
+                    if (i1 != i2 && i2 != i3 && i1 != i3) {
                         triangles.add(Arrays.asList(i1, i2, i3));
                     }
                 }

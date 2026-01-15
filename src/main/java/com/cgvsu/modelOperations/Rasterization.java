@@ -201,7 +201,7 @@ public class Rasterization {
     }
 
     /**
-     * Метод интерполирует нормаль с учётом глубины, корректно отображает её на 3d пространство
+     * Метод интерполирует нормаль текущей вершины с учётом глубины, корректно отображает её на 3d пространство
      * @param v1 вершина полигона
      * @param z1 глубина этой вершины
      * @param barycentric барицентрики для вершин полигона
@@ -252,6 +252,43 @@ public class Rasterization {
         float nz = nz_over_z / one_over_z;
 
         return new Vector3f(nx, ny, nz).normalize();
+    }
+
+    /**
+     *  Метод интерполирует координаты всех вершин с учётом перспективы, чтобы получить мировую позицию текущей вершины в отрисовке
+     * @param p1 координаты первой вершины треугольнгика
+     * @param p2 координаты второй вершины треугольнгика
+     * @param p3 координаты третьей вершины треугольнгика
+     * @param z1 глубина первой вершины треугольнгика
+     * @param z2 глубина второй вершины треугольнгика
+     * @param z3 глубина третьей вершины треугольнгика
+     * @param barycentric барицентрические координаты для тройки вершин
+     * @return интерполированную вершину
+     */
+    public static Vector3f interpolatePositionWithPerspective(
+            Vector3f p1, Vector3f p2, Vector3f p3,
+            float z1, float z2, float z3,
+            float[] barycentric) {
+
+        float alpha = barycentric[0];
+        float beta  = barycentric[1];
+        float gamma = barycentric[2];
+
+        float iz1 = 1.0f / z1;
+        float iz2 = 1.0f / z2;
+        float iz3 = 1.0f / z3;
+
+        Vector3f p1_oz = p1.multiply(iz1);
+        Vector3f p2_oz = p2.multiply(iz2);
+        Vector3f p3_oz = p3.multiply(iz3);
+
+        Vector3f p_oz = p1_oz.multiply(alpha)
+                .add(p2_oz.multiply(beta))
+                .add(p3_oz.multiply(gamma));
+
+        float iz = alpha * iz1 + beta * iz2 + gamma * iz3;
+
+        return p_oz.multiply(1.0f / iz);
     }
 
     /**
@@ -319,10 +356,11 @@ public class Rasterization {
                     
                     // Интерполируем нормаль
                     Vector3f normal = interpolateNormalWithPerspective(vertex1, vertex2, vertex3, z1, z2, z3, barycentric);
-                    
+                    Vector3f worldPosition = interpolatePositionWithPerspective(vertex1.position, vertex2.position, vertex3.position,
+                            z1, z2, z3, barycentric);
                     // Вызываем callback
                     // Используется для отрисовки
-                    pixelCallback.onPixel(x, y, z, barycentric, texCoord, normal);
+                    pixelCallback.onPixel(x, y, z, barycentric, texCoord, normal, worldPosition);
                 }
             }
         }
@@ -340,9 +378,11 @@ public class Rasterization {
          * @param barycentric барицентрические координаты [alpha, beta, gamma]
          * @param texCoord интерполированные текстурные координаты (может быть null)
          * @param normal интерполированная нормаль (может быть null)
+         * @param worldPosition позиция текущей вершины в мировой системе координат
          */
-        void onPixel(int x, int y, float z, float[] barycentric, Vector2f texCoord, Vector3f normal);
+        void onPixel(int x, int y, float z, float[] barycentric, Vector2f texCoord, Vector3f normal, Vector3f worldPosition);
     }
 }
+
 
 

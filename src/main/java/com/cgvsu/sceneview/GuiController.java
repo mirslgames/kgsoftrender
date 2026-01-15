@@ -115,8 +115,20 @@ public class GuiController {
         sceneCanvas.heightProperty().bind(canvasParentAnchorPane.heightProperty());
         deleteActiveEntityButton.setVisible(false);
         transformationTitledPane.setVisible(false);
+        drawMeshCheckBox.setSelected(SceneManager.drawMesh);
+        useTextureCheckBox.setSelected(SceneManager.useTexture);
+        useLightCheckBox.setSelected(SceneManager.useLight);
+        drawMeshCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            SceneManager.drawMesh = newVal;
+        });
 
+        useTextureCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            SceneManager.useTexture = newVal;
+        });
 
+        useLightCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            SceneManager.useLight = newVal;
+        });
         timeline = new Timeline();
         timeline.setCycleCount(Animation.INDEFINITE);
 
@@ -135,8 +147,13 @@ public class GuiController {
         SceneManager.activeCamera.setAspectRatio((float) (width / height));
 
 
+<<<<<<< Updated upstream
         for(Model model : SceneManager.models){
             RenderEngine.render(sceneCanvas.getGraphicsContext2D(), SceneManager.activeCamera, model, (int) width, (int) height);
+=======
+        for (Model model : SceneManager.models) {
+            RenderEngine.renderWithRenderingMods(sceneCanvas.getGraphicsContext2D(), SceneManager.activeCamera, model, (int) width, (int) height);
+>>>>>>> Stashed changes
         }
         //ВАРИАНТ рендерить только активную модель
         /*if (SceneManager.activeModel != null) {
@@ -229,6 +246,7 @@ public class GuiController {
         try {
             String fileContent = Files.readString(fileName);
             Model mesh = ObjReader.read(fileContent, fileName.getFileName().toString(), SceneManager.historyModelName);
+<<<<<<< Updated upstream
             if(SceneManager.historyModelName.containsKey(mesh.modelName)){
                 int c = SceneManager.historyModelName.get(mesh.modelName);
                 SceneManager.historyModelName.put(mesh.modelName, ++c);
@@ -236,6 +254,10 @@ public class GuiController {
                 SceneManager.historyModelName.put(mesh.modelName, 0);
             }
 
+=======
+            validateAndCorrectDuplicateModelName(mesh);
+            mesh.triangulate();
+>>>>>>> Stashed changes
             //Добавление кнопки
             addModel(mesh);
             SceneManager.activeModel = mesh;
@@ -317,7 +339,6 @@ public class GuiController {
         btn.setOnAction(this::onModelButtonClick);
         modelsBox.getChildren().add(btn);
     }
-
 
     @FXML
     public void handleCameraForward(ActionEvent actionEvent) {

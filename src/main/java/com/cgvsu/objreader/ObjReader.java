@@ -107,17 +107,22 @@ public class ObjReader {
 
 			int polygonIndexCount = 0; // Счетчик для индексов полигонов относительно массива индексов на вершины
 			//Теперь прокинуть полигоны в индексы на вершины только
-			for (ArrayList<Integer>[] polygon : readPolygonsIndices){
-				modelPolygonsIndices.add(polygonIndexCount);
-				for (Integer vertexIndex : polygon[0]){
-					modelVertexIndices.add(vertexIndex);
-					polygonIndexCount++;
-				}
+			for (ArrayList<Integer>[] polygon : readPolygonsIndices) {
+				modelPolygonsIndices.add(modelVertexIndices.size()); // старт текущего полигона
+				modelVertexIndices.addAll(polygon[0]);               // добавляем все вершины face (3/4/…)
 			}
 
 			result.vertices = modelVertices;
 			result.polygons = modelVertexIndices;
 			result.polygonsBoundaries = modelPolygonsIndices;
+<<<<<<< Updated upstream
+=======
+
+			//мы всегда игнорируем считанные нормали вершин и сами перерасчитываем их
+			MyVertexNormalCalc calc = new MyVertexNormalCalc();
+			calc.calculateVertexNormals(result);
+
+>>>>>>> Stashed changes
 		}
 
 		//Сделать обработку ошибки при загрузке модели
