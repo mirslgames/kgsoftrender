@@ -57,7 +57,9 @@ public class Camera {
     Matrix4f getProjectionMatrix() {
         return GraphicConveyor.perspective(fov, aspectRatio, nearPlane, farPlane);
     }
-
+    public Vector3f getRayToPoint(Vector3f worldPoint) {
+        return worldPoint.subbed(position).normalize();
+    }
     private Vector3f position;
     private Vector3f target;
     private float fov;

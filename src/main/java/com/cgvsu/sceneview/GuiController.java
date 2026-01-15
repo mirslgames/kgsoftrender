@@ -135,8 +135,20 @@ public class GuiController {
         sceneCanvas.heightProperty().bind(canvasParentAnchorPane.heightProperty());
         deleteActiveEntityButton.setVisible(false);
         transformationTitledPane.setVisible(false);
+        drawMeshCheckBox.setSelected(SceneManager.drawMesh);
+        useTextureCheckBox.setSelected(SceneManager.useTexture);
+        useLightCheckBox.setSelected(SceneManager.useLight);
+        drawMeshCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            SceneManager.drawMesh = newVal;
+        });
 
+        useTextureCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            SceneManager.useTexture = newVal;
+        });
 
+        useLightCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            SceneManager.useLight = newVal;
+        });
         timeline = new Timeline();
         timeline.setCycleCount(Animation.INDEFINITE);
 
@@ -159,7 +171,8 @@ public class GuiController {
 
 
         for (Model model : SceneManager.models) {
-            RenderEngine.render(sceneCanvas.getGraphicsContext2D(), SceneManager.activeCamera, model, (int) width, (int) height);
+            model.triangulate();
+            RenderEngine.renderWithRenderingMods2(sceneCanvas.getGraphicsContext2D(), SceneManager.activeCamera, model, (int) width, (int) height);
         }
         //ВАРИАНТ рендерить только активную модель
         /*if (SceneManager.activeModel != null) {
@@ -475,7 +488,6 @@ public class GuiController {
         modelsBox.getChildren().add(btn);
 
     }
-
 
     @FXML
     public void handleCameraForward(ActionEvent actionEvent) {
