@@ -15,7 +15,7 @@ public class Model {
     public ArrayList<Integer> polygonsBoundaries = new ArrayList<>(); //Номер индекса с которого идут вершины для данного полигона (старт)
     public boolean hasTexture;
     public Image texture;
-    //todo: Добавить поле для самой текстуры + дефолтная текстура + подумать над режимами отрисовки
+    //todo: дефолтная текстура + подумать над режимами отрисовки
 
     //Положение модельки в сцене
     public Transform currentTransform;

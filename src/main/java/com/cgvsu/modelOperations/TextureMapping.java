@@ -17,7 +17,7 @@ public class TextureMapping {
 
     /**
      * Получает цвет пикселя из текстуры по текстурным координатам.
-     * 
+     *
      * @param texture текстура (Image из JavaFX)
      * @param texCoord текстурные координаты (u, v) в диапазоне [0, 1]
      * @return цвет пикселя из текстуры, или белый цвет если текстура null
@@ -56,7 +56,7 @@ public class TextureMapping {
     /**
      * Получает цвет пикселя из текстуры с учётом Z-буфера.
      * Пиксель будет отрисован только если он проходит проверку Z-буфера.
-     * 
+     *
      * @param texture текстура
      * @param texCoord текстурные координаты
      * @param x, y координаты пикселя на экране
@@ -65,12 +65,12 @@ public class TextureMapping {
      * @return цвет пикселя из текстуры, или null если пиксель не должен быть отрисован (закрыт другим)
      */
     public static Color getTextureColorWithZBuffer(
-            Image texture, 
-            Vector2f texCoord, 
-            int x, int y, 
-            float z, 
+            Image texture,
+            Vector2f texCoord,
+            int x, int y,
+            float z,
             ZBuffer zBuffer) {
-        
+
         // Проверяем Z-буфер
         if (zBuffer == null || !zBuffer.testAndSet(x, y, z)) {
             return null; // Пиксель закрыт другим, не рисуем
@@ -90,17 +90,17 @@ public class TextureMapping {
      */
     public static Color getModifiedColorWithLighting(Vector3f ray, Vector3f normal, Color baseColor,
                                                      float lightIntensity){
-            float l = -1 * ray.dot(normal);
-            if (l < 0){
-                l = 0;
-            }
-            double new_r = baseColor.getRed() * (1-lightIntensity) + baseColor.getRed() * l * lightIntensity;
-            double new_g = baseColor.getGreen() * (1-lightIntensity) + baseColor.getGreen() * l * lightIntensity;
-            double new_b = baseColor.getBlue() * (1-lightIntensity) + baseColor.getBlue() * l * lightIntensity;
-            return new Color(new_r, new_g, new_b, baseColor.getOpacity());
+
+        float l = -1 * ray.dot(normal);
+        if (l < 0){
+            l = 0;
+        }
+        double new_r = baseColor.getRed() * (1-lightIntensity) + baseColor.getRed() * l * lightIntensity;
+        double new_g = baseColor.getGreen() * (1-lightIntensity) + baseColor.getGreen() * l * lightIntensity;
+        double new_b = baseColor.getBlue() * (1-lightIntensity) + baseColor.getBlue() * l * lightIntensity;
+        return new Color(new_r, new_g, new_b, baseColor.getOpacity());
     }
 
 }
-
 
 

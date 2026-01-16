@@ -6,38 +6,23 @@ import java.util.Arrays;
 import java.util.List;
 
 public class TriangulationAlgorithm {
-    public static List<List<Integer>> triangulate(List<Integer> polygon) {
-        List<List<Integer>> triangles = new ArrayList<>();
-        int n = polygon.size();
 
-        System.out.println("  triangulate called with polygon of size " + n + ": " + polygon);
-
-        // Простая триангуляция веером от первой вершины
-        if (n >= 3) {
-            // Первый треугольник
-            triangles.add(Arrays.asList(polygon.get(0), polygon.get(1), polygon.get(2)));
-
-            // Остальные треугольники
-            for (int i = 3; i < n; i++) {
-                triangles.add(Arrays.asList(polygon.get(0), polygon.get(i-1), polygon.get(i)));
-            }
-        } else {
-            System.err.println("  WARNING: Polygon with less than 3 vertices!");
+    public static List<List<Integer>> triangulate(List<Integer> polygon){
+        List<Integer> copy = new ArrayList<>(polygon);
+        int n = copy.size();
+        if (n % 2 == 1) {
+            copy.add(copy.get(n - 1)); // дублируем последний индекс вершины
         }
-
-        System.out.println("  Returning " + triangles.size() + " triangles");
-        return triangles;
+        return triangulateEven(copy);
     }
-
     public static List<List<Integer>> triangulateEven(List<Integer> polygon) {
         List<List<Integer>> triangles = new ArrayList<>();
 
         int n = polygon.size();
-
         for (int step = 1; step < n; step *= 2) {
             for (int i = 0; i < n-2*step+1; i += step * 2) {
                 if (i + step < n) {
-                    int i1 = polygon.get(i);        // Берем индекс вершины из списка полигона
+                    int i1 = polygon.get(i); // Берем индекс вершины из списка полигона
                     int i2 = polygon.get(i + step);
                     int i3 = polygon.get((i + 2 * step) % n);
 

@@ -88,7 +88,7 @@ public class RenderEngine {
                         resultPoints.get(0).getY());
         }
     }
-    public static void renderWithRenderingMods(
+    public static void renderWithRenderingMods1(
             final GraphicsContext graphicsContext,
             final Camera camera,
             final Model mesh,
@@ -217,12 +217,14 @@ public class RenderEngine {
             }
         }
     }
-    public static void renderWithRenderingMods2(
+
+    public static void renderWithRenderingMods(
             final GraphicsContext graphicsContext,
             final Camera camera,
             final Model mesh,
             final int width,
-            final int height) {
+            final int height)
+    {
         Matrix4f modelMatrix = rotateScaleTranslate(mesh.currentTransform.scaleX, mesh.currentTransform.scaleY, mesh.currentTransform.scaleZ,
                 mesh.currentTransform.rotationX, mesh.currentTransform.rotationY, mesh.currentTransform.rotationZ,
                 mesh.currentTransform.positionX, mesh.currentTransform.positionY, mesh.currentTransform.positionZ);
@@ -232,49 +234,83 @@ public class RenderEngine {
         Matrix4f modelViewProjectionMatrix = new Matrix4f(projectionMatrix.getMatrix());
         modelViewProjectionMatrix.multiply(viewMatrix);
         modelViewProjectionMatrix.multiply(modelMatrix);
+
         Color baseColor = Color.GRAY;
         ZBuffer zBuffer = new ZBuffer(width, height);
         zBuffer.clear();
         final int nPolygons = mesh.polygonsBoundaries.size();
+
+        // НОВОЕ: Вспомогательные матрицы для получения мировых координат
+        Matrix4f modelViewMatrix = new Matrix4f(viewMatrix.getMatrix());
+        modelViewMatrix.multiply(modelMatrix);
+
         for (int polygonInd = 0; polygonInd < nPolygons; ++polygonInd) {
             final int startIndex = mesh.polygonsBoundaries.get(polygonInd);
             final int endIndex = (polygonInd + 1 < nPolygons)
                     ? mesh.polygonsBoundaries.get(polygonInd + 1)
                     : mesh.polygons.size();
-            // Собираем вершины полигона
+
             ArrayList<Point2f> projectedPoints = new ArrayList<>();
             ArrayList<Float> depths = new ArrayList<>();
             ArrayList<Vertex> originalVertices = new ArrayList<>();
+            ArrayList<Vector3f> worldPositions = new ArrayList<>(); // НОВОЕ: мировые координаты
+
+            boolean shouldSkipPolygon = false; // НОВОЕ: флаг для пропуска полигона
 
             for (int i = startIndex; i < endIndex; ++i) {
+                if (i >= mesh.polygons.size()) {
+                    System.err.printf("ERROR: i=%d >= polygons.size=%d\n", i, mesh.polygons.size());
+                    shouldSkipPolygon = true;
+                    break;
+                }
+
                 int vertexIndex = mesh.polygons.get(i);
 
-                // Проверка индекса вершины
                 if (vertexIndex < 0 || vertexIndex >= mesh.vertices.size()) {
                     System.err.printf("ERROR: vertexIndex=%d, vertices.size=%d\n",
                             vertexIndex, mesh.vertices.size());
-                    continue;
+                    shouldSkipPolygon = true;
+                    break;
                 }
 
                 Vertex vertex = mesh.vertices.get(vertexIndex);
 
                 Vector3f pos = vertex.position;
                 Vector3f posVecmath = new Vector3f(pos.getX(), pos.getY(), pos.getZ());
+
+                // НОВОЕ: получаем мировую позицию для освещения
+                Vector3f worldPos = modelMatrix.multiplyOnVector(posVecmath);
+                worldPositions.add(worldPos);
+
+                // Проецируем вершину
                 Vector3f transformed = modelViewProjectionMatrix.multiplyOnVector(posVecmath);
-                Point2f resultPoint = vertexToPoint(
-                        transformed, width, height
-                );
+
+                // НОВОЕ: Проверяем Z-координату после проецирования
+                // Если вершина за камерой (или очень близко к ней), пропускаем весь полигон
+                if (transformed.getZ() <= 0.001f) { // небольшой эпсилон
+                    shouldSkipPolygon = true;
+                    break;
+                }
+
+                Point2f resultPoint = vertexToPoint(transformed, width, height);
 
                 projectedPoints.add(resultPoint);
                 originalVertices.add(vertex);
                 depths.add(transformed.getZ());
             }
 
-            int nValidVertices = projectedPoints.size();
+            // НОВОЕ: пропускаем полигон, если хотя бы одна вершина за камерой
+            if (shouldSkipPolygon) {
+                continue;
+            }
 
-            // Если полигон имеет 3 вершины и не в режиме wireframe, то rasterize
-            if (!SceneManager.drawMesh && nValidVertices == 3) {
-                // Используем собранные вершины
+            // НОВОЕ: проверяем, что у нас достаточно вершин для рендеринга
+            int nValidVertices = projectedPoints.size();
+            if (nValidVertices < 3) {
+                continue; // не хватает вершин для треугольника
+            }
+
+            if (nValidVertices == 3) {
                 Vertex v1 = originalVertices.get(0);
                 Vertex v2 = originalVertices.get(1);
                 Vertex v3 = originalVertices.get(2);
@@ -284,7 +320,9 @@ public class RenderEngine {
                 float z1 = depths.get(0);
                 float z2 = depths.get(1);
                 float z3 = depths.get(2);
-
+                Vector3f w1 = worldPositions.get(0); // НОВОЕ
+                Vector3f w2 = worldPositions.get(1); // НОВОЕ
+                Vector3f w3 = worldPositions.get(2);
                 if (SceneManager.useTexture && mesh.texture != null) {
                     Image texture = mesh.texture;
                     Rasterization.PixelCallback callback = (x, y, z, barycentric, texCoord, normal, worldPosition) -> {
@@ -299,8 +337,10 @@ public class RenderEngine {
                             graphicsContext.getPixelWriter().setColor(x, y, color);
                         }
                     };
-                    Rasterization.rasterizeTriangle(p1, p2, p3, z1, z2, z3, v1, v2, v3, callback);
-                } else {
+                    // НОВОЕ: передаем мировые позиции для интерполяции
+                    Rasterization.rasterizeTriangleWithWorldPos(p1, p2, p3, z1, z2, z3, v1, v2, v3, w1,
+                            w2, w3, callback, modelMatrix);
+                } else if (!SceneManager.drawMesh) {
                     Rasterization.PixelCallback callback = (x, y, z, barycentric, texCoord, normal, worldPosition) -> {
                         if (zBuffer.testAndSet(x, y, z)) {
                             Color color = baseColor;
@@ -313,32 +353,34 @@ public class RenderEngine {
                             graphicsContext.getPixelWriter().setColor(x, y, color);
                         }
                     };
-                    Rasterization.rasterizeTriangle(p1, p2, p3, z1, z2, z3, v1, v2, v3, callback);
+                    // НОВОЕ: передаем мировые позиции для интерполяции
+                    Rasterization.rasterizeTriangleWithWorldPos(p1, p2, p3, z1, z2, z3, v1, v2, v3, w1,
+                            w2, w3, callback, modelMatrix);
                 }
-            } else if (SceneManager.drawMesh) {
-                // Режим wireframe: рисуем линии между собранными вершинами
+            }
+            if (SceneManager.drawMesh) {
                 graphicsContext.setStroke(Color.web(ThemeSettings.wireframeColor));
                 graphicsContext.setLineWidth(ThemeSettings.wireframeWidth);
 
-                if (nValidVertices >= 2) {
-                    for (int vertexInPolygonInd = 1; vertexInPolygonInd < nValidVertices; ++vertexInPolygonInd) {
-                        graphicsContext.strokeLine(
-                                projectedPoints.get(vertexInPolygonInd - 1).getX(),
-                                projectedPoints.get(vertexInPolygonInd - 1).getY(),
-                                projectedPoints.get(vertexInPolygonInd).getX(),
-                                projectedPoints.get(vertexInPolygonInd).getY());
-                    }
 
-                    // Замыкаем полигон, если вершин достаточно
-                    if (nValidVertices >= 3) {
-                        graphicsContext.strokeLine(
-                                projectedPoints.get(nValidVertices - 1).getX(),
-                                projectedPoints.get(nValidVertices - 1).getY(),
-                                projectedPoints.get(0).getX(),
-                                projectedPoints.get(0).getY());
-                    }
+                for (int vertexInPolygonInd = 1; vertexInPolygonInd < nValidVertices; ++vertexInPolygonInd) {
+                    graphicsContext.strokeLine(
+                            projectedPoints.get(vertexInPolygonInd - 1).getX(),
+                            projectedPoints.get(vertexInPolygonInd - 1).getY(),
+                            projectedPoints.get(vertexInPolygonInd).getX(),
+                            projectedPoints.get(vertexInPolygonInd).getY());
                 }
+
+
+                graphicsContext.strokeLine(
+                        projectedPoints.get(nValidVertices - 1).getX(),
+                        projectedPoints.get(nValidVertices - 1).getY(),
+                        projectedPoints.get(0).getX(),
+                        projectedPoints.get(0).getY());
             }
+
+
+
         }
     }
 }
