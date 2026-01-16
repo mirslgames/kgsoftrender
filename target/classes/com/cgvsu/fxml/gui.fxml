@@ -217,6 +217,16 @@
                                                                            <TextField fx:id="scaleZTextField" layoutX="148.0" layoutY="10.0" prefHeight="25.0" prefWidth="41.0" />
                                                                         </children>
                                                                      </HBox>
+                                                                     <Button fx:id="loadTextureButton" mnemonicParsing="false" onAction="#onLoadTextureButtonClick" text="Загрузить текстуру">
+                                                                        <VBox.margin>
+                                                                           <Insets top="5.0" />
+                                                                        </VBox.margin></Button>
+                                                                     <Label fx:id="currentTextureLabel" text="Текущая текстура: нет">
+                                                                        <VBox.margin>
+                                                                           <Insets left="5.0" top="5.0" />
+                                                                        </VBox.margin>
+                                                                     </Label>
+                                                                     <Button fx:id="deleteTextureButton" mnemonicParsing="false" onAction="#onDeleteTextureButtonClick" text="Удалить текстуру" visible="false" />
                                                                      <Button fx:id="applyTransformButton" mnemonicParsing="false" onAction="#onApplyTransformButtonClick" text="Применить" visible="false" />
                                                                   </children>
                                                                </VBox>

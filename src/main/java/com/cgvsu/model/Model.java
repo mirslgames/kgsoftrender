@@ -13,14 +13,20 @@ public class Model {
     public ArrayList<Vertex> vertices = new ArrayList<>(); //Вершины у модельки
     public ArrayList<Integer> polygons = new ArrayList<Integer>(); //Индексы на конкретные вершины из списка для полигонов
     public ArrayList<Integer> polygonsBoundaries = new ArrayList<>(); //Номер индекса с которого идут вершины для данного полигона (старт)
+    private boolean hasTextureVertex; //Отвечает по смыслу за наличие VT, может ли модель иметь текстуру
     public boolean hasTexture;
     public Image texture;
-    //todo: дефолтная текстура + подумать над режимами отрисовки
+    public String textureName;
+    //todo: дефолтная текстура
 
     //Положение модельки в сцене
     public Transform currentTransform;
     //История трансформаций где последняя должна совпадать с текущей
     public ArrayList<Transform> transformHistory;
+
+    public boolean getHasTextureVertex(){
+        return hasTextureVertex;
+    }
 
     public Model() {
 
@@ -39,7 +45,7 @@ public class Model {
                 Model result = new Model();
                 result.modelName = filename;
                 result.currentTransform = new Transform(0, 0, 0, 0, 0, 0, 1, 1, 1);
-
+                result.hasTexture = false;
                 result.vertices = new ArrayList<>();
                 for (int i = 0; i < readVertices.size(); i++) {
                     Vertex vertex = new Vertex();
@@ -68,9 +74,9 @@ public class Model {
                     for (int i = 0; i < result.vertices.size(); i++) {
                         result.vertices.get(i).textureCoordinate = readTextureVertices.get(i);
                     }
-                    result.hasTexture = true;
+                    result.hasTextureVertex = true;
                 } else {
-                    result.hasTexture = false;
+                    result.hasTextureVertex = false;
                 }
 
                 MyVertexNormalCalc calc = new MyVertexNormalCalc();

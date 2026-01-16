@@ -15,6 +15,7 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
@@ -102,6 +103,12 @@ public class GuiController {
     private Slider lightIntensitySlider;
     @FXML
     private TextArea logTextArea;
+    @FXML
+    private Button loadTextureButton;
+    @FXML
+    private Label currentTextureLabel;
+    @FXML
+    private Button deleteTextureButton;
 
     private Timeline timeline;
 
@@ -294,11 +301,11 @@ public class GuiController {
 
             Platform.runLater(() -> applyStyle(root, ".menu-bar .label", ThemeSettings.menuBarLabelStyle));
 
-            if (applyTransformButton != null) {
+            /*if (applyTransformButton != null) {
                 applyTransformButton.setStyle(
                         applyTransformButton.isHover() ? ThemeSettings.buttonHoverStyle : ThemeSettings.buttonStyle
                 );
-            }
+            }*/
         }
         catch (Exception exception){
             showError("Ошибка при применении темы");
@@ -479,6 +486,31 @@ public class GuiController {
     }
 
     @FXML
+    private void onLoadTextureButtonClick(){
+        FileChooser fc = new FileChooser();
+            fc.setTitle("Choose texture");
+            fc.getExtensionFilters().add(
+                    new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg", "*.bmp")
+            );
+
+            File texFile = fc.showOpenDialog((Stage) sceneCanvas.getScene().getWindow());
+            if (texFile != null) {
+                Image tex = new Image(texFile.toURI().toString());
+                SceneManager.activeModel.texture = tex;
+                SceneManager.activeModel.hasTexture = true;
+                SceneManager.activeModel.textureName = texFile.getName();
+                currentTextureLabel.setText(String.format("Текущая текстура: %s", SceneManager.activeModel.textureName));
+                deleteTextureButton.setVisible(true);
+            } else {
+                SceneManager.activeModel.texture = null;
+                SceneManager.activeModel.hasTexture = false;
+            }
+
+
+    }
+
+
+    @FXML
     private void onOpenModelMenuItemClick() {
         try {
             FileChooser fileChooser = new FileChooser();
@@ -497,6 +529,8 @@ public class GuiController {
             Model mesh = ObjReader.readModelFromFile(fileContent, fileName.getFileName().toString(), SceneManager.historyModelName);
             validateAndCorrectDuplicateModelName(mesh);
             mesh.triangulate();
+
+
             //Добавление кнопки
             addModelButton(mesh);
             logInfo(String.format("Модель %s была успешно загружена", mesh.modelName));
@@ -565,6 +599,13 @@ public class GuiController {
         alert.setContentText(text);
         alert.showAndWait();
     }
+    @FXML private void onDeleteTextureButtonClick(ActionEvent event){
+        SceneManager.activeModel.hasTexture = false;
+        SceneManager.activeModel.texture = null;
+        SceneManager.activeModel.textureName = "";
+        currentTextureLabel.setText("Текущая текстура: Нет");
+        deleteTextureButton.setVisible(false);
+    }
 
     @FXML
     private void onDeleteActiveEntityButtonClick(ActionEvent event) {
@@ -605,6 +646,19 @@ public class GuiController {
         }
         activeButton = button;
         activeButton.setStyle(ThemeSettings.activeButtonStyle);
+
+        deleteTextureButton.setVisible(false);
+        String currentTextureName = "Нет";
+        loadTextureButton.setVisible(true);
+        if (!model.getHasTextureVertex()){
+            currentTextureName = "У модели отсутствуют текстурные координаты";
+            loadTextureButton.setVisible(false);
+        } else if(model.hasTexture && model.textureName != null && model.texture != null){
+            currentTextureName = model.textureName;
+            deleteTextureButton.setVisible(true);
+        }
+
+        currentTextureLabel.setText(String.format("Текущая текстура: %s", currentTextureName));
 
         setTextFieldModelTransform(model);
 

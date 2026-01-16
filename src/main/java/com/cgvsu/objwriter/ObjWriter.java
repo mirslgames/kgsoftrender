@@ -40,7 +40,7 @@ public class ObjWriter {
         }
 
         //Поскольку текстурные координаты мы не можем добавлять в программе, то если модель не имела текстуру при загрузке, то и при сохранении ей не нужны текстурные корды
-        hasTexCoords = hasTexCoords && model.hasTexture;
+        hasTexCoords = hasTexCoords && model.getHasTextureVertex();
 
         Path path = Paths.get(filePath);
         try (BufferedWriter writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8, StandardOpenOption.CREATE,
