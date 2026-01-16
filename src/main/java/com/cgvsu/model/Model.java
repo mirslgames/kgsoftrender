@@ -1,12 +1,10 @@
 package com.cgvsu.model;
 
-
-
-import com.cgvsu.math.vectors.Vector2f;
 import com.cgvsu.modelOperations.TriangulationAlgorithm;
 import javafx.scene.image.Image;
-
-
+import com.cgvsu.math.vectors.Vector2f;
+import com.cgvsu.math.vectors.Vector3f;
+import com.cgvsu.modelOperations.MyVertexNormalCalc;
 import java.util.*;
 
 public class Model {
@@ -16,53 +14,112 @@ public class Model {
     public ArrayList<Integer> polygons = new ArrayList<Integer>(); //Индексы на конкретные вершины из списка для полигонов
     public ArrayList<Integer> polygonsBoundaries = new ArrayList<>(); //Номер индекса с которого идут вершины для данного полигона (старт)
     public ArrayList<Integer> polygonsTextureCoordinateIndices = new ArrayList<>();
+
     public boolean hasTexture;
     public Image texture;
+    public String textureName;
+    //todo: дефолтная текстура
 
-    //Положение модельки в сцене, todo: возможно переписать под векторы
-    public float positionXValue;
-    public float positionYValue;
-    public float positionZValue;
-    public float rotationXValue;
-    public float rotationYValue;
-    public float rotationZValue;
-    public float scaleXValue;
-    public float scaleYValue;
-    public float scaleZValue;
+    //Положение модельки в сцене
+    public Transform currentTransform;
+    //История трансформаций где последняя должна совпадать с текущей
+    public ArrayList<Transform> transformHistory;
 
-    public Model(){
-        positionXValue = 0;
-        positionYValue = 0;
-        positionZValue = 0;
-        rotationXValue = 0;
-        rotationYValue = 0;
-        rotationZValue = 0;
-        scaleXValue = 1;
-        scaleYValue = 1;
-        scaleZValue = 1;
-    }
-    /**
-     * Оставил старое имя метода, потому что он используется в UI (GuiController).
-     * По смыслу: есть ли в модели UV (vt), которые можно использовать.
-     */
+    //Отвечает по смыслу за наличие VT, может ли модель использовать текстуру
     public boolean getHasTextureVertex() {
-        return polygonsTextureCoordinateIndices != null
-                && polygonsTextureCoordinateIndices.size() == polygons.size();
+        if (polygonsTextureCoordinateIndices == null || polygons == null || vertices == null ||
+                polygonsTextureCoordinateIndices.size() != polygons.size()){
+            return false;
+        }
+
+        //Если хотя бы у одного угла localUvIndex < 0, считаем что vt нет и использовать текстуру нельзя
+        for (int i = 0; i < polygonsTextureCoordinateIndices.size(); i++) {
+            if (polygonsTextureCoordinateIndices.get(i) < 0) return false;
+        }
+        return true;
     }
 
-    public Vector2f getTextureCoordinateForPolygonVertex(final int polygonVertexGlobalIndex) {
+
+    //Получаем UV по индексу вершины для угла полигона
+    public Vector2f getTextureCoordinateForPolygonVertex(int polygonVertexGlobalIndex) {
         if (!getHasTextureVertex()) return null;
         if (polygonVertexGlobalIndex < 0 || polygonVertexGlobalIndex >= polygons.size()) return null;
 
         int vIndex = polygons.get(polygonVertexGlobalIndex);
-        if (vIndex < 0 || vIndex >= vertices.size()) return null;
-
         int uvLocalIndex = polygonsTextureCoordinateIndices.get(polygonVertexGlobalIndex);
         return vertices.get(vIndex).getTextureCoordinate(uvLocalIndex);
     }
-    /**
-     * Триангулирует все полигоны в модели, сохраняя индексы UV (локальные) синхронно с вершинами.
-     */
+
+
+
+    public Model() {
+
+    }
+
+    public static Model constructModelFromReadData(
+            ArrayList<Vector3f> readVertices,
+            ArrayList<Vector2f> readTextureVertices,
+            ArrayList<Vector3f> readNormals,
+            ArrayList<ArrayList<Integer>[]> readPolygonsIndices,
+            String filename,
+            boolean resultCheck
+    ) {
+        if (resultCheck) {
+            try {
+                Model result = new Model();
+                result.modelName = filename;
+                result.currentTransform = new Transform(0, 0, 0, 0, 0, 0, 1, 1, 1);
+                result.hasTexture = false;
+
+                result.vertices = new ArrayList<>();
+                for (int i = 0; i < readVertices.size(); i++) {
+                    Vertex vertex = new Vertex();
+                    vertex.position = readVertices.get(i);
+                    vertex.normal = null;
+                    result.vertices.add(vertex);
+                }
+
+                boolean fileHasVt = readTextureVertices != null && !readTextureVertices.isEmpty();
+                result.polygons = new ArrayList<>();
+                result.polygonsBoundaries = new ArrayList<>();
+                result.polygonsTextureCoordinateIndices = new ArrayList<>();
+
+
+                for (ArrayList<Integer>[] polygon : readPolygonsIndices) {
+                    if (polygon == null || polygon.length < 1 || polygon[0] == null || polygon[0].size() < 3) {
+                        throw new RuntimeException("Некорректный полигон");
+                    }
+
+                    ArrayList<Integer> vertexIds = polygon[0];
+                    ArrayList<Integer> textureVertexIds = (polygon.length > 1) ? polygon[1] : null;
+                    result.polygonsBoundaries.add(result.polygons.size()); //Формируем массив с границами полигонов
+
+
+                    for (int i = 0; i < vertexIds.size(); i++) {
+                        int vertexIndex = vertexIds.get(i);
+                        result.polygons.add(vertexIndex);
+
+                        int localUvIndex = -1;
+                        if (fileHasVt && textureVertexIds != null && !textureVertexIds.isEmpty()) {
+                            int globalVtIndex = textureVertexIds.get(i); //Получаем индекс vt от полигона
+                            Vector2f uv = readTextureVertices.get(globalVtIndex); //Получаем конкретную UV по индексу vt из прочитанных данных
+                            localUvIndex = result.vertices.get(vertexIndex).getOrAddTextureCoordinate(uv); //Получаем локальный индекс UV внутри Vertex
+                        }
+                        result.polygonsTextureCoordinateIndices.add(localUvIndex);
+                    }
+                }
+
+                MyVertexNormalCalc calc = new MyVertexNormalCalc();
+                calc.calculateVertexNormals(result);
+
+                return result;
+            } catch (Exception exception) {
+                throw new RuntimeException("Ошибка при построении модели на основе прочитанных данных: " + exception.getMessage());
+            }
+        }
+        throw new RuntimeException("Прочитанные данные не корректны");
+    }
+
     public void triangulate() {
         if (polygonsBoundaries == null || polygonsBoundaries.isEmpty()) {
             return;
@@ -87,7 +144,7 @@ public class Model {
             List<Integer> polygonVertices = new ArrayList<>(polygons.subList(start, end));
             List<Integer> polygonVtLocal = new ArrayList<>(polygonsTextureCoordinateIndices.subList(start, end));
 
-            // Триангулируем по позициям 0..N-1 и применяем те же позиции к обоим спискам.
+            //Триангулируем по позициям 0..N-1 и применяем те же позиции к обоим спискам.
             List<List<Integer>> trianglesPos = TriangulationAlgorithm.triangulatePositions(vertexCount);
             for (List<Integer> triPos : trianglesPos) {
                 newBoundaries.add(newPolygons.size());
@@ -102,7 +159,5 @@ public class Model {
         polygonsTextureCoordinateIndices = newTextureLocalIndices;
         polygonsBoundaries = newBoundaries;
     }
-
-
 }
 

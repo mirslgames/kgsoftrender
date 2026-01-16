@@ -36,19 +36,12 @@ public class TriangulationAlgorithm {
         return triangles;
     }
 
-    /**
-     * НОВОЕ: триангуляция, которая возвращает позиции внутри полигона (0..N-1), а не "значения" индексов.
-     *
-     * Это нужно, когда у полигона несколько параллельных списков индексов (v и vt),
-     * и мы хотим триангулировать их синхронно без рассинхронизации.
-     */
     public static List<List<Integer>> triangulatePositions(final int polygonVertexCount) {
         List<Integer> positions = new ArrayList<>(polygonVertexCount + 1);
         for (int i = 0; i < polygonVertexCount; i++) {
             positions.add(i);
         }
 
-        // Повторяем старую логику: если нечётное количество вершин — дублируем последнюю.
         if (polygonVertexCount % 2 == 1 && polygonVertexCount > 0) {
             positions.add(polygonVertexCount - 1);
         }

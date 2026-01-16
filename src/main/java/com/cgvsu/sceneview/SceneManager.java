@@ -22,7 +22,7 @@ public class SceneManager {
     //Задел на будущее подумать как сохранять исходную модель и модель преобразованную
     public static ArrayList<Model> originalModels = new ArrayList<>();
     public static Dictionary<String, Model> originalcacheNameSceneModels = new Hashtable<>();
-    //todo: Подумать как организовать источник света + SceneEntity
+    //todo: Подумать как организовать источник света
 
 
     public static boolean drawMesh;

@@ -8,20 +8,30 @@ import java.util.ArrayList;
 public class Vertex {
     public Vector3f position;
     public Vector3f normal;
-    public ArrayList<Vector2f> textureCoordinates;
+    public ArrayList<Vector2f> textureCoordinates = new ArrayList<>();; //UV, которые использовались с этой позицией вершины
 
     public boolean equals(Vertex vertex) {
         return vertex.position.equals(position);
     }
+
+    public Vertex(float x, float y, float z){
+        position = new Vector3f(x, y, z);
+    }
+
+    public Vertex(){
+        position = new Vector3f(0,0,0);
+    }
+
     public int getOrAddTextureCoordinate(final Vector2f uv) {
         if (uv == null) return -1;
 
-        for (int i = 0; i < textureCoordinates.size(); i++) {
+        //Получаем индекс UV внутри textureCoordinates
+        for (int i = 0; i < textureCoordinates.size(); i++){
             if (textureCoordinates.get(i).equals(uv)) {
                 return i;
             }
         }
-
+        //если такой не было то добавляем
         textureCoordinates.add(new Vector2f(uv.getX(), uv.getY()));
         return textureCoordinates.size() - 1;
     }
