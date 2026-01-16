@@ -109,12 +109,27 @@ public class GuiController {
     private Label currentTextureLabel;
     @FXML
     private Button deleteTextureButton;
+    @FXML
+    private Button renderButton;
+    @FXML
+    private RadioButton oneFrameRadioButton;
+    @FXML
+    private RadioButton transformFrameRadioButton;
+    @FXML
+    private RadioButton cameraFrameRadioButton;
+    @FXML
+    private RadioButton cameraTransformFrameRadioButton;
+    @FXML
+    private RadioButton everyFrameRadioButton;
+
+    private RenderMode currentRenderMode;
 
     private Timeline timeline;
 
     @FXML
     private void initialize() {
 
+        currentRenderMode = RenderMode.ONE_FRAME;
         lightIntensityLabel.textProperty().bind(
                 lightIntensitySlider.valueProperty().asString("%.2f")
         );
@@ -187,7 +202,11 @@ public class GuiController {
         timeline = new Timeline();
         timeline.setCycleCount(Animation.INDEFINITE);
 
-        KeyFrame frame = new KeyFrame(Duration.millis(15), e -> renderFrame());
+        KeyFrame frame = new KeyFrame(Duration.millis(15), e -> {
+            if(currentRenderMode == RenderMode.EVERY_FRAME){
+                renderFrame();
+            }
+        });
 
 
         timeline.getKeyFrames().add(frame);
@@ -251,15 +270,12 @@ public class GuiController {
     @FXML
     private void onLightThemeMenuItemClick() {
         ThemeSettings.setLightTheme();
-        logTextArea.setStyle(String.format("-fx-text-fill: black;"));
-        //todo: Доделать стили и добавить туда TextArea
         applyTheme();
     }
 
     @FXML
     private void onDarkThemeMenuItemClick() {
         ThemeSettings.setDarkTheme();
-        logTextArea.setStyle(String.format("-fx-text-fill: white;"));
         applyTheme();
     }
 
@@ -301,6 +317,8 @@ public class GuiController {
 
             Platform.runLater(() -> applyStyle(root, ".menu-bar .label", ThemeSettings.menuBarLabelStyle));
 
+            logTextArea.setStyle(ThemeSettings.textAreaStyle);
+
             /*if (applyTransformButton != null) {
                 applyTransformButton.setStyle(
                         applyTransformButton.isHover() ? ThemeSettings.buttonHoverStyle : ThemeSettings.buttonStyle
@@ -331,10 +349,35 @@ public class GuiController {
         }
     }
 
+    @FXML private void oneFrameRadioButtonSelect(ActionEvent event){
+        currentRenderMode = RenderMode.ONE_FRAME;
+        renderButton.setDisable(false);
+    }
+    @FXML private void transformFrameRadioButtonSelect(ActionEvent event){
+        currentRenderMode = RenderMode.EVERY_TRANSFORM_FRAME;
+        renderButton.setDisable(true);
+    }
+    @FXML private void cameraFrameRadioButtonSelect(ActionEvent event){
+        currentRenderMode = RenderMode.EVERY_CAMERA_MOTION_FRAME;
+        renderButton.setDisable(true);
+    }
+    @FXML private void cameraTransformFrameRadioButtonSelect(ActionEvent event){
+        currentRenderMode = RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME;
+        renderButton.setDisable(true);
+    }
+    @FXML private void everyFrameRadioButtonSelect(ActionEvent event){
+        currentRenderMode = RenderMode.EVERY_FRAME;
+        renderButton.setDisable(true);
+    }
+
     @FXML
     private void onPositionXChanged() {
         if(SceneManager.activeModel != null){
             SceneManager.activeModel.currentTransform.positionX = parseFloat(positionXTextField);
+            if(currentRenderMode == RenderMode.EVERY_TRANSFORM_FRAME ||
+                    currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
+                renderFrame();
+            }
         }
     }
 
@@ -342,6 +385,10 @@ public class GuiController {
     private void onPositionYChanged() {
         if(SceneManager.activeModel != null) {
             SceneManager.activeModel.currentTransform.positionY = parseFloat(positionYTextField);
+            if(currentRenderMode == RenderMode.EVERY_TRANSFORM_FRAME ||
+                    currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
+                renderFrame();
+            }
         }
     }
 
@@ -349,6 +396,10 @@ public class GuiController {
     private void onPositionZChanged() {
         if(SceneManager.activeModel != null) {
             SceneManager.activeModel.currentTransform.positionZ = parseFloat(positionZTextField);
+            if(currentRenderMode == RenderMode.EVERY_TRANSFORM_FRAME ||
+                    currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
+                renderFrame();
+            }
         }
     }
 
@@ -356,6 +407,10 @@ public class GuiController {
     private void onRotationXChanged() {
         if(SceneManager.activeModel != null) {
             SceneManager.activeModel.currentTransform.rotationX = parseFloat(rotationXTextField);
+            if(currentRenderMode == RenderMode.EVERY_TRANSFORM_FRAME ||
+                    currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
+                renderFrame();
+            }
         }
     }
 
@@ -363,6 +418,10 @@ public class GuiController {
     private void onRotationYChanged() {
         if(SceneManager.activeModel != null) {
             SceneManager.activeModel.currentTransform.rotationY = parseFloat(rotationYTextField);
+            if(currentRenderMode == RenderMode.EVERY_TRANSFORM_FRAME ||
+                    currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
+                renderFrame();
+            }
         }
     }
 
@@ -370,6 +429,10 @@ public class GuiController {
     private void onRotationZChanged() {
         if(SceneManager.activeModel != null) {
             SceneManager.activeModel.currentTransform.rotationZ = parseFloat(rotationZTextField);
+            if(currentRenderMode == RenderMode.EVERY_TRANSFORM_FRAME ||
+                    currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
+                renderFrame();
+            }
         }
     }
 
@@ -377,6 +440,10 @@ public class GuiController {
     private void onScaleXChanged() {
         if(SceneManager.activeModel != null) {
             SceneManager.activeModel.currentTransform.scaleX = parseFloat(scaleXTextField);
+            if(currentRenderMode == RenderMode.EVERY_TRANSFORM_FRAME ||
+                    currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
+                renderFrame();
+            }
         }
     }
 
@@ -384,6 +451,10 @@ public class GuiController {
     private void onScaleYChanged() {
         if(SceneManager.activeModel != null) {
             SceneManager.activeModel.currentTransform.scaleY = parseFloat(scaleYTextField);
+            if(currentRenderMode == RenderMode.EVERY_TRANSFORM_FRAME ||
+                    currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
+                renderFrame();
+            }
         }
     }
 
@@ -391,6 +462,10 @@ public class GuiController {
     private void onScaleZChanged() {
         if(SceneManager.activeModel != null) {
             SceneManager.activeModel.currentTransform.scaleZ = parseFloat(scaleZTextField);
+            if(currentRenderMode == RenderMode.EVERY_TRANSFORM_FRAME ||
+                    currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
+                renderFrame();
+            }
         }
     }
 
@@ -629,6 +704,11 @@ public class GuiController {
     }
 
     @FXML
+    private void renderButtonClick(ActionEvent event){
+        renderFrame();
+    }
+
+    @FXML
     private void onModelButtonClick(ActionEvent event) {
         Button button = (Button) event.getSource();
         String modelName = button.getText();
@@ -697,30 +777,54 @@ public class GuiController {
     @FXML
     public void handleCameraForward(ActionEvent actionEvent) {
         SceneManager.activeCamera.movePosition(new Vector3f(0, 0, -TRANSLATION));
+        if(currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
+                currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
+            renderFrame();
+        }
     }
 
     @FXML
     public void handleCameraBackward(ActionEvent actionEvent) {
         SceneManager.activeCamera.movePosition(new Vector3f(0, 0, TRANSLATION));
+        if(currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
+                currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
+            renderFrame();
+        }
     }
 
     @FXML
     public void handleCameraLeft(ActionEvent actionEvent) {
         SceneManager.activeCamera.movePosition(new Vector3f(TRANSLATION, 0, 0));
+        if(currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
+                currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
+            renderFrame();
+        }
     }
 
     @FXML
     public void handleCameraRight(ActionEvent actionEvent) {
         SceneManager.activeCamera.movePosition(new Vector3f(-TRANSLATION, 0, 0));
+        if(currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
+                currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
+            renderFrame();
+        }
     }
 
     @FXML
     public void handleCameraUp(ActionEvent actionEvent) {
         SceneManager.activeCamera.movePosition(new Vector3f(0, TRANSLATION, 0));
+        if(currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
+                currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
+            renderFrame();
+        }
     }
 
     @FXML
     public void handleCameraDown(ActionEvent actionEvent) {
         SceneManager.activeCamera.movePosition(new Vector3f(0, -TRANSLATION, 0));
+        if(currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
+                currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
+            renderFrame();
+        }
     }
 }

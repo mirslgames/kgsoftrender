@@ -4,6 +4,7 @@ import com.cgvsu.service.ThemeSettings;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 
@@ -23,7 +24,7 @@ public class Simple3DViewer extends Application {
         viewport.prefHeightProperty().bind(scene.heightProperty());
 
 
-
+        stage.getIcons().add(new Image(getClass().getResourceAsStream("/main_icon.png")));
         stage.setTitle("KgSoftRender");
         stage.setScene(scene);
         stage.show();

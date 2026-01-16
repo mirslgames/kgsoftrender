@@ -118,7 +118,7 @@ public class ObjWriter {
 
                     //У нас формат может быть либо v/vt/vn либо v//vn
                     if (hasTexCoords) {
-                        int objVt = globalVtIndexByCorner[i] + 1;
+                        int objVt = globalVtIndexByCorner[i] + 1; //Какой vt для данного угла i
                         //vn у нас идёт 1:1 с v
                         faceLine.append(objVIndex).append('/').append(objVt).append('/').append(objVIndex);
                     } else {
@@ -138,7 +138,7 @@ public class ObjWriter {
     }
 
     private static int findOrAddVt(final ArrayList<Vector2f> globalVt, final Vector2f uv) {
-        // Возвращает индекс vt в globalVt относительно нуля, если такого uv ещё нет добавляет и возвращает новый индекс.
+        // Возвращает индекс vt в globalVt относительно нуля, если такого uv ещё нет добавляет и возвращает новый индекс, чтобы uv были уникальны
         for (int i = 0; i < globalVt.size(); i++) {
             if (globalVt.get(i).equals(uv)) {
                 return i;

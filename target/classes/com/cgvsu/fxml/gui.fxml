@@ -79,12 +79,12 @@
                </AnchorPane>
              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
                   <children>
-                     <SplitPane dividerPositions="0.20964360587002095" layoutX="32.0" layoutY="40.0" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                     <SplitPane dividerPositions="0.35667963683527887" layoutX="32.0" layoutY="40.0" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                        <items>
-                         <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="100.0" prefWidth="292.0">
+                         <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="150.0" prefWidth="292.0">
                               <children>
                                  <Label alignment="CENTER" layoutX="57.0" layoutY="6.0" text="Режимы отрисовки" />
-                                 <VBox layoutX="8.0" layoutY="33.0" prefHeight="64.0" prefWidth="211.0">
+                                 <VBox layoutX="8.0" layoutY="33.0" prefHeight="64.0" prefWidth="280.0">
                                     <children>
                                        <CheckBox fx:id="drawMeshCheckBox" mnemonicParsing="false" text="Рисовать полигональную сетку" />
                                        <CheckBox fx:id="useTextureCheckBox" mnemonicParsing="false" text="Использовать текстуру" />
@@ -94,13 +94,44 @@
                                              <Insets top="5.0" />
                                           </VBox.margin>
                                        </Label>
-                                       <Slider fx:id="lightIntensitySlider" blockIncrement="0.01" max="1.0" prefWidth="152.0" value="1.0" />
+                                       <Slider fx:id="lightIntensitySlider" blockIncrement="0.01" max="1.0" maxWidth="150.0" prefWidth="152.0" value="1.0" />
+                                       <Button fx:id="renderButton" mnemonicParsing="false" onAction="#renderButtonClick" text="Рендер кадра">
+                                          <VBox.margin>
+                                             <Insets top="10.0" />
+                                          </VBox.margin></Button>
+                                       <RadioButton fx:id="oneFrameRadioButton" mnemonicParsing="false" onAction="#oneFrameRadioButtonSelect" selected="true" text="Рендерить один кадр по кнопке">
+                                          <VBox.margin>
+                                             <Insets top="10.0" />
+                                          </VBox.margin>
+                                          <toggleGroup>
+                                             <ToggleGroup fx:id="renderMode" />
+                                          </toggleGroup></RadioButton>
+                                       <RadioButton fx:id="transformFrameRadioButton" layoutX="10.0" layoutY="142.0" mnemonicParsing="false" onAction="#transformFrameRadioButtonSelect" text="Рендерить каждую трансформацию" toggleGroup="$renderMode">
+                                          <VBox.margin>
+                                             <Insets top="5.0" />
+                                          </VBox.margin>
+                                       </RadioButton>
+                                       <RadioButton fx:id="cameraFrameRadioButton" layoutX="10.0" layoutY="164.0" mnemonicParsing="false" onAction="#cameraFrameRadioButtonSelect" text="Рендерить каждое движение камеры" toggleGroup="$renderMode">
+                                          <VBox.margin>
+                                             <Insets top="5.0" />
+                                          </VBox.margin>
+                                       </RadioButton>
+                                       <RadioButton fx:id="cameraTransformFrameRadioButton" layoutX="10.0" layoutY="186.0" mnemonicParsing="false" onAction="#cameraTransformFrameRadioButtonSelect" text="Рендерить и камеру и трансформации" toggleGroup="$renderMode">
+                                          <VBox.margin>
+                                             <Insets top="5.0" />
+                                          </VBox.margin>
+                                       </RadioButton>
+                                       <RadioButton fx:id="everyFrameRadioButton" layoutX="10.0" layoutY="208.0" mnemonicParsing="false" onAction="#everyFrameRadioButtonSelect" text="Рендерить каждый кадр" toggleGroup="$renderMode">
+                                          <VBox.margin>
+                                             <Insets top="5.0" />
+                                          </VBox.margin>
+                                       </RadioButton>
                                     </children>
                                  </VBox>
                               </children></AnchorPane>
                          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="100.0" prefWidth="160.0">
                               <children>
-                                 <SplitPane dividerPositions="0.5728476821192053" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                 <SplitPane dividerPositions="0.5067698259187621" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                    <items>
                                      <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="100.0" prefWidth="160.0">
                                           <children>

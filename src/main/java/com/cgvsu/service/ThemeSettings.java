@@ -33,6 +33,10 @@ public class ThemeSettings {
     public static double wireframeWidth;
     public static String canvasBackgroundColor;
 
+    public static String textAreaText;
+    public static String textAreaStyle;
+    public static String textAreaContentStyle;
+
 
     public static void setLightTheme() {
         rootStyle = "-fx-background-color: #EEF2F7;";
@@ -104,6 +108,17 @@ public class ThemeSettings {
         wireframeColor = "#111827";
         wireframeWidth = 1.0;
         canvasBackgroundColor = "#F8FAFC";
+
+        textAreaStyle =
+                "-fx-control-inner-background: #FFFFFF;" +
+                        "-fx-background-color: #FFFFFF;" +
+                        "-fx-text-fill: #111827;" +
+                        "-fx-prompt-text-fill: #6B7280;" +
+                        "-fx-border-color: #CBD5E1;" +
+                        "-fx-border-radius: 4;" +
+                        "-fx-background-radius: 4;";
+
+        textAreaText = "-fx-text-fill: #111827;";
     }
 
     public static void setDarkTheme() {
@@ -179,5 +194,16 @@ public class ThemeSettings {
         canvasBackgroundColor = "#121C26";
         wireframeColor = "rgba(220, 235, 255, 0.95)";
         wireframeWidth = 1.05;
+        textAreaStyle =
+                "-fx-control-inner-background: #1A222C;" +
+                        "-fx-background-color: #1A222C;" +
+                        "-fx-text-fill: #E5E7EB;" +
+                        "-fx-prompt-text-fill: #94A3B8;" +
+                        "-fx-border-color: #334155;" +
+                        "-fx-border-radius: 4;" +
+                        "-fx-background-radius: 4;";
+
+        textAreaText = "-fx-text-fill: #E5E7EB;";
+
     }
 }
