@@ -16,6 +16,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCombination;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -40,7 +41,10 @@ import static java.nio.file.Path.*;
 
 public class GuiController {
 
-    final private float TRANSLATION = 0.5F;
+    final private float TRANSLATION = 5F;
+    final private float ROT = 0.5F;
+    private float pastX = 0;
+    private float pastY = 0;
 
     @FXML
     AnchorPane canvasParentAnchorPane;
@@ -121,6 +125,9 @@ public class GuiController {
 
         openModeMenuItem.setAccelerator(KeyCombination.keyCombination(ShortcutsSettings.openModel));
         saveModeMenuItem.setAccelerator(KeyCombination.keyCombination(ShortcutsSettings.saveModel));
+
+        canvasParentAnchorPane.setOnMouseDragged(this::changeCameraPosition);
+        canvasParentAnchorPane.setOnMousePressed(this::setPastXY);
 
         Platform.runLater(() -> {
             ThemeSettings.setLightTheme();
@@ -476,6 +483,22 @@ public class GuiController {
 
     }
 
+    @FXML
+    public void changeCameraPosition(MouseEvent mouseEvent) {
+
+        float deltaX = (float) (mouseEvent.getX() - pastX);
+        float deltaY = (float) (mouseEvent.getY() - pastY);
+        pastX = (float) mouseEvent.getX();
+        pastY = (float) mouseEvent.getY();
+
+
+        SceneManager.activeCamera.rotateCamera(-deltaX * ROT, -deltaY * ROT);
+    }
+
+    public void setPastXY(MouseEvent mouseEvent) {
+        pastX = (float) mouseEvent.getX();
+        pastY = (float) mouseEvent.getY();
+    }
 
     @FXML
     public void handleCameraForward(ActionEvent actionEvent) {

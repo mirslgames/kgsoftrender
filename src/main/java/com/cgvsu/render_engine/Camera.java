@@ -44,14 +44,66 @@ public class Camera {
 
     public void movePosition(final Vector3f translation) {
         this.position.add(translation);
+        //System.out.printf("%f, %f, %f, %n", position.getX(), position.getY(), position.getZ());
     }
 
     public void moveTarget(final Vector3f translation) {
-        this.target.add(target);
+        this.target.add(translation);
+    }
+
+    public void rotateCamera(float yawDeg, float pitchDeg) {
+
+        yaw += yawDeg;
+        pitch += pitchDeg;
+
+        yaw = wrapAngle(yaw);
+        pitch = clamp(pitch, -89f, 89f);
+
+        updatePositionFromAngles();
+
+    }
+
+    private float clamp(float v, float lo, float hi) {
+        if (v < lo) return lo;
+        if (v > hi) return hi;
+        return v;
+    }
+
+    private float wrapAngle(float ang) {
+        ang %= 360f;
+        if (ang <= -180f) ang += 360f;
+        if (ang > 180f) ang -= 360f;
+        return ang;
+    }
+
+    private void updatePositionFromAngles() {
+        double yawRad = Math.toRadians(yaw);
+        double pitchRad = Math.toRadians(pitch);
+        float radius = position.subbed(target).len();
+
+
+        float cosPitch = (float) Math.cos(pitchRad);
+        float x = radius * cosPitch * (float) Math.sin(yawRad);
+        float y = radius * (float) Math.sin(pitchRad);
+        float z = radius * cosPitch * (float) Math.cos(yawRad);
+
+        Vector3f offset = new Vector3f(x, y, z);
+        position = target.added(offset);
+
+        Vector3f forward = target.subbed(position).normalized();
+        Vector3f right = forward.crossed(new Vector3f(0, 1, 0));
+
+        if (right.len() < EPS) {
+            right = new Vector3f(1, 0, 0);
+        } else {
+            right = right.normalized();
+        }
+
+        cameraUp = right.crossed(forward).normalized();
     }
 
     Matrix4f getViewMatrix() {
-        return GraphicConveyor.lookAt(position, target);
+        return GraphicConveyor.lookAt(position, target, cameraUp);
     }
 
     Matrix4f getProjectionMatrix() {
@@ -64,4 +116,11 @@ public class Camera {
     private float aspectRatio;
     private float nearPlane;
     private float farPlane;
+
+    private float pitch = 0f;
+    private float yaw = 0f;
+
+    private final float EPS = 10e-6f;
+
+    private Vector3f cameraUp = new Vector3f(0f, 1f, 0f);
 }
