@@ -6,11 +6,10 @@ import java.util.Arrays;
 import java.util.List;
 
 public class TriangulationAlgorithm {
+
     public static List<List<Integer>> triangulate(List<Integer> polygon){
         List<Integer> copy = new ArrayList<>(polygon);
         int n = copy.size();
-
-        // вообще не нужно делать "чётность". Но если хочешь оставить логику:
         if (n % 2 == 1) {
             copy.add(copy.get(n - 1)); // дублируем последний индекс вершины
         }
@@ -20,11 +19,10 @@ public class TriangulationAlgorithm {
         List<List<Integer>> triangles = new ArrayList<>();
 
         int n = polygon.size();
-
         for (int step = 1; step < n; step *= 2) {
             for (int i = 0; i < n-2*step+1; i += step * 2) {
                 if (i + step < n) {
-                    int i1 = polygon.get(i);        // Берем индекс вершины из списка полигона
+                    int i1 = polygon.get(i); // Берем индекс вершины из списка полигона
                     int i2 = polygon.get(i + step);
                     int i3 = polygon.get((i + 2 * step) % n);
 

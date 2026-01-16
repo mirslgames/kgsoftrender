@@ -1,7 +1,10 @@
 package com.cgvsu.model;
 
+
+
 import com.cgvsu.modelOperations.TriangulationAlgorithm;
 import javafx.scene.image.Image;
+
 
 import java.util.*;
 
@@ -45,10 +48,9 @@ public class Model {
             int end = (i + 1 < polygonsBoundaries.size()) ? polygonsBoundaries.get(i + 1) : polygons.size();
             List<Integer> polygon = new ArrayList<>(polygons.subList(start, end));
 
-            System.out.println("Original polygon " + i + " indices: " + polygon);
 
             List<List<Integer>> triangles = TriangulationAlgorithm.triangulate(polygon);
-            System.out.println("Triangles for polygon " + i + ": " + triangles);
+
 
             for (List<Integer> tri : triangles) {
                 newBoundaries.add(newPolygons.size());
@@ -58,10 +60,8 @@ public class Model {
 
         polygons = newPolygons;
         polygonsBoundaries = newBoundaries;
-
-        System.out.println("After triangulation: total triangles = " + newBoundaries.size());
-        System.out.println("Indices: " + newPolygons);
     }
+
 
 }
 

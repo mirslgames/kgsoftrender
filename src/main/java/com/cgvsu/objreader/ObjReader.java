@@ -69,9 +69,9 @@ public class ObjReader {
 	}
 
 	protected static Model constructModelFromReadData(ArrayList<Vector3f> readVertices,
-		ArrayList<Vector2f> readTextureVertices,
-		ArrayList<Vector3f> readNormals,
-		ArrayList<ArrayList<Integer>[]> readPolygonsIndices){
+													  ArrayList<Vector2f> readTextureVertices,
+													  ArrayList<Vector3f> readNormals,
+													  ArrayList<ArrayList<Integer>[]> readPolygonsIndices){
 
 		Model result = new Model();
 
@@ -122,9 +122,9 @@ public class ObjReader {
 	}
 
 	protected static boolean checkReadData(ArrayList<Vector3f> readVertices,
-		ArrayList<Vector2f> readTextureVertices,
-		ArrayList<Vector3f> readNormals,
-		ArrayList<ArrayList<Integer>[]> readPolygonsIndices){
+										   ArrayList<Vector2f> readTextureVertices,
+										   ArrayList<Vector3f> readNormals,
+										   ArrayList<ArrayList<Integer>[]> readPolygonsIndices){
 
 		if (readVertices == null || readVertices.isEmpty()){
 			return false;
@@ -202,9 +202,9 @@ public class ObjReader {
 
 
 	protected static void parseFaceWordDoubleSlash(String wordInLine,
-		ArrayList<Integer> onePolygonVertexIndices,
-		ArrayList<Integer> onePolygonNormalIndices,
-		int lineInd){
+												   ArrayList<Integer> onePolygonVertexIndices,
+												   ArrayList<Integer> onePolygonNormalIndices,
+												   int lineInd){
 
 		try {
 			String[] wordIndices = wordInLine.split("//");

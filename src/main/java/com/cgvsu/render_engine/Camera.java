@@ -57,8 +57,27 @@ public class Camera {
     Matrix4f getProjectionMatrix() {
         return GraphicConveyor.perspective(fov, aspectRatio, nearPlane, farPlane);
     }
-    public Vector3f getRayToPoint(Vector3f worldPoint) {
-        return worldPoint.subbed(position).normalize();
+    public Vector3f getRayToPoint(Vector3f worldPosition) {
+         //проверяем входные данные
+        if (worldPosition == null ||
+                Float.isNaN(worldPosition.getX()) ||
+                Float.isNaN(worldPosition.getY()) ||
+                Float.isNaN(worldPosition.getZ())) {
+            System.err.println("ERROR: Invalid world position in getRayToPoint");
+            return new Vector3f(0, 0, -1); // возвращаем что-то безопасное
+        }
+
+
+        Vector3f cameraPos = this.getPosition();
+        Vector3f ray = worldPosition.subbed(cameraPos);
+
+
+        if (ray.len() == 0) {
+            System.err.println("WARNING: Zero-length ray in getRayToPoint");
+            return new Vector3f(0, 0, -1);
+        }
+
+        return ray.normalize();
     }
     private Vector3f position;
     private Vector3f target;

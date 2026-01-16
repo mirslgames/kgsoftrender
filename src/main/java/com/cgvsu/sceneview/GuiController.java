@@ -171,8 +171,7 @@ public class GuiController {
 
 
         for (Model model : SceneManager.models) {
-            model.triangulate();
-            RenderEngine.renderWithRenderingMods2(sceneCanvas.getGraphicsContext2D(), SceneManager.activeCamera, model, (int) width, (int) height);
+            RenderEngine.renderWithRenderingMods(sceneCanvas.getGraphicsContext2D(), SceneManager.activeCamera, model, (int) width, (int) height);
         }
         //ВАРИАНТ рендерить только активную модель
         /*if (SceneManager.activeModel != null) {
@@ -362,7 +361,7 @@ public class GuiController {
             String fileContent = Files.readString(fileName);
             Model mesh = ObjReader.read(fileContent, fileName.getFileName().toString(), SceneManager.historyModelName);
             validateAndCorrectDuplicateModelName(mesh);
-
+            mesh.triangulate();
             //Добавление кнопки
             addModelButton(mesh);
             // todo: обработка ошибок

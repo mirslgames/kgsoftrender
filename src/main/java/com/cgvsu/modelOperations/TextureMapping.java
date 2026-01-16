@@ -90,6 +90,7 @@ public class TextureMapping {
      */
     public static Color getModifiedColorWithLighting(Vector3f ray, Vector3f normal, Color baseColor,
                                                      float lightIntensity){
+
             float l = -1 * ray.dot(normal);
             if (l < 0){
                 l = 0;
