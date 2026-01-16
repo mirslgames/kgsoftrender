@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import com.cgvsu.math.matrixs.Matrix4f;
 import com.cgvsu.math.point.Point2f;
 import com.cgvsu.math.point.Point3f;
+import com.cgvsu.math.vectors.Vector2f;
 import com.cgvsu.math.vectors.Vector3f;
 import com.cgvsu.model.Vertex;
 import com.cgvsu.modelOperations.Rasterization;
@@ -320,9 +321,12 @@ public class RenderEngine {
                 float z1 = depths.get(0);
                 float z2 = depths.get(1);
                 float z3 = depths.get(2);
-                Vector3f w1 = worldPositions.get(0); // НОВОЕ
-                Vector3f w2 = worldPositions.get(1); // НОВОЕ
+                Vector3f w1 = worldPositions.get(0);
+                Vector3f w2 = worldPositions.get(1);
                 Vector3f w3 = worldPositions.get(2);
+                Vector2f t1 = mesh.getTextureCoordinateForPolygonVertex(0);
+                Vector2f t2 = mesh.getTextureCoordinateForPolygonVertex(1);
+                Vector2f t3 = mesh.getTextureCoordinateForPolygonVertex(2);
                 if (SceneManager.useTexture && mesh.texture != null) {
                     Image texture = mesh.texture;
                     Rasterization.PixelCallback callback = (x, y, z, barycentric, texCoord, normal, worldPosition) -> {

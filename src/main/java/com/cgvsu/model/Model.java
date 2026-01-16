@@ -2,6 +2,7 @@ package com.cgvsu.model;
 
 
 
+import com.cgvsu.math.vectors.Vector2f;
 import com.cgvsu.modelOperations.TriangulationAlgorithm;
 import javafx.scene.image.Image;
 
@@ -14,6 +15,7 @@ public class Model {
     public ArrayList<Vertex> vertices = new ArrayList<>(); //Вершины у модельки
     public ArrayList<Integer> polygons = new ArrayList<Integer>(); //Индексы на конкретные вершины из списка для полигонов
     public ArrayList<Integer> polygonsBoundaries = new ArrayList<>(); //Номер индекса с которого идут вершины для данного полигона (старт)
+    public ArrayList<Integer> polygonsTextureCoordinateIndices = new ArrayList<>();
     public boolean hasTexture;
     public Image texture;
 
@@ -39,26 +41,65 @@ public class Model {
         scaleYValue = 1;
         scaleZValue = 1;
     }
+    /**
+     * Оставил старое имя метода, потому что он используется в UI (GuiController).
+     * По смыслу: есть ли в модели UV (vt), которые можно использовать.
+     */
+    public boolean getHasTextureVertex() {
+        return polygonsTextureCoordinateIndices != null
+                && polygonsTextureCoordinateIndices.size() == polygons.size();
+    }
+
+    public Vector2f getTextureCoordinateForPolygonVertex(final int polygonVertexGlobalIndex) {
+        if (!getHasTextureVertex()) return null;
+        if (polygonVertexGlobalIndex < 0 || polygonVertexGlobalIndex >= polygons.size()) return null;
+
+        int vIndex = polygons.get(polygonVertexGlobalIndex);
+        if (vIndex < 0 || vIndex >= vertices.size()) return null;
+
+        int uvLocalIndex = polygonsTextureCoordinateIndices.get(polygonVertexGlobalIndex);
+        return vertices.get(vIndex).getTextureCoordinate(uvLocalIndex);
+    }
+    /**
+     * Триангулирует все полигоны в модели, сохраняя индексы UV (локальные) синхронно с вершинами.
+     */
     public void triangulate() {
+        if (polygonsBoundaries == null || polygonsBoundaries.isEmpty()) {
+            return;
+        }
+
         ArrayList<Integer> newPolygons = new ArrayList<>();
+        ArrayList<Integer> newTextureLocalIndices = new ArrayList<>();
         ArrayList<Integer> newBoundaries = new ArrayList<>();
 
-        for (int i = 0; i < polygonsBoundaries.size(); i++) {
-            int start = polygonsBoundaries.get(i);
-            int end = (i + 1 < polygonsBoundaries.size()) ? polygonsBoundaries.get(i + 1) : polygons.size();
-            List<Integer> polygon = new ArrayList<>(polygons.subList(start, end));
+        int polygonCount = polygonsBoundaries.size();
+        for (int polygonInd = 0; polygonInd < polygonCount; polygonInd++) {
+            int start = polygonsBoundaries.get(polygonInd);
+            int end = (polygonInd + 1 < polygonCount)
+                    ? polygonsBoundaries.get(polygonInd + 1)
+                    : polygons.size();
 
+            int vertexCount = end - start;
+            if (vertexCount < 3) {
+                continue;
+            }
 
-            List<List<Integer>> triangles = TriangulationAlgorithm.triangulate(polygon);
+            List<Integer> polygonVertices = new ArrayList<>(polygons.subList(start, end));
+            List<Integer> polygonVtLocal = new ArrayList<>(polygonsTextureCoordinateIndices.subList(start, end));
 
-
-            for (List<Integer> tri : triangles) {
+            // Триангулируем по позициям 0..N-1 и применяем те же позиции к обоим спискам.
+            List<List<Integer>> trianglesPos = TriangulationAlgorithm.triangulatePositions(vertexCount);
+            for (List<Integer> triPos : trianglesPos) {
                 newBoundaries.add(newPolygons.size());
-                newPolygons.addAll(tri);
+                for (int pos : triPos) {
+                    newPolygons.add(polygonVertices.get(pos));
+                    newTextureLocalIndices.add(polygonVtLocal.get(pos));
+                }
             }
         }
 
         polygons = newPolygons;
+        polygonsTextureCoordinateIndices = newTextureLocalIndices;
         polygonsBoundaries = newBoundaries;
     }
 
