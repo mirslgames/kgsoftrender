@@ -16,7 +16,9 @@ import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCombination;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -128,6 +130,7 @@ public class GuiController {
 
         canvasParentAnchorPane.setOnMouseDragged(this::changeCameraPosition);
         canvasParentAnchorPane.setOnMousePressed(this::setPastXY);
+        canvasParentAnchorPane.setOnScroll(this::setZoom);
 
         Platform.runLater(() -> {
             ThemeSettings.setLightTheme();
@@ -485,7 +488,19 @@ public class GuiController {
 
     @FXML
     public void changeCameraPosition(MouseEvent mouseEvent) {
+        if (mouseEvent.getButton() == MouseButton.PRIMARY) {
+            rotateCamera(mouseEvent);
+        } else {
+            moveCamera(mouseEvent);
+        }
 
+    }
+
+    private void moveCamera(MouseEvent mouseEvent) {
+        return;
+    }
+
+    private void rotateCamera(MouseEvent mouseEvent) {
         float deltaX = (float) (mouseEvent.getX() - pastX);
         float deltaY = (float) (mouseEvent.getY() - pastY);
         pastX = (float) mouseEvent.getX();
@@ -498,6 +513,10 @@ public class GuiController {
     public void setPastXY(MouseEvent mouseEvent) {
         pastX = (float) mouseEvent.getX();
         pastY = (float) mouseEvent.getY();
+    }
+
+    public void setZoom(ScrollEvent scrollEvent) {
+        SceneManager.activeCamera.zoomCamera((float) scrollEvent.getDeltaY() / 20);
     }
 
     @FXML

@@ -20,6 +20,8 @@ public class Camera {
         this.aspectRatio = aspectRatio;
         this.nearPlane = nearPlane;
         this.farPlane = farPlane;
+        radius = position.subbed(target).len();
+
     }
 
     public void setPosition(final Vector3f position) {
@@ -44,11 +46,19 @@ public class Camera {
 
     public void movePosition(final Vector3f translation) {
         this.position.add(translation);
-        //System.out.printf("%f, %f, %f, %n", position.getX(), position.getY(), position.getZ());
     }
 
     public void moveTarget(final Vector3f translation) {
         this.target.add(translation);
+    }
+
+    public void zoomCamera(float deltaS) {
+        radius = clamp(radius - deltaS, (float) (Math.max(nearPlane * 1.2, 50f)), 400f);
+        updatePositionFromAngles();
+    }
+
+    public float getNearPlane() {
+        return nearPlane;
     }
 
     public void rotateCamera(float yawDeg, float pitchDeg) {
@@ -64,8 +74,12 @@ public class Camera {
     }
 
     private float clamp(float v, float lo, float hi) {
-        if (v < lo) return lo;
-        if (v > hi) return hi;
+        if (v < lo) {
+            return lo;
+        }
+        if (v > hi) {
+            return hi;
+        }
         return v;
     }
 
@@ -79,7 +93,7 @@ public class Camera {
     private void updatePositionFromAngles() {
         double yawRad = Math.toRadians(yaw);
         double pitchRad = Math.toRadians(pitch);
-        float radius = position.subbed(target).len();
+
 
 
         float cosPitch = (float) Math.cos(pitchRad);
@@ -121,6 +135,7 @@ public class Camera {
     private float yaw = 0f;
 
     private final float EPS = 10e-6f;
+    private float radius;
 
     private Vector3f cameraUp = new Vector3f(0f, 1f, 0f);
 }
