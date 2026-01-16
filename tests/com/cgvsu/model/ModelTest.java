@@ -9,7 +9,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ModelTextureTest {
+class ModelTest {
 
     private static final float EPS = 1e-6f;
 
