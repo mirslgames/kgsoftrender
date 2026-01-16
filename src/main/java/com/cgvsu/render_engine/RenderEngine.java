@@ -357,10 +357,10 @@ public class RenderEngine {
                             graphicsContext.getPixelWriter().setColor(x, y, color);
                         }
                     };
-                    // НОВОЕ: передаем мировые позиции для интерполяции
+
                     Rasterization.rasterizeTriangleWithWorldPos(p1, p2, p3, z1, z2, z3, v1, v2, v3, t1, t2, t3, w1,
                             w2, w3, callback, modelMatrix);
-                } else if (!SceneManager.drawMesh) {
+                } else if (!SceneManager.useTexture) {
                     Rasterization.PixelCallback callback = (x, y, z, barycentric, texCoord, normal, worldNormal, worldPosition) -> {
                         if (zBuffer.testAndSet(x, y, z)) {
                             Color color = baseColor;
@@ -381,13 +381,31 @@ public class RenderEngine {
                 }
             }
             if (SceneManager.drawMesh) {
-                graphicsContext.setStroke(Color.web(ThemeSettings.wireframeColor));
-                graphicsContext.setLineWidth(ThemeSettings.wireframeWidth);
-
-
-                graphicsContext.strokeLine(p1.getX(), p1.getY(), p2.getX(), p2.getY());
-                graphicsContext.strokeLine(p2.getX(), p2.getY(), p3.getX(), p3.getY());
-                graphicsContext.strokeLine(p3.getX(), p3.getY(), p1.getX(), p1.getY());
+                float bias = 0.0001f;
+                Color lineColor = Color.web(ThemeSettings.wireframeColor);
+                int lineWidth =  (int) ThemeSettings.wireframeWidth;
+                Rasterization.rasterizeThickLine(p1,p2,z1-bias,z2-bias, lineWidth, ((x, y, z) -> {
+                    if (zBuffer.testAndSet(x, y, z)) {
+                        graphicsContext.getPixelWriter().setColor(x, y, lineColor);
+                    }
+                }));
+                Rasterization.rasterizeThickLine(p2,p3,z2-bias,z3-bias, lineWidth, ((x, y, z) -> {
+                    if (zBuffer.testAndSet(x, y, z)) {
+                        graphicsContext.getPixelWriter().setColor(x, y, lineColor);
+                    }
+                }));
+                Rasterization.rasterizeThickLine(p1,p3,z1-bias,z3-bias, lineWidth, ((x, y, z) -> {
+                    if (zBuffer.testAndSet(x, y, z)) {
+                        graphicsContext.getPixelWriter().setColor(x, y, lineColor);
+                    }
+                }));
+//                graphicsContext.setStroke(Color.web(ThemeSettings.wireframeColor));
+//                graphicsContext.setLineWidth(ThemeSettings.wireframeWidth);
+//
+//
+//                graphicsContext.strokeLine(p1.getX(), p1.getY(), p2.getX(), p2.getY());
+//                graphicsContext.strokeLine(p2.getX(), p2.getY(), p3.getX(), p3.getY());
+//                graphicsContext.strokeLine(p3.getX(), p3.getY(), p1.getX(), p1.getY());
             }
         }
     }

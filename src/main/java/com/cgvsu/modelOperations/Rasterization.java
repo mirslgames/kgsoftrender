@@ -454,6 +454,165 @@ public class Rasterization {
          */
         void onPixel(int x, int y, float z, float[] barycentric, Vector2f texCoord, Vector3f normal, Vector3f worldNormal, Vector3f worldPosition);
     }
+    public interface LinePixelCallback {
+        /**
+         * Вызывается для каждого пикселя на прямой
+         * @param x координата вершины по оси ox в экранных координатах
+         * @param y координата вершины по оси oy в экранных координатах
+         */
+        void onPixel(int x, int y, float z);
+
+    }
+    /**
+     * Растеризует линию между двумя точками с учетом глубины
+     * Использует алгоритм Брезенхема с интерполяцией Z
+     *
+     * @param p1 первая точка (с глубиной z1)
+     * @param p2 вторая точка (с глубиной z2)
+     * @param z1 глубина первой точки
+     * @param z2 глубина второй точки
+     * @param callback callback для каждого пикселя
+     */
+    public static void rasterizeLine(Point2f p1, Point2f p2, float z1, float z2,
+                                     LinePixelCallback callback) {
+        int x1 = (int) Math.round(p1.getX());
+        int y1 = (int) Math.round(p1.getY());
+        int x2 = (int) Math.round(p2.getX());
+        int y2 = (int) Math.round(p2.getY());
+
+        rasterizeLine(x1, y1, x2, y2, z1, z2, callback);
+    }
+
+    /**
+     * Растеризует линию между двумя точками с учетом глубины
+     * Использует алгоритм Брезенхема с интерполяцией Z
+     *
+     * @param x1, y1 координаты первой точки
+     * @param x2, y2 координаты второй точки
+     * @param z1 глубина первой точки
+     * @param z2 глубина второй точки
+     * @param callback callback для каждого пикселя
+     */
+    public static void rasterizeLine(int x1, int y1, int x2, int y2,
+                                     float z1, float z2, LinePixelCallback callback) {
+        if (x1 == x2 && y1 == y2) {
+            callback.onPixel(x1, y1, z1);
+            return;
+        }
+
+        int dx = Math.abs(x2 - x1);
+        int dy = Math.abs(y2 - y1);
+
+        int sx = (x1 < x2) ? 1 : -1;
+        int sy = (y1 < y2) ? 1 : -1;
+
+        int err = dx - dy;
+        int currentX = x1;
+        int currentY = y1;
+
+        // Определяем основную ось для интерполяции
+        boolean xMajor = dx >= dy;
+        float total = xMajor ? dx : dy;
+        if (total == 0) total = 1;
+
+        float progress = 0;
+
+        while (true) {
+            // Интерполируем z
+            float t = progress / total;
+            float z = z1 + (z2 - z1) * t;
+
+            callback.onPixel(currentX, currentY, z);
+
+            if (currentX == x2 && currentY == y2) break;
+
+            int err2 = 2 * err;
+
+            if (err2 > -dy) {
+                err -= dy;
+                currentX += sx;
+                if (xMajor) progress++;
+            }
+
+            if (err2 < dx) {
+                err += dx;
+                currentY += sy;
+                if (!xMajor) progress++;
+            }
+        }
+    }
+
+    /**
+     * Растеризует линию с утолщением (ширина линии)
+     *
+     * @param p1 первая точка
+     * @param p2 вторая точка
+     * @param z1 глубина первой точки
+     * @param z2 глубина второй точки
+     * @param lineWidth толщина линии (в пикселях)
+     * @param callback callback для каждого пикселя
+     */
+    public static void rasterizeThickLine(Point2f p1, Point2f p2, float z1, float z2,
+                                          int lineWidth, LinePixelCallback callback) {
+        int x1 = (int) Math.round(p1.getX());
+        int y1 = (int) Math.round(p1.getY());
+        int x2 = (int) Math.round(p2.getX());
+        int y2 = (int) Math.round(p2.getY());
+
+        // Для толстой линии рисуем несколько параллельных линий
+        if (lineWidth <= 1) {
+            rasterizeLine(x1, y1, x2, y2, z1, z2, callback);
+            return;
+        }
+
+        // Вычисляем нормаль к линии
+        float dx = x2 - x1;
+        float dy = y2 - y1;
+        float length = (float) Math.sqrt(dx*dx + dy*dy);
+
+        if (length == 0) {
+            // Точки совпадают - рисуем точку с радиусом
+            drawPointWithThickness(x1, y1, z1, lineWidth, callback);
+            return;
+        }
+
+        // Нормализуем вектор направления
+        dx /= length;
+        dy /= length;
+
+        // Перпендикулярный вектор (для толщины)
+        float perpX = -dy;
+        float perpY = dx;
+
+        // Смещения для толщины
+        float halfWidth = (lineWidth - 1) / 2.0f;
+
+        // Рисуем несколько линий с небольшим смещением
+        for (int i = 0; i < lineWidth; i++) {
+            float offset = i - halfWidth;
+            int offsetX1 = x1 + Math.round(perpX * offset);
+            int offsetY1 = y1 + Math.round(perpY * offset);
+            int offsetX2 = x2 + Math.round(perpX * offset);
+            int offsetY2 = y2 + Math.round(perpY * offset);
+
+            rasterizeLine(offsetX1, offsetY1, offsetX2, offsetY2, z1, z2, callback);
+        }
+    }
+    private static void drawPointWithThickness(int x, int y, float z,
+                                               int thickness, LinePixelCallback callback) {
+        int radius = thickness / 2;
+        for (int dy = -radius; dy <= radius; dy++) {
+            for (int dx = -radius; dx <= radius; dx++) {
+                if (dx*dx + dy*dy <= radius*radius) {
+                    callback.onPixel(x + dx, y + dy, z);
+                }
+            }
+        }
+    }
+    private static float interpolateLinear(float a, float b, float t) {
+        return a + (b - a) * t;
+    }
+
 }
 
 
