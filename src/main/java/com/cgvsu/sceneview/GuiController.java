@@ -18,9 +18,16 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
+
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.function.UnaryOperator;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -93,6 +100,8 @@ public class GuiController {
     private Label lightIntensityLabel;
     @FXML
     private Slider lightIntensitySlider;
+    @FXML
+    private TextArea logTextArea;
 
     private Timeline timeline;
 
@@ -107,6 +116,7 @@ public class GuiController {
             SceneManager.lightIntensity = newV.floatValue();
         });
 
+
         positionXTextField.setOnKeyReleased(e -> onPositionXChanged());
         positionYTextField.setOnKeyReleased(e -> onPositionYChanged());
         positionZTextField.setOnKeyReleased(e -> onPositionZChanged());
@@ -119,12 +129,30 @@ public class GuiController {
         scaleYTextField.setOnKeyReleased(e -> onScaleYChanged());
         scaleZTextField.setOnKeyReleased(e -> onScaleZChanged());
 
+        installNumericFloatFilter(positionXTextField);
+        installNumericFloatFilter(positionYTextField);
+        installNumericFloatFilter(positionZTextField);
+
+        installNumericFloatFilter(rotationXTextField);
+        installNumericFloatFilter(rotationYTextField);
+        installNumericFloatFilter(rotationZTextField);
+
+        installNumericFloatFilter(scaleXTextField);
+        installNumericFloatFilter(scaleYTextField);
+        installNumericFloatFilter(scaleZTextField);
+
+
         openModeMenuItem.setAccelerator(KeyCombination.keyCombination(ShortcutsSettings.openModel));
         saveModeMenuItem.setAccelerator(KeyCombination.keyCombination(ShortcutsSettings.saveModel));
 
         Platform.runLater(() -> {
             ThemeSettings.setLightTheme();
             applyTheme();
+
+            Scene scene = sceneCanvas.getScene();
+            if (scene != null) {
+                installHoverForAllButtons(scene.getRoot());
+            }
         });
         SceneManager.initialize();
 
@@ -171,12 +199,34 @@ public class GuiController {
 
 
         for (Model model : SceneManager.models) {
-            RenderEngine.renderWithRenderingMods(sceneCanvas.getGraphicsContext2D(), SceneManager.activeCamera, model, (int) width, (int) height);
+            RenderEngine.renderWithRenderingMods2(sceneCanvas.getGraphicsContext2D(), SceneManager.activeCamera, model, (int) width, (int) height);
         }
         //ВАРИАНТ рендерить только активную модель
         /*if (SceneManager.activeModel != null) {
             RenderEngine.render(sceneCanvas.getGraphicsContext2D(), SceneManager.activeCamera, SceneManager.activeModel, (int) width, (int) height);
         }*/
+    }
+
+    private void installNumericFloatFilter(TextField tf) {
+        if (tf == null) return;
+
+        UnaryOperator<TextFormatter.Change> filter = change -> {
+            String newText = change.getControlNewText();
+
+            // Разрешаем как промежуточный ввод
+            if (newText.equals("-") || newText.equals("-.") || newText.equals("-,")) return change;
+
+            // Полноценное число:
+            // 123
+            // -123
+            // 12.34
+            // -12,34
+            if (newText.matches("-?\\d+([\\.,]\\d*)?")) return change;
+
+            return null; //Запрещаем другие изменения и также пустую строчку
+        };
+
+        tf.setTextFormatter(new TextFormatter<>(filter));
     }
 
     private float parseFloat(TextField textField) {
@@ -186,7 +236,7 @@ public class GuiController {
         try {
             return Float.parseFloat(s);
         } catch (NumberFormatException e) {
-            //todo:обработка ошибок
+            showError(e.getMessage());
         }
         return 0;
     }
@@ -194,51 +244,77 @@ public class GuiController {
     @FXML
     private void onLightThemeMenuItemClick() {
         ThemeSettings.setLightTheme();
+        logTextArea.setStyle(String.format("-fx-text-fill: black;"));
+        //todo: Доделать стили и добавить туда TextArea
         applyTheme();
     }
 
     @FXML
     private void onDarkThemeMenuItemClick() {
         ThemeSettings.setDarkTheme();
+        logTextArea.setStyle(String.format("-fx-text-fill: white;"));
         applyTheme();
     }
 
     private void applyTheme() {
-        Scene scene = sceneCanvas.getScene();
-        if (scene == null) return;
+        try {
+            Scene scene = sceneCanvas.getScene();
+            if (scene == null) return;
 
-        Parent root = scene.getRoot();
-        root.setStyle(ThemeSettings.rootStyle);
+            Parent root = scene.getRoot();
+            root.setStyle(ThemeSettings.rootStyle);
 
-        applyStyle(root, ".split-pane", ThemeSettings.splitPaneStyle);
-        applyStyle(root, ".split-pane-divider", ThemeSettings.splitDividerStyle);
+            applyStyle(root, ".split-pane", ThemeSettings.splitPaneStyle);
+            applyStyle(root, ".split-pane-divider", ThemeSettings.splitDividerStyle);
 
-        applyStyle(root, ".anchor-pane", ThemeSettings.paneStyle);
-        applyStyle(root, ".vbox", ThemeSettings.paneStyle);
-        applyStyle(root, ".hbox", ThemeSettings.paneStyle);
+            applyStyle(root, ".anchor-pane", ThemeSettings.paneStyle);
+            applyStyle(root, ".vbox", ThemeSettings.paneStyle);
+            applyStyle(root, ".hbox", ThemeSettings.paneStyle);
 
-        applyStyle(root, ".menu-bar", ThemeSettings.menuBarStyle);
+            applyStyle(root, ".menu-bar", ThemeSettings.menuBarStyle);
 
-        applyStyle(root, ".label", ThemeSettings.labelStyle);
-        applyStyle(root, ".check-box", ThemeSettings.checkBoxStyle);
-        applyStyle(root, ".text-field", ThemeSettings.textFieldStyle);
+            applyStyle(root, ".label", ThemeSettings.labelStyle);
+            applyStyle(root, ".check-box", ThemeSettings.checkBoxStyle);
+            applyStyle(root, ".text-field", ThemeSettings.textFieldStyle);
 
-        applyStyle(root, ".button", ThemeSettings.buttonStyle);
-        if (activeButton != null) {
-            activeButton.setStyle(ThemeSettings.activeButtonStyle);
+            applyStyle(root, ".button", ThemeSettings.buttonStyle);
+            if (activeButton != null) {
+                activeButton.setStyle(ThemeSettings.activeButtonStyle);
+            }
+
+            applyStyle(root, ".titled-pane > .title", ThemeSettings.titledPaneTitleStyle);
+            applyStyle(root, ".titled-pane > .title > .text", ThemeSettings.titledPaneTitleTextStyle);
+            applyStyle(root, ".titled-pane > *.content", ThemeSettings.titledPaneContentStyle);
+
+            applyStyle(root, ".scroll-pane", ThemeSettings.scrollPaneStyle);
+            applyStyle(root, ".scroll-pane .viewport", ThemeSettings.scrollPaneViewportStyle);
+
+            applyStyle(root, ".scroll-bar", ThemeSettings.scrollBarStyle);
+            applyStyle(root, ".scroll-bar .thumb", ThemeSettings.scrollBarThumbStyle);
+
+            Platform.runLater(() -> applyStyle(root, ".menu-bar .label", ThemeSettings.menuBarLabelStyle));
+
+            if (applyTransformButton != null) {
+                applyTransformButton.setStyle(
+                        applyTransformButton.isHover() ? ThemeSettings.buttonHoverStyle : ThemeSettings.buttonStyle
+                );
+            }
         }
+        catch (Exception exception){
+            showError("Ошибка при применении темы");
+        }
+    }
 
-        applyStyle(root, ".titled-pane > .title", ThemeSettings.titledPaneTitleStyle);
-        applyStyle(root, ".titled-pane > .title > .text", ThemeSettings.titledPaneTitleTextStyle);
-        applyStyle(root, ".titled-pane > *.content", ThemeSettings.titledPaneContentStyle);
+    private void appendLog(String level, String text) {
+        String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+        String line = String.format("[%s] [%s] %s%n", time, level, text);
 
-        applyStyle(root, ".scroll-pane", ThemeSettings.scrollPaneStyle);
-        applyStyle(root, ".scroll-pane .viewport", ThemeSettings.scrollPaneViewportStyle);
+        Platform.runLater(() -> {
+            logTextArea.appendText(line);
 
-        applyStyle(root, ".scroll-bar", ThemeSettings.scrollBarStyle);
-        applyStyle(root, ".scroll-bar .thumb", ThemeSettings.scrollBarThumbStyle);
 
-        Platform.runLater(() -> applyStyle(root, ".menu-bar .label", ThemeSettings.menuBarLabelStyle));
+            logTextArea.positionCaret(logTextArea.getText().length());
+        });
     }
 
     private void applyStyle(Node root, String selector, String style) {
@@ -251,69 +327,121 @@ public class GuiController {
     @FXML
     private void onPositionXChanged() {
         if(SceneManager.activeModel != null){
-            SceneManager.activeModel.positionXValue = parseFloat(positionXTextField);
+            SceneManager.activeModel.currentTransform.positionX = parseFloat(positionXTextField);
         }
-
     }
 
     @FXML
     private void onPositionYChanged() {
         if(SceneManager.activeModel != null) {
-            SceneManager.activeModel.positionYValue = parseFloat(positionYTextField);
+            SceneManager.activeModel.currentTransform.positionY = parseFloat(positionYTextField);
         }
     }
 
     @FXML
     private void onPositionZChanged() {
         if(SceneManager.activeModel != null) {
-            SceneManager.activeModel.positionZValue = parseFloat(positionZTextField);
+            SceneManager.activeModel.currentTransform.positionZ = parseFloat(positionZTextField);
         }
     }
 
     @FXML
     private void onRotationXChanged() {
         if(SceneManager.activeModel != null) {
-            SceneManager.activeModel.rotationXValue = parseFloat(rotationXTextField);
+            SceneManager.activeModel.currentTransform.rotationX = parseFloat(rotationXTextField);
         }
     }
 
     @FXML
     private void onRotationYChanged() {
         if(SceneManager.activeModel != null) {
-            SceneManager.activeModel.rotationYValue = parseFloat(rotationYTextField);
+            SceneManager.activeModel.currentTransform.rotationY = parseFloat(rotationYTextField);
         }
     }
 
     @FXML
     private void onRotationZChanged() {
         if(SceneManager.activeModel != null) {
-            SceneManager.activeModel.rotationZValue = parseFloat(rotationZTextField);
+            SceneManager.activeModel.currentTransform.rotationZ = parseFloat(rotationZTextField);
         }
     }
 
     @FXML
     private void onScaleXChanged() {
         if(SceneManager.activeModel != null) {
-            SceneManager.activeModel.scaleXValue = parseFloat(scaleXTextField);
+            SceneManager.activeModel.currentTransform.scaleX = parseFloat(scaleXTextField);
         }
     }
 
     @FXML
     private void onScaleYChanged() {
         if(SceneManager.activeModel != null) {
-            SceneManager.activeModel.scaleYValue = parseFloat(scaleYTextField);
+            SceneManager.activeModel.currentTransform.scaleY = parseFloat(scaleYTextField);
         }
     }
 
     @FXML
     private void onScaleZChanged() {
         if(SceneManager.activeModel != null) {
-            SceneManager.activeModel.scaleZValue = parseFloat(scaleZTextField);
+            SceneManager.activeModel.currentTransform.scaleZ = parseFloat(scaleZTextField);
         }
     }
 
+    private void installHoverForButton(ButtonBase button) {
+        if (button == null) return;
+
+        button.setOnMouseEntered(e -> {
+            if (button == activeButton) {
+                button.setStyle(ThemeSettings.activeButtonStyle);
+            } else {
+                button.setStyle(ThemeSettings.buttonHoverStyle);
+            }
+        });
+
+        button.setOnMouseExited(e -> {
+            if (button == activeButton) {
+                button.setStyle(ThemeSettings.activeButtonStyle);
+            } else {
+                button.setStyle(ThemeSettings.buttonStyle);
+            }
+        });
+    }
+
+    private void installHoverForAllButtons(Parent root) {
+        if (root == null) return;
+
+        Set<Node> nodes = root.lookupAll(".button");
+        for (Node n : nodes) {
+            if (n instanceof ButtonBase b) {
+                installHoverForButton(b);
+
+                if (b == activeButton) {
+                    b.setStyle(ThemeSettings.activeButtonStyle);
+                } else {
+                    b.setStyle(b.isHover() ? ThemeSettings.buttonHoverStyle : ThemeSettings.buttonStyle);
+                }
+            }
+        }
+    }
+
+
     @FXML
     private void onApplyTransformButtonClick(){
+        //Вариант если через кнопку применить
+        /*if(SceneManager.activeModel != null) {
+            SceneManager.activeModel.currentTransform.positionX = parseFloat(positionXTextField);
+            SceneManager.activeModel.currentTransform.positionY = parseFloat(positionYTextField);
+            SceneManager.activeModel.currentTransform.positionZ = parseFloat(positionZTextField);
+            SceneManager.activeModel.currentTransform.rotationX = parseFloat(rotationXTextField);
+            SceneManager.activeModel.currentTransform.rotationY = parseFloat(rotationYTextField);
+            SceneManager.activeModel.currentTransform.rotationZ = parseFloat(rotationZTextField);
+            SceneManager.activeModel.currentTransform.scaleX = parseFloat(scaleXTextField);
+            SceneManager.activeModel.currentTransform.scaleY = parseFloat(scaleYTextField);
+            SceneManager.activeModel.currentTransform.scaleZ = parseFloat(scaleZTextField);
+        } else{
+            showWarning("Не выбрана конкретная модель");
+        }*/
+
         //Для теста ручного
         /*String text = SceneManager.activeModel.positionXValue + "\n" +
                 SceneManager.activeModel.positionYValue + "\n" +
@@ -331,52 +459,76 @@ public class GuiController {
     @FXML
     private void onSaveModelMenuItemClick() {
 
-        if(SceneManager.activeModel == null){
-            showWarning("Выберите конкретную модель");
-        } else {
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Model (*.obj)", "*.obj"));
-            fileChooser.setTitle("Save Model");
+        try {
+            if (SceneManager.activeModel == null) {
+                showWarning("Выберите конкретную модель");
+            } else {
+                FileChooser fileChooser = new FileChooser();
+                fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Model (*.obj)", "*.obj"));
+                fileChooser.setTitle("Save Model");
 
-            File file = fileChooser.showSaveDialog((Stage) sceneCanvas.getScene().getWindow());
-            Path fileName = Path.of(file.getAbsolutePath());
-            ObjWriter.writeModelToFile(SceneManager.activeModel, fileName.toString());
+                File file = fileChooser.showSaveDialog((Stage) sceneCanvas.getScene().getWindow());
+                Path fileName = Path.of(file.getAbsolutePath());
+                ObjWriter.writeModelToFile(SceneManager.activeModel, fileName.toString());
+                logInfo(String.format("Модель %s была успешно сохранена", SceneManager.activeModel.modelName));
+            }
+        }
+        catch(Exception exception){
+            showError(exception.getMessage());
         }
     }
 
     @FXML
     private void onOpenModelMenuItemClick() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Model (*.obj)", "*.obj"));
-        fileChooser.setTitle("Load Model");
-
-        File file = fileChooser.showOpenDialog((Stage) sceneCanvas.getScene().getWindow());
-        if (file == null) {
-            return;
-        }
-
-        Path fileName = Path.of(file.getAbsolutePath());
-
         try {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Model (*.obj)", "*.obj"));
+            fileChooser.setTitle("Load Model");
+
+            File file = fileChooser.showOpenDialog((Stage) sceneCanvas.getScene().getWindow());
+            if (file == null) {
+                return;
+            }
+
+            Path fileName = Path.of(file.getAbsolutePath());
+
+
             String fileContent = Files.readString(fileName);
-            Model mesh = ObjReader.read(fileContent, fileName.getFileName().toString(), SceneManager.historyModelName);
+            Model mesh = ObjReader.readModelFromFile(fileContent, fileName.getFileName().toString(), SceneManager.historyModelName);
             validateAndCorrectDuplicateModelName(mesh);
             mesh.triangulate();
             //Добавление кнопки
             addModelButton(mesh);
-            // todo: обработка ошибок
-        } catch (IOException exception) {
-
+            logInfo(String.format("Модель %s была успешно загружена", mesh.modelName));
+        } catch (Exception exception) {
+            showError(exception.getMessage());
         }
     }
 
+    public void logInfo(String text) {
+        appendLog("INFO", text);
+    }
+
+    public void logWarning(String text) {
+        appendLog("WARN", text);
+    }
+
+    public void logError(String text) {
+        appendLog("ERROR", text);
+    }
+
     protected static void validateAndCorrectDuplicateModelName(Model targetModel){
-        if (SceneManager.historyModelName.containsKey(targetModel.modelName)){
-            int c = SceneManager.historyModelName.get(targetModel.modelName);
-            SceneManager.historyModelName.put(targetModel.modelName, ++c);
-            targetModel.modelName += String.format(" (%d)", c);
-        } else{
-            SceneManager.historyModelName.put(targetModel.modelName, 0);
+        try {
+            if (SceneManager.historyModelName.containsKey(targetModel.modelName)) {
+                int c = SceneManager.historyModelName.get(targetModel.modelName);
+                SceneManager.historyModelName.put(targetModel.modelName, ++c);
+                targetModel.modelName += String.format(" (%d)", c);
+            } else {
+                SceneManager.historyModelName.put(targetModel.modelName, 0);
+            }
+        }
+        catch (Exception exception){
+            throw new RuntimeException("Ошибка при проверки и корректировки дубликата имени модельки");
         }
     }
 
@@ -461,15 +613,15 @@ public class GuiController {
     }
 
     private void setTextFieldModelTransform(Model model){
-        positionXTextField.setText(""+model.positionXValue);
-        positionYTextField.setText(""+model.positionYValue);
-        positionZTextField.setText(""+model.positionZValue);
-        rotationXTextField.setText(""+model.rotationXValue);
-        rotationYTextField.setText(""+model.rotationYValue);
-        rotationZTextField.setText(""+model.rotationZValue);
-        scaleXTextField.setText(""+model.scaleXValue);
-        scaleYTextField.setText(""+model.scaleYValue);
-        scaleZTextField.setText(""+model.scaleZValue);
+        positionXTextField.setText(""+model.currentTransform.positionX);
+        positionYTextField.setText(""+model.currentTransform.positionY);
+        positionZTextField.setText(""+model.currentTransform.positionZ);
+        rotationXTextField.setText(""+model.currentTransform.rotationX);
+        rotationYTextField.setText(""+model.currentTransform.rotationY);
+        rotationZTextField.setText(""+model.currentTransform.rotationZ);
+        scaleXTextField.setText(""+model.currentTransform.scaleX);
+        scaleYTextField.setText(""+model.currentTransform.scaleY);
+        scaleZTextField.setText(""+model.currentTransform.scaleZ);
 
     }
 
