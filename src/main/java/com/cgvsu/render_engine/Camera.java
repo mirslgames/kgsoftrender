@@ -44,7 +44,13 @@ public class Camera {
         return target;
     }
 
-    public void movePosition(final Vector3f translation) {
+    public void moveCamera(float x, float y) {
+        this.position.add(new Vector3f(x, y, 0));
+        this.target.add(new Vector3f(x, y, 0));
+        updatePositionFromAngles();
+    }
+
+    public void moveCamera(Vector3f translation) {
         this.position.add(translation);
     }
 

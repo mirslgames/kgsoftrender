@@ -1,7 +1,6 @@
 package com.cgvsu.sceneview;
 
 import com.cgvsu.objwriter.ObjWriter;
-import com.cgvsu.math.vectors.Vector3f;
 import com.cgvsu.render_engine.RenderEngine;
 import com.cgvsu.service.ShortcutsSettings;
 import com.cgvsu.service.ThemeSettings;
@@ -39,14 +38,15 @@ import javafx.scene.Parent;
 import com.cgvsu.model.Model;
 import com.cgvsu.objreader.ObjReader;
 
-import static java.nio.file.Path.*;
-
 public class GuiController {
 
     final private float TRANSLATION = 5F;
     final private float ROT = 0.5F;
-    private float pastX = 0;
-    private float pastY = 0;
+    private float pastRotateX = 0;
+    private float pastRotateY = 0;
+
+    private float pastMoveX = 0;
+    private float pastMoveY = 0;
 
     @FXML
     AnchorPane canvasParentAnchorPane;
@@ -113,17 +113,7 @@ public class GuiController {
             SceneManager.lightIntensity = newV.floatValue();
         });
 
-        positionXTextField.setOnKeyReleased(e -> onPositionXChanged());
-        positionYTextField.setOnKeyReleased(e -> onPositionYChanged());
-        positionZTextField.setOnKeyReleased(e -> onPositionZChanged());
 
-        rotationXTextField.setOnKeyReleased(e -> onRotationXChanged());
-        rotationYTextField.setOnKeyReleased(e -> onRotationYChanged());
-        rotationZTextField.setOnKeyReleased(e -> onRotationZChanged());
-
-        scaleXTextField.setOnKeyReleased(e -> onScaleXChanged());
-        scaleYTextField.setOnKeyReleased(e -> onScaleYChanged());
-        scaleZTextField.setOnKeyReleased(e -> onScaleZChanged());
 
         openModeMenuItem.setAccelerator(KeyCombination.keyCombination(ShortcutsSettings.openModel));
         saveModeMenuItem.setAccelerator(KeyCombination.keyCombination(ShortcutsSettings.saveModel));
@@ -429,8 +419,6 @@ public class GuiController {
             deleteActiveEntityButton.setVisible(false);
             transformationTitledPane.setVisible(false);
         }
-
-
     }
 
     @FXML
@@ -493,59 +481,45 @@ public class GuiController {
         } else {
             moveCamera(mouseEvent);
         }
-
     }
 
     private void moveCamera(MouseEvent mouseEvent) {
-        return;
+        float deltaX = (float) (mouseEvent.getX() - pastMoveX);
+        float deltaY = (float) (mouseEvent.getY() - pastMoveY);
+        pastMoveX = (float) mouseEvent.getX();
+        pastMoveY = (float) mouseEvent.getY();
+
+        SceneManager.activeCamera.moveCamera(deltaX * ROT, deltaY * ROT);
     }
 
     private void rotateCamera(MouseEvent mouseEvent) {
-        float deltaX = (float) (mouseEvent.getX() - pastX);
-        float deltaY = (float) (mouseEvent.getY() - pastY);
-        pastX = (float) mouseEvent.getX();
-        pastY = (float) mouseEvent.getY();
-
+        float deltaX = (float) (mouseEvent.getX() - pastRotateX);
+        float deltaY = (float) (mouseEvent.getY() - pastRotateY);
+        pastRotateX = (float) mouseEvent.getX();
+        pastRotateY = (float) mouseEvent.getY();
 
         SceneManager.activeCamera.rotateCamera(-deltaX * ROT, -deltaY * ROT);
     }
 
-    public void setPastXY(MouseEvent mouseEvent) {
-        pastX = (float) mouseEvent.getX();
-        pastY = (float) mouseEvent.getY();
+    private void setPastXY(MouseEvent mouseEvent) {
+        if (mouseEvent.getButton() == MouseButton.PRIMARY) {
+            setPastRotateXY(mouseEvent);
+        } else {
+            setPastMoveXY(mouseEvent);
+        }
+    }
+
+    private void setPastMoveXY(MouseEvent mouseEvent) {
+        pastMoveX = (float) mouseEvent.getX();
+        pastMoveY = (float) mouseEvent.getY();
+    }
+
+    private void setPastRotateXY(MouseEvent mouseEvent) {
+        pastRotateX = (float) mouseEvent.getX();
+        pastRotateY = (float) mouseEvent.getY();
     }
 
     public void setZoom(ScrollEvent scrollEvent) {
         SceneManager.activeCamera.zoomCamera((float) scrollEvent.getDeltaY() / 20);
-    }
-
-    @FXML
-    public void handleCameraForward(ActionEvent actionEvent) {
-        SceneManager.activeCamera.movePosition(new Vector3f(0, 0, -TRANSLATION));
-    }
-
-    @FXML
-    public void handleCameraBackward(ActionEvent actionEvent) {
-        SceneManager.activeCamera.movePosition(new Vector3f(0, 0, TRANSLATION));
-    }
-
-    @FXML
-    public void handleCameraLeft(ActionEvent actionEvent) {
-        SceneManager.activeCamera.movePosition(new Vector3f(TRANSLATION, 0, 0));
-    }
-
-    @FXML
-    public void handleCameraRight(ActionEvent actionEvent) {
-        SceneManager.activeCamera.movePosition(new Vector3f(-TRANSLATION, 0, 0));
-    }
-
-    @FXML
-    public void handleCameraUp(ActionEvent actionEvent) {
-        SceneManager.activeCamera.movePosition(new Vector3f(0, TRANSLATION, 0));
-    }
-
-    @FXML
-    public void handleCameraDown(ActionEvent actionEvent) {
-        SceneManager.activeCamera.movePosition(new Vector3f(0, -TRANSLATION, 0));
     }
 }
