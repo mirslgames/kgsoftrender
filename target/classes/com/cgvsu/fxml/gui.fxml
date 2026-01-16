@@ -6,7 +6,7 @@
 <?import javafx.scene.input.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane prefHeight="800.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.cgvsu.sceneview.GuiController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.cgvsu.sceneview.GuiController">
    <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
       <children>
           <MenuBar fx:id="menuBar">
@@ -24,38 +24,6 @@
                   <MenuItem mnemonicParsing="false" onAction="#onDarkThemeMenuItemClick" text="Dark" />
               </items>
             </Menu>
-              <Menu mnemonicParsing="false" text="Camera Options">
-                  <MenuItem mnemonicParsing="false" onAction="#handleCameraForward" text="Forward">
-                      <accelerator>
-                          <KeyCodeCombination alt="UP" code="UP" control="UP" meta="UP" shift="UP" shortcut="UP" />
-                      </accelerator>
-                  </MenuItem>
-                  <MenuItem mnemonicParsing="false" onAction="#handleCameraBackward" text="Backward">
-                      <accelerator>
-                          <KeyCodeCombination alt="UP" code="DOWN" control="UP" meta="UP" shift="UP" shortcut="UP" />
-                      </accelerator>
-                  </MenuItem>
-                  <MenuItem mnemonicParsing="false" onAction="#handleCameraLeft" text="Left">
-                      <accelerator>
-                          <KeyCodeCombination alt="UP" code="LEFT" control="UP" meta="UP" shift="UP" shortcut="UP" />
-                      </accelerator>
-                  </MenuItem>
-                  <MenuItem mnemonicParsing="false" onAction="#handleCameraRight" text="Right">
-                      <accelerator>
-                          <KeyCodeCombination alt="UP" code="RIGHT" control="UP" meta="UP" shift="UP" shortcut="UP" />
-                      </accelerator>
-                  </MenuItem>
-                  <MenuItem mnemonicParsing="false" onAction="#handleCameraUp" text="Up">
-                      <accelerator>
-                          <KeyCodeCombination alt="UP" code="W" control="UP" meta="UP" shift="UP" shortcut="UP" />
-                      </accelerator>
-                  </MenuItem>
-                  <MenuItem mnemonicParsing="false" onAction="#handleCameraDown" text="Down">
-                      <accelerator>
-                          <KeyCodeCombination alt="UP" code="S" control="UP" meta="UP" shift="UP" shortcut="UP" />
-                      </accelerator>
-                  </MenuItem>
-              </Menu>
           </MenuBar>
          <SplitPane dividerPositions="0.7312186978297162" prefHeight="481.0" prefWidth="814.0" VBox.vgrow="ALWAYS">
            <items>

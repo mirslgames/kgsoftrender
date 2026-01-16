@@ -17,6 +17,9 @@ import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCombination;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -48,7 +51,13 @@ import static java.nio.file.Path.*;
 
 public class GuiController {
 
-    final private float TRANSLATION = 0.5F;
+    final private float TRANSLATION = 5F;
+    final private float ROT = 0.5F;
+    private float pastRotateX = 0;
+    private float pastRotateY = 0;
+
+    private float pastMoveX = 0;
+    private float pastMoveY = 0;
 
     @FXML
     AnchorPane canvasParentAnchorPane;
@@ -167,6 +176,10 @@ public class GuiController {
         openModeMenuItem.setAccelerator(KeyCombination.keyCombination(ShortcutsSettings.openModel));
         saveModeMenuItem.setAccelerator(KeyCombination.keyCombination(ShortcutsSettings.saveModel));
 
+        canvasParentAnchorPane.setOnMouseDragged(this::changeCameraPosition);
+        canvasParentAnchorPane.setOnMousePressed(this::setPastXY);
+        canvasParentAnchorPane.setOnScroll(this::setZoom);
+
         Platform.runLater(() -> {
             ThemeSettings.setLightTheme();
             applyTheme();
@@ -225,7 +238,7 @@ public class GuiController {
 
 
         for (Model model : SceneManager.models) {
-            RenderEngine.renderWithRenderingMods(sceneCanvas.getGraphicsContext2D(), SceneManager.activeCamera, model, (int) width, (int) height);
+            RenderEngine.render(sceneCanvas.getGraphicsContext2D(), SceneManager.activeCamera, model, (int) width, (int) height);
         }
         //ВАРИАНТ рендерить только активную модель
         /*if (SceneManager.activeModel != null) {
@@ -379,6 +392,7 @@ public class GuiController {
                 renderFrame();
             }
         }
+
     }
 
     @FXML
@@ -775,56 +789,59 @@ public class GuiController {
     }
 
     @FXML
-    public void handleCameraForward(ActionEvent actionEvent) {
-        SceneManager.activeCamera.movePosition(new Vector3f(0, 0, -TRANSLATION));
+    public void changeCameraPosition(MouseEvent mouseEvent) {
+        if (mouseEvent.getButton() == MouseButton.PRIMARY) {
+            rotateCamera(mouseEvent);
+        } else {
+            moveCamera(mouseEvent);
+        }
+    }
+
+    private void moveCamera(MouseEvent mouseEvent) {
+        float deltaX = (float) (mouseEvent.getX() - pastMoveX);
+        float deltaY = (float) (mouseEvent.getY() - pastMoveY);
+        pastMoveX = (float) mouseEvent.getX();
+        pastMoveY = (float) mouseEvent.getY();
+
+        SceneManager.activeCamera.moveCamera(deltaX * ROT, deltaY * ROT);
         if(currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
                 currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
             renderFrame();
         }
     }
 
-    @FXML
-    public void handleCameraBackward(ActionEvent actionEvent) {
-        SceneManager.activeCamera.movePosition(new Vector3f(0, 0, TRANSLATION));
+    private void rotateCamera(MouseEvent mouseEvent) {
+        float deltaX = (float) (mouseEvent.getX() - pastRotateX);
+        float deltaY = (float) (mouseEvent.getY() - pastRotateY);
+        pastRotateX = (float) mouseEvent.getX();
+        pastRotateY = (float) mouseEvent.getY();
+
+        SceneManager.activeCamera.rotateCamera(-deltaX * ROT, -deltaY * ROT);
         if(currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
                 currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
             renderFrame();
         }
     }
 
-    @FXML
-    public void handleCameraLeft(ActionEvent actionEvent) {
-        SceneManager.activeCamera.movePosition(new Vector3f(TRANSLATION, 0, 0));
-        if(currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
-                currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
-            renderFrame();
+    private void setPastXY(MouseEvent mouseEvent) {
+        if (mouseEvent.getButton() == MouseButton.PRIMARY) {
+            setPastRotateXY(mouseEvent);
+        } else {
+            setPastMoveXY(mouseEvent);
         }
     }
 
-    @FXML
-    public void handleCameraRight(ActionEvent actionEvent) {
-        SceneManager.activeCamera.movePosition(new Vector3f(-TRANSLATION, 0, 0));
-        if(currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
-                currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
-            renderFrame();
-        }
+    private void setPastMoveXY(MouseEvent mouseEvent) {
+        pastMoveX = (float) mouseEvent.getX();
+        pastMoveY = (float) mouseEvent.getY();
     }
 
-    @FXML
-    public void handleCameraUp(ActionEvent actionEvent) {
-        SceneManager.activeCamera.movePosition(new Vector3f(0, TRANSLATION, 0));
-        if(currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
-                currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
-            renderFrame();
-        }
+    private void setPastRotateXY(MouseEvent mouseEvent) {
+        pastRotateX = (float) mouseEvent.getX();
+        pastRotateY = (float) mouseEvent.getY();
     }
 
-    @FXML
-    public void handleCameraDown(ActionEvent actionEvent) {
-        SceneManager.activeCamera.movePosition(new Vector3f(0, -TRANSLATION, 0));
-        if(currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
-                currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
-            renderFrame();
-        }
+    public void setZoom(ScrollEvent scrollEvent) {
+        SceneManager.activeCamera.zoomCamera((float) scrollEvent.getDeltaY() / 20);
     }
 }
