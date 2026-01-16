@@ -207,25 +207,11 @@ public class ObjWriterTest {
         expected.add(v( 0,  0, 1));
         expected.add("");
 
+        //vt пишутся уникальные без дубликатов
         expected.add(vt(0.0f, 0.0f));
         expected.add(vt(0.0f, 1.0f));
         expected.add(vt(1.0f, 1.0f));
         expected.add(vt(1.0f, 0.0f));
-
-        expected.add(vt(0.0f, 0.0f));
-        expected.add(vt(0.0f, 1.0f));
-        expected.add(vt(0.5f, 0.5f));
-
-        expected.add(vt(0.0f, 1.0f));
-        expected.add(vt(1.0f, 1.0f));
-        expected.add(vt(0.5f, 0.5f));
-
-        expected.add(vt(1.0f, 1.0f));
-        expected.add(vt(1.0f, 0.0f));
-        expected.add(vt(0.5f, 0.5f));
-
-        expected.add(vt(1.0f, 0.0f));
-        expected.add(vt(0.0f, 0.0f));
         expected.add(vt(0.5f, 0.5f));
         expected.add("");
 
@@ -237,10 +223,11 @@ public class ObjWriterTest {
         expected.add("");
 
         expected.add("f 1/1/1 2/2/2 3/3/3 4/4/4");
-        expected.add("f 1/5/1 2/6/2 5/7/5");
-        expected.add("f 2/8/2 3/9/3 5/10/5");
-        expected.add("f 3/11/3 4/12/4 5/13/5");
-        expected.add("f 4/14/4 1/15/1 5/16/5");
+        expected.add("f 1/1/1 2/2/2 5/5/5");
+        expected.add("f 2/2/2 3/3/3 5/5/5");
+        expected.add("f 3/3/3 4/4/4 5/5/5");
+        expected.add("f 4/4/4 1/1/1 5/5/5");
+
 
         assertEquals(expected.size(), actual.size(),
                 "Разное количество строк в файле.\nОжидалось: " + expected.size() + "\nПолучилось: " + actual.size());

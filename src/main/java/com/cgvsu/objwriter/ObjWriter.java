@@ -64,9 +64,10 @@ public class ObjWriter {
                 Vector2f uv = model.getTextureCoordinateForPolygonVertex(corner); //Получаем от конкретного индекса вершины из массива polygons чтобы вычленить нужный UV
                 if (uv == null) uv = new Vector2f(0, 0); //Делаем, чтобы не падала запись OBJ
 
-                globalVt.add(new Vector2f(uv.getX(), uv.getY()));
-                globalVtIndexByCorner[corner] = corner; //чтобы найти vt индекс по углу полигона
+                int globalIdx = findOrAddVt(globalVt, uv);
+                globalVtIndexByCorner[corner] = globalIdx;
             }
+
         }
 
 
@@ -136,5 +137,15 @@ public class ObjWriter {
         return true;
     }
 
+    private static int findOrAddVt(final ArrayList<Vector2f> globalVt, final Vector2f uv) {
+        // Возвращает индекс vt в globalVt относительно нуля, если такого uv ещё нет добавляет и возвращает новый индекс.
+        for (int i = 0; i < globalVt.size(); i++) {
+            if (globalVt.get(i).equals(uv)) {
+                return i;
+            }
+        }
+        globalVt.add(new Vector2f(uv.getX(), uv.getY()));
+        return globalVt.size() - 1;
+    }
 
 }
