@@ -1,5 +1,6 @@
 package com.cgvsu.objwriter;
 
+import com.cgvsu.math.vectors.Vector2f;
 import com.cgvsu.model.Model;
 import com.cgvsu.model.Vertex;
 import com.cgvsu.modelOperations.MyVertexNormalCalc;
@@ -11,25 +12,25 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 public class ObjWriter {
 
     public static boolean writeModelToFile(Model model, String filePath){
 
         //Проверить на корректность модель
-        //Следует проверять что количество текстурных координат совпадает с вершинами
         //Если у какой то отдельной вершины нет vt но в целом у модели есть текстура то мейби стоит записать туда (0,0) чтобы не поехала индексация
 
-        String fileName = model.modelName + ".obj";
-
-        boolean hasTexCoords = false;
         boolean hasNormals = false;
 
         for (Vertex v : model.vertices) {
-            if (v.textureCoordinate != null) hasTexCoords = true;
-            if (v.normal != null) hasNormals = true;
-            if (hasTexCoords && hasNormals) break;
+            if (v.normal != null) {
+                hasNormals = true;
+                break;
+            }
         }
 
         if(!hasNormals){
@@ -40,7 +41,34 @@ public class ObjWriter {
         }
 
         //Поскольку текстурные координаты мы не можем добавлять в программе, то если модель не имела текстуру при загрузке, то и при сохранении ей не нужны текстурные корды
-        hasTexCoords = hasTexCoords && model.getHasTextureVertex();
+        boolean hasTexCoords = model.getHasTextureVertex();
+        if (hasTexCoords) {
+            //Чтобы предотвратить частичный UV у модели
+            for (int idx : model.polygonsTextureCoordinateIndices) {
+                if (idx < 0) {
+                    hasTexCoords = false;
+                    break;
+                }
+            }
+        }
+
+        //Для преобразования нашего Vertex в плоский список vt
+        ArrayList<Vector2f> globalVt = new ArrayList<>();
+        int[] globalVtIndexByCorner = null; //Глобальные индексы vt для конкретного угла полигона (по индексу вершины polygons)
+
+        if (hasTexCoords) {
+            int cornersCount = model.polygons.size();
+            globalVtIndexByCorner = new int[cornersCount];
+
+            for (int corner = 0; corner < cornersCount; corner++) {
+                Vector2f uv = model.getTextureCoordinateForPolygonVertex(corner); //Получаем от конкретного индекса вершины из массива polygons чтобы вычленить нужный UV
+                if (uv == null) uv = new Vector2f(0, 0); //Делаем, чтобы не падала запись OBJ
+
+                globalVt.add(new Vector2f(uv.getX(), uv.getY()));
+                globalVtIndexByCorner[corner] = corner; //чтобы найти vt индекс по углу полигона
+            }
+        }
+
 
         Path path = Paths.get(filePath);
         try (BufferedWriter writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8, StandardOpenOption.CREATE,
@@ -56,9 +84,9 @@ public class ObjWriter {
             writer.write("\n");
 
             //Запись текстурных координат
-            if(hasTexCoords){
-                for (Vertex v : model.vertices) {
-                    writer.write(String.format(Locale.US, "vt %f %f\n", v.textureCoordinate.getX(), v.textureCoordinate.getY()));
+            if (hasTexCoords) {
+                for (Vector2f vt : globalVt) {
+                    writer.write(String.format(Locale.US, "vt %f %f\n", vt.getX(), vt.getY()));
                 }
                 writer.write("\n");
             }
@@ -79,18 +107,21 @@ public class ObjWriter {
                 StringBuilder faceLine = new StringBuilder("f");
 
                 for (int i = start; i < end; i++) {
+                    //i индекс угла в плоском массиве
                     int vertexIndex = model.polygons.get(i);
 
                     //OBJ индексы начинаются с 1
-                    int objIndex = vertexIndex + 1;
+                    int objVIndex = vertexIndex + 1;
 
                     faceLine.append(" ");
 
                     //У нас формат может быть либо v/vt/vn либо v//vn
                     if (hasTexCoords) {
-                        faceLine.append(objIndex).append("/").append(objIndex).append("/").append(objIndex);
-                    } else{
-                        faceLine.append(objIndex).append("//").append(objIndex);
+                        int objVt = globalVtIndexByCorner[i] + 1;
+                        //vn у нас идёт 1:1 с v
+                        faceLine.append(objVIndex).append('/').append(objVt).append('/').append(objVIndex);
+                    } else {
+                        faceLine.append(objVIndex).append("//").append(objVIndex);
                     }
                 }
 

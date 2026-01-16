@@ -7,6 +7,7 @@ import com.cgvsu.math.matrixs.Matrix4f;
 import com.cgvsu.math.point.Point2f;
 import com.cgvsu.math.point.Point3f;
 import com.cgvsu.math.vectors.Vector3f;
+import com.cgvsu.math.vectors.Vector2f;
 import com.cgvsu.model.Vertex;
 import com.cgvsu.modelOperations.Rasterization;
 import com.cgvsu.modelOperations.TextureMapping;
@@ -164,6 +165,11 @@ public class RenderEngine {
                 float z1 = depths.get(0);
                 float z2 = depths.get(1);
                 float z3 = depths.get(2);
+
+                Vector2f t1 = mesh.getTextureCoordinateForPolygonVertex(startIndex);
+                Vector2f t2 = mesh.getTextureCoordinateForPolygonVertex(startIndex + 1);
+                Vector2f t3 = mesh.getTextureCoordinateForPolygonVertex(startIndex + 2);
+
                 if (SceneManager.useTexture && mesh.texture != null) {
                     Image texture = mesh.texture;
                     Rasterization.PixelCallback callback = (x, y, z, barycentric, texCoord, normal, worldPosition) -> {
@@ -179,7 +185,7 @@ public class RenderEngine {
                             graphicsContext.getPixelWriter().setColor(x, y, color);
                         }
                     };
-                    Rasterization.rasterizeTriangle(p1,p2,p3,z1,z2,z3,v1,v2,v3, callback);
+                    Rasterization.rasterizeTriangle(p1, p2, p3, z1, z2, z3, v1, v2, v3, t1, t2, t3, callback);
                 } else {
                     Rasterization.PixelCallback callback = (x, y, z, barycentric, texCoord, normal, worldPosition) -> {
                         if (zBuffer.testAndSet(x, y, z)) {
@@ -193,7 +199,7 @@ public class RenderEngine {
                             graphicsContext.getPixelWriter().setColor(x, y, color);
                         }
                     };
-                    Rasterization.rasterizeTriangle(p1,p2,p3,z1,z2,z3,v1,v2,v3, callback);
+                    Rasterization.rasterizeTriangle(p1, p2, p3, z1, z2, z3, v1, v2, v3, t1, t2, t3, callback);
                 }
             }
             else if (SceneManager.drawMesh){
@@ -254,6 +260,7 @@ public class RenderEngine {
             ArrayList<Float> depths = new ArrayList<>();
             ArrayList<Vertex> originalVertices = new ArrayList<>();
             ArrayList<Vector3f> worldPositions = new ArrayList<>(); // НОВОЕ: мировые координаты
+            ArrayList<Vector2f> texCoords = new ArrayList<>();
 
             boolean shouldSkipPolygon = false; // НОВОЕ: флаг для пропуска полигона
 
@@ -296,6 +303,7 @@ public class RenderEngine {
 
                 projectedPoints.add(resultPoint);
                 originalVertices.add(vertex);
+                texCoords.add(mesh.getTextureCoordinateForPolygonVertex(i));
                 depths.add(transformed.getZ());
             }
 
@@ -323,6 +331,11 @@ public class RenderEngine {
                 Vector3f w1 = worldPositions.get(0); // НОВОЕ
                 Vector3f w2 = worldPositions.get(1); // НОВОЕ
                 Vector3f w3 = worldPositions.get(2);
+
+                Vector2f t1 = texCoords.get(0);
+                Vector2f t2 = texCoords.get(1);
+                Vector2f t3 = texCoords.get(2);
+
                 if (SceneManager.useTexture && mesh.texture != null) {
                     Image texture = mesh.texture;
                     Rasterization.PixelCallback callback = (x, y, z, barycentric, texCoord, normal, worldPosition) -> {
@@ -338,7 +351,7 @@ public class RenderEngine {
                         }
                     };
                     // НОВОЕ: передаем мировые позиции для интерполяции
-                    Rasterization.rasterizeTriangleWithWorldPos(p1, p2, p3, z1, z2, z3, v1, v2, v3, w1,
+                    Rasterization.rasterizeTriangleWithWorldPos(p1, p2, p3, z1, z2, z3, v1, v2, v3, t1, t2, t3, w1,
                             w2, w3, callback, modelMatrix);
                 } else if (!SceneManager.drawMesh) {
                     Rasterization.PixelCallback callback = (x, y, z, barycentric, texCoord, normal, worldPosition) -> {
@@ -354,7 +367,7 @@ public class RenderEngine {
                         }
                     };
                     // НОВОЕ: передаем мировые позиции для интерполяции
-                    Rasterization.rasterizeTriangleWithWorldPos(p1, p2, p3, z1, z2, z3, v1, v2, v3, w1,
+                    Rasterization.rasterizeTriangleWithWorldPos(p1, p2, p3, z1, z2, z3, v1, v2, v3, t1, t2, t3, w1,
                             w2, w3, callback, modelMatrix);
                 }
             }

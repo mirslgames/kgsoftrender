@@ -36,4 +36,17 @@ public class TriangulationAlgorithm {
         return triangles;
     }
 
+    public static List<List<Integer>> triangulatePositions(final int polygonVertexCount) {
+        List<Integer> positions = new ArrayList<>(polygonVertexCount + 1);
+        for (int i = 0; i < polygonVertexCount; i++) {
+            positions.add(i);
+        }
+
+        if (polygonVertexCount % 2 == 1 && polygonVertexCount > 0) {
+            positions.add(polygonVertexCount - 1);
+        }
+
+        return triangulateEven(positions);
+    }
+
 }

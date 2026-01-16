@@ -346,6 +346,7 @@ public class Rasterization {
             Point2f v1, Point2f v2, Point2f v3,
             float z1, float z2, float z3,
             Vertex vertex1, Vertex vertex2, Vertex vertex3,
+            Vector2f tex1, Vector2f tex2, Vector2f tex3,
             PixelCallback pixelCallback) {
 
         // Находим границу полигона(треугольника)
@@ -366,22 +367,14 @@ public class Rasterization {
                 // Проверяем, находится ли пиксель внутри треугольника
                 if (isInsideTriangle(barycentric)) {
                     float z = interpolate(z1, z2, z3, barycentric);
-
-                    // Интерполируем текстурные координаты
+                    // Интерполируем текстурные координаты (передаются отдельно от Vertex)
                     Vector2f texCoord = null;
-                    if (vertex1 != null && vertex2 != null && vertex3 != null &&
-                            vertex1.textureCoordinate != null &&
-                            vertex2.textureCoordinate != null &&
-                            vertex3.textureCoordinate != null) {
-                        texCoord = interpolateWithPerspective(
-                                vertex1.textureCoordinate,
-                                vertex2.textureCoordinate,
-                                vertex3.textureCoordinate,
-                                z1, z2, z3,
-                                barycentric
-                        );
+                    if (tex1 != null && tex2 != null && tex3 != null) {
+                        texCoord = interpolateWithPerspective(tex1, tex2, tex3, z1, z2, z3, barycentric);
+                    } else if (!(tex1 == null && tex2 == null && tex3 == null)) {
+                        // На всякий случай: если данные неполные, чтобы не упасть по NPE при текстурировании
+                        texCoord = new Vector2f(0, 0);
                     }
-
                     // Интерполируем нормаль
                     Vector3f normal = interpolateNormalWithPerspective(vertex1, vertex2,
                             vertex3, z1, z2, z3, barycentric);
@@ -399,6 +392,7 @@ public class Rasterization {
             Point2f v1, Point2f v2, Point2f v3,
             float z1, float z2, float z3,
             Vertex vertex1, Vertex vertex2, Vertex vertex3,
+            Vector2f tex1, Vector2f tex2, Vector2f tex3,
             Vector3f worldPos1, Vector3f worldPos2, Vector3f worldPos3,
             PixelCallback pixelCallback, Matrix4f modelMatrix) {
 
@@ -422,21 +416,13 @@ public class Rasterization {
                             z1, z2, z3,
                             barycentric
                     );
-
-                    // Интерполируем текстурные координаты
+                    // Интерполируем текстурные координаты (передаются отдельно от Vertex)
                     Vector2f texCoord = null;
-                    if (vertex1.textureCoordinate != null &&
-                            vertex2.textureCoordinate != null &&
-                            vertex3.textureCoordinate != null) {
-                        texCoord = interpolateWithPerspective(
-                                vertex1.textureCoordinate,
-                                vertex2.textureCoordinate,
-                                vertex3.textureCoordinate,
-                                z1, z2, z3,
-                                barycentric
-                        );
+                    if (tex1 != null && tex2 != null && tex3 != null) {
+                        texCoord = interpolateWithPerspective(tex1, tex2, tex3, z1, z2, z3, barycentric);
+                    } else if (!(tex1 == null && tex2 == null && tex3 == null)) {
+                        texCoord = new Vector2f(0, 0);
                     }
-
                     // Интерполируем нормаль
                     Vector3f normal = interpolateNormalWithPerspective(
                             vertex1, vertex2, vertex3,

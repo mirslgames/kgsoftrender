@@ -930,4 +930,72 @@ class ObjReaderTest {
         assertEquals(List.of(0), model.polygonsBoundaries, "Для одного face boundary должен быть [0]");
     }
 
+    @Test
+    void testReadModelUvSeamOneVertexHasTwoUvs() {
+        String obj =
+                "v 0 0 0\n" +
+                        "v 1 0 0\n" +
+                        "v 1 1 0\n" +
+                        "v 0 1 0\n" +
+                        "vt 0 0\n" +
+                        "vt 1 0\n" +
+                        "vt 1 1\n" +
+                        "vt 0 1\n" +
+                        "vt 0 0.5\n" +
+                        "vt 1 0.5\n" +
+                        "f 1/1 2/2 3/3\n" +
+                        "f 1/5 3/6 4/4\n";
+
+        Model model = ObjReader.readModelFromFile(obj, "seam.obj", new HashMap<>());
+
+        assertTrue(model.getHasTextureVertex(), "Модель должна считаться текстурированной (есть vt для всех углов)");
+        assertEquals(model.polygons.size(), model.polygonsTextureCoordinateIndices.size(),
+                "polygonsTextureCoordinateIndices должен быть той же длины что polygons");
+
+        assertNotNull(model.vertices.get(0).textureCoordinates, "textureCoordinates не должен быть null");
+        assertEquals(2, model.vertices.get(0).textureCoordinates.size(),
+                "У вершины 0 должно быть 2 UV-варианта из-за UV-шва");
+
+        Vector2f uv0 = model.getTextureCoordinateForPolygonVertex(0);
+        assertNotNull(uv0);
+        assertEquals(0f, uv0.getX(), 1e-6f);
+        assertEquals(0f, uv0.getY(), 1e-6f);
+
+        Vector2f uv3 = model.getTextureCoordinateForPolygonVertex(3);
+        assertNotNull(uv3);
+        assertEquals(0f, uv3.getX(), 1e-6f);
+        assertEquals(0.5f, uv3.getY(), 1e-6f);
+    }
+
+    @Test
+    void testCheckReadDataMixVtAndNoVtThrows() {
+        ArrayList<Vector3f> vertices = new ArrayList<>();
+        vertices.add(new Vector3f(0, 0, 0));
+        vertices.add(new Vector3f(1, 0, 0));
+        vertices.add(new Vector3f(0, 1, 0));
+
+        ArrayList<Vector2f> textures = new ArrayList<>();
+        textures.add(new Vector2f(0, 0));
+        textures.add(new Vector2f(1, 0));
+        textures.add(new Vector2f(0, 1));
+
+        ArrayList<ArrayList<Integer>[]> faces = new ArrayList<>();
+        //полигон 1 с vt
+        faces.add(createFace(new int[]{0, 1, 2}, new int[]{0, 1, 2}, null));
+        //полигон 2 без vt
+        faces.add(createFace(new int[]{0, 1, 2}, null, null));
+
+        ArrayList<Integer> lines = new ArrayList<>();
+        lines.add(10);
+        lines.add(11);
+
+        ObjReaderException ex = assertThrows(
+                ObjReaderException.class,
+                () -> ObjReader.checkReadData(vertices, textures, new ArrayList<>(), faces, lines)
+        );
+
+        assertTrue(ex.getMessage().contains("нельзя смешивать face с vt"),
+                "Сообщение должно объяснять запрет смешивания vt и без vt");
+    }
+
 }

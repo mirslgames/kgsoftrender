@@ -41,6 +41,9 @@ public class TextureMapping {
         u = u - (float) Math.floor(u);
         v = v - (float) Math.floor(v);
 
+        v = 1.0f - v;
+        if (v >= 1.0f) v = 0.0f;
+
         // Преобразуем в координаты пикселя в текстуре
         int texX = (int) (u * (texture.getWidth() - 1));
         int texY = (int) (v * (texture.getHeight() - 1));

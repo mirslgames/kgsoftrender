@@ -118,6 +118,9 @@ public class ObjReader {
 		int vnCount = (readNormals == null) ? 0 : readNormals.size();
 
 		boolean usesVtInFaces = false;
+		boolean foundFaceWithoutVt = false; //Чтобы не смешивать полигоны с UV и без UV, у нас единый подход
+		int firstFaceWithoutVtLine = -1;
+
 
 		for (int faceIdx = 0; faceIdx < readPolygonsIndices.size(); faceIdx++) {
 			int line = (faceLineNumbers != null && faceIdx < faceLineNumbers.size())
@@ -162,7 +165,11 @@ public class ObjReader {
 						);
 					}
 				}
+			} else {
+				foundFaceWithoutVt = true;
+				if (firstFaceWithoutVtLine < 0) firstFaceWithoutVtLine = line;
 			}
+
 
 			if (vn != null && !vn.isEmpty()) {
 				if (vnCount == 0) {
@@ -179,6 +186,10 @@ public class ObjReader {
 					}
 				}
 			}
+		}
+
+		if (usesVtInFaces && foundFaceWithoutVt) {
+			throw new ObjReaderException("В одном OBJ-файле нельзя смешивать face с vt и face без vt.", firstFaceWithoutVtLine);
 		}
 
 		//Если vt нигде не использовались — считаем, что текстуры нет

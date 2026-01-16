@@ -13,7 +13,8 @@ public class Model {
     public ArrayList<Vertex> vertices = new ArrayList<>(); //Вершины у модельки
     public ArrayList<Integer> polygons = new ArrayList<Integer>(); //Индексы на конкретные вершины из списка для полигонов
     public ArrayList<Integer> polygonsBoundaries = new ArrayList<>(); //Номер индекса с которого идут вершины для данного полигона (старт)
-    private boolean hasTextureVertex; //Отвечает по смыслу за наличие VT, может ли модель иметь текстуру
+    public ArrayList<Integer> polygonsTextureCoordinateIndices = new ArrayList<>();
+
     public boolean hasTexture;
     public Image texture;
     public String textureName;
@@ -24,9 +25,32 @@ public class Model {
     //История трансформаций где последняя должна совпадать с текущей
     public ArrayList<Transform> transformHistory;
 
-    public boolean getHasTextureVertex(){
-        return hasTextureVertex;
+    //Отвечает по смыслу за наличие VT, может ли модель использовать текстуру
+    public boolean getHasTextureVertex() {
+        if (polygonsTextureCoordinateIndices == null || polygons == null || vertices == null ||
+                polygonsTextureCoordinateIndices.size() != polygons.size()){
+            return false;
+        }
+
+        //Если хотя бы у одного угла localUvIndex < 0, считаем что vt нет и использовать текстуру нельзя
+        for (int i = 0; i < polygonsTextureCoordinateIndices.size(); i++) {
+            if (polygonsTextureCoordinateIndices.get(i) < 0) return false;
+        }
+        return true;
     }
+
+
+    //Получаем UV по индексу вершины для угла полигона
+    public Vector2f getTextureCoordinateForPolygonVertex(int polygonVertexGlobalIndex) {
+        if (!getHasTextureVertex()) return null;
+        if (polygonVertexGlobalIndex < 0 || polygonVertexGlobalIndex >= polygons.size()) return null;
+
+        int vIndex = polygons.get(polygonVertexGlobalIndex);
+        int uvLocalIndex = polygonsTextureCoordinateIndices.get(polygonVertexGlobalIndex);
+        return vertices.get(vIndex).getTextureCoordinate(uvLocalIndex);
+    }
+
+
 
     public Model() {
 
@@ -46,37 +70,43 @@ public class Model {
                 result.modelName = filename;
                 result.currentTransform = new Transform(0, 0, 0, 0, 0, 0, 1, 1, 1);
                 result.hasTexture = false;
+
                 result.vertices = new ArrayList<>();
                 for (int i = 0; i < readVertices.size(); i++) {
                     Vertex vertex = new Vertex();
                     vertex.position = readVertices.get(i);
                     vertex.normal = null;
-                    vertex.textureCoordinate = null;
                     result.vertices.add(vertex);
                 }
 
+                boolean fileHasVt = readTextureVertices != null && !readTextureVertices.isEmpty();
                 result.polygons = new ArrayList<>();
                 result.polygonsBoundaries = new ArrayList<>();
+                result.polygonsTextureCoordinateIndices = new ArrayList<>();
 
-                int polygonIndexCount = 0;
+
                 for (ArrayList<Integer>[] polygon : readPolygonsIndices) {
-                    result.polygonsBoundaries.add(polygonIndexCount);
-
-                    ArrayList<Integer> vIdx = polygon[0];
-                    for (int i = 0; i < vIdx.size(); i++) {
-                        result.polygons.add(vIdx.get(i));
-                        polygonIndexCount++;
+                    if (polygon == null || polygon.length < 1 || polygon[0] == null || polygon[0].size() < 3) {
+                        throw new RuntimeException("Некорректный полигон");
                     }
-                }
 
-                //Считаем, что vt идут 1 в 1 с вершинами v по индексу
-                if (readTextureVertices != null && !readTextureVertices.isEmpty()) {
-                    for (int i = 0; i < result.vertices.size(); i++) {
-                        result.vertices.get(i).textureCoordinate = readTextureVertices.get(i);
+                    ArrayList<Integer> vertexIds = polygon[0];
+                    ArrayList<Integer> textureVertexIds = (polygon.length > 1) ? polygon[1] : null;
+                    result.polygonsBoundaries.add(result.polygons.size()); //Формируем массив с границами полигонов
+
+
+                    for (int i = 0; i < vertexIds.size(); i++) {
+                        int vertexIndex = vertexIds.get(i);
+                        result.polygons.add(vertexIndex);
+
+                        int localUvIndex = -1;
+                        if (fileHasVt && textureVertexIds != null && !textureVertexIds.isEmpty()) {
+                            int globalVtIndex = textureVertexIds.get(i); //Получаем индекс vt от полигона
+                            Vector2f uv = readTextureVertices.get(globalVtIndex); //Получаем конкретную UV по индексу vt из прочитанных данных
+                            localUvIndex = result.vertices.get(vertexIndex).getOrAddTextureCoordinate(uv); //Получаем локальный индекс UV внутри Vertex
+                        }
+                        result.polygonsTextureCoordinateIndices.add(localUvIndex);
                     }
-                    result.hasTextureVertex = true;
-                } else {
-                    result.hasTextureVertex = false;
                 }
 
                 MyVertexNormalCalc calc = new MyVertexNormalCalc();
@@ -91,25 +121,42 @@ public class Model {
     }
 
     public void triangulate() {
+        if (polygonsBoundaries == null || polygonsBoundaries.isEmpty()) {
+            return;
+        }
+
         ArrayList<Integer> newPolygons = new ArrayList<>();
+        ArrayList<Integer> newTextureLocalIndices = new ArrayList<>();
         ArrayList<Integer> newBoundaries = new ArrayList<>();
 
-        for (int i = 0; i < polygonsBoundaries.size(); i++) {
-            int start = polygonsBoundaries.get(i);
-            int end = (i + 1 < polygonsBoundaries.size()) ? polygonsBoundaries.get(i + 1) : polygons.size();
-            List<Integer> polygon = new ArrayList<>(polygons.subList(start, end));
+        int polygonCount = polygonsBoundaries.size();
+        for (int polygonInd = 0; polygonInd < polygonCount; polygonInd++) {
+            int start = polygonsBoundaries.get(polygonInd);
+            int end = (polygonInd + 1 < polygonCount)
+                    ? polygonsBoundaries.get(polygonInd + 1)
+                    : polygons.size();
 
+            int vertexCount = end - start;
+            if (vertexCount < 3) {
+                continue;
+            }
 
-            List<List<Integer>> triangles = TriangulationAlgorithm.triangulate(polygon);
+            List<Integer> polygonVertices = new ArrayList<>(polygons.subList(start, end));
+            List<Integer> polygonVtLocal = new ArrayList<>(polygonsTextureCoordinateIndices.subList(start, end));
 
-
-            for (List<Integer> tri : triangles) {
+            //Триангулируем по позициям 0..N-1 и применяем те же позиции к обоим спискам.
+            List<List<Integer>> trianglesPos = TriangulationAlgorithm.triangulatePositions(vertexCount);
+            for (List<Integer> triPos : trianglesPos) {
                 newBoundaries.add(newPolygons.size());
-                newPolygons.addAll(tri);
+                for (int pos : triPos) {
+                    newPolygons.add(polygonVertices.get(pos));
+                    newTextureLocalIndices.add(polygonVtLocal.get(pos));
+                }
             }
         }
 
         polygons = newPolygons;
+        polygonsTextureCoordinateIndices = newTextureLocalIndices;
         polygonsBoundaries = newBoundaries;
     }
 }
