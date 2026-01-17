@@ -44,22 +44,38 @@ public class Camera {
         return target;
     }
 
-    public void moveCamera(float x, float y) {
-        this.position.add(new Vector3f(x, y, 0));
+    public void moveCamera(float deltaXpx, float deltaYpx, int viewportW, int viewportH) {
+        /* this.position.add(new Vector3f(x, y, 0));
         this.target.add(new Vector3f(x, y, 0));
-        updatePositionFromAngles();
-    }
+        updatePositionFromAngles(); */
+        float d = radius;
 
-    public void moveCamera(Vector3f translation) {
-        this.position.add(translation);
-    }
+        // сколько мировых единиц помещается по вертикали на расстоянии d
+        float vSpan = 2f * d * (float) Math.tan(fov * 0.5);
+        float unitsPerPxY = vSpan / (float) viewportH;
+        float unitsPerPxX = (vSpan * aspectRatio) / (float) viewportW;
 
-    public void moveTarget(final Vector3f translation) {
-        this.target.add(translation);
+        Vector3f worldUp = new Vector3f(0, 1, 0);
+        Vector3f forward = target.subbed(position).normalized();
+
+        Vector3f right = forward.crossed(worldUp);
+        if (right.len() < EPS) right = new Vector3f(1, 0, 0);
+        else right = right.normalized();
+
+        Vector3f up = right.crossed(forward).normalized(); // фактический up камеры
+
+        // знак подбери под “как нравится” (обычно X инвертируют)
+        Vector3f move =
+                right.multiplied(-deltaXpx * unitsPerPxX)
+                        .added(up.multiplied(deltaYpx * unitsPerPxY));
+
+        position.add(move);
+        target.add(move);
     }
 
     public void zoomCamera(float deltaS) {
         radius = clamp(radius - deltaS, 0.5f, Float.MAX_VALUE);
+        System.out.println(Math.abs(target.subbed(position).normalized().dot(new Vector3f(0,1,0))));
         updatePositionFromAngles();
     }
 
@@ -140,8 +156,6 @@ public class Camera {
         double yawRad = Math.toRadians(yaw);
         double pitchRad = Math.toRadians(pitch);
 
-
-
         float cosPitch = (float) Math.cos(pitchRad);
         float x = radius * cosPitch * (float) Math.sin(yawRad);
         float y = radius * (float) Math.sin(pitchRad);
@@ -170,7 +184,6 @@ public class Camera {
         return GraphicConveyor.perspective(fov, aspectRatio, nearPlane, farPlane);
     }
     public Vector3f getRayToPoint(Vector3f worldPosition) {
-        //проверяем входные данные
         if (worldPosition == null ||
                 Float.isNaN(worldPosition.getX()) ||
                 Float.isNaN(worldPosition.getY()) ||
@@ -191,6 +204,20 @@ public class Camera {
 
         return ray.normalize();
     }
+
+    public void returnToDefaultCamera() {
+        pitch = 0f;
+        yaw = 0f;
+
+        position = new Vector3f(0, 0, 50f);
+        target = new Vector3f(0, 0, 0);
+
+        cameraUp = new Vector3f(0f, 1f, 0f);
+
+        radius = position.subbed(target).len();
+    }
+
+
     private Vector3f position;
     private Vector3f target;
     private float fov;

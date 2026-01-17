@@ -199,6 +199,7 @@ public class GuiController {
 
             canvasParentAnchorPane.setOnMouseDragged(this::changeCameraPosition);
             canvasParentAnchorPane.setOnMousePressed(this::setPastXY);
+            canvasParentAnchorPane.setOnMouseClicked(this::setDefaultPosition);
             canvasParentAnchorPane.setOnScroll(this::setZoom);
 
             Platform.runLater(() -> {
@@ -268,7 +269,8 @@ public class GuiController {
             //RenderEngine.render(sceneCanvas.getGraphicsContext2D(), SceneManager.activeCamera, model, (int) width, (int) height);
         }
         //ВАРИАНТ рендерить только активную модель
-        /*if (SceneManager.activeModel != null) {
+        /*if (SceneManager.acti
+        veModel != null) {
             RenderEngine.render(sceneCanvas.getGraphicsContext2D(), SceneManager.activeCamera, SceneManager.activeModel, (int) width, (int) height);
         }*/
     }
@@ -905,7 +907,8 @@ public class GuiController {
         pastMoveX = (float) mouseEvent.getX();
         pastMoveY = (float) mouseEvent.getY();
 
-        SceneManager.activeCamera.moveCamera(deltaX * ROT, deltaY * ROT);
+        SceneManager.activeCamera.moveCamera(-deltaX, deltaY,
+                (int) sceneCanvas.getWidth(), (int) sceneCanvas.getHeight());
         if(currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
                 currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
             renderFrame();
@@ -948,6 +951,16 @@ public class GuiController {
         if(currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
                 currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
             renderFrame();
+        }
+    }
+
+    public void setDefaultPosition(MouseEvent mouseEvent) {
+        if (mouseEvent.getClickCount() == 2) {
+            SceneManager.activeCamera.returnToDefaultCamera();
+            if(currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
+                    currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
+                renderFrame();
+            }
         }
     }
 }
