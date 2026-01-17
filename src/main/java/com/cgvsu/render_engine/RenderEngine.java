@@ -31,236 +31,106 @@ public class RenderEngine {
             final Camera camera,
             final Model mesh,
             final int width,
-            final int height)
-    {
+            final int height) {
         Matrix4f modelMatrix = rotateScaleTranslate(mesh.currentTransform.scaleX, mesh.currentTransform.scaleY, mesh.currentTransform.scaleZ,
                 mesh.currentTransform.rotationX, mesh.currentTransform.rotationY, mesh.currentTransform.rotationZ,
                 mesh.currentTransform.positionX, mesh.currentTransform.positionY, mesh.currentTransform.positionZ);
-        Matrix4f viewMatrix = camera.getViewMatrix();
-        Matrix4f projectionMatrix = camera.getProjectionMatrix();
 
-        Matrix4f modelViewProjectionMatrix = new Matrix4f(projectionMatrix.getMatrix());
-        modelViewProjectionMatrix.multiply(viewMatrix);
-        modelViewProjectionMatrix.multiply(modelMatrix);
+        Matrix4f viewMatrix = camera.getViewMatrix();
+        Matrix4f projMatrix = camera.getProjectionMatrix();
+
+        Vector3f targetView = viewMatrix.multiplyOnVector(camera.getTarget());
+        boolean forwardMinusZ = targetView.getZ() < 0;
+
+        Matrix4f modelView = new Matrix4f(viewMatrix.getMatrix());
+        modelView.multiply(modelMatrix);
 
         final int nPolygons = mesh.polygonsBoundaries.size();
+        graphicsContext.setStroke(Color.web(ThemeSettings.wireframeColor));
+        graphicsContext.setLineWidth(ThemeSettings.wireframeWidth);
+
+        float near = camera.getNearPlane();
+
         for (int polygonInd = 0; polygonInd < nPolygons; ++polygonInd) {
-            final int startIndex = mesh.polygonsBoundaries.get(polygonInd);
-            final int endIndex = (polygonInd + 1 < nPolygons)
-                    ? mesh.polygonsBoundaries.get(polygonInd + 1)
-                    : mesh.polygons.size();
+            int startIndex = mesh.polygonsBoundaries.get(polygonInd);
+            int endIndex = (polygonInd + 1 < nPolygons) ? mesh.polygonsBoundaries.get(polygonInd + 1) : mesh.polygons.size();
+            int n = endIndex - startIndex;
 
-            final int nVerticesInPolygon = endIndex - startIndex; //Под новую архитектуру модели
-            // считаем сколько у полигона вершины
-
-            ArrayList<Point2f> resultPoints = new ArrayList<>();
-
+            ArrayList<Vector3f> viewPts = new ArrayList<>(n);
             for (int i = startIndex; i < endIndex; ++i) {
                 int vertexIndex = mesh.polygons.get(i);
-                Vertex vertex = mesh.vertices.get(vertexIndex);
-
-                Vector3f pos = vertex.position;
-                Vector3f posVecmath = new Vector3f(pos.getX(), pos.getY(), pos.getZ());
-
-                Point2f resultPoint = vertexToPoint(
-                        modelViewProjectionMatrix.multiplyOnVector(posVecmath), width, height
-                );
-
-
-                resultPoints.add(resultPoint);
+                Vector3f p = mesh.vertices.get(vertexIndex).position;
+                Vector3f viewP = modelView.multiplyOnVector(new Vector3f(p.getX(), p.getY(), p.getZ()));
+                viewPts.add(viewP);
             }
 
-            graphicsContext.setStroke(Color.web(ThemeSettings.wireframeColor));
-            graphicsContext.setLineWidth(ThemeSettings.wireframeWidth);
+            for (int i = 0; i < n; i++) {
+                Vector3f a0 = viewPts.get(i);
+                Vector3f b0 = viewPts.get((i + 1) % n);
 
-            for (int vertexInPolygonInd = 1; vertexInPolygonInd < nVerticesInPolygon; ++vertexInPolygonInd) {
-                graphicsContext.strokeLine(
-                        resultPoints.get(vertexInPolygonInd - 1).getX(),
-                        resultPoints.get(vertexInPolygonInd - 1).getY(),
-                        resultPoints.get(vertexInPolygonInd).getX(),
-                        resultPoints.get(vertexInPolygonInd).getY());
+                Vector3f a = new Vector3f(a0.getX(), a0.getY(), a0.getZ());
+                Vector3f b = new Vector3f(b0.getX(), b0.getY(), b0.getZ());
+
+                Vector3f[] seg = clipLineToNear(a, b, near, forwardMinusZ);
+                if (seg == null) continue;
+
+                Point2f pa = vertexToPoint(projMatrix.multiplyOnVector(seg[0]), width, height);
+                Point2f pb = vertexToPoint(projMatrix.multiplyOnVector(seg[1]), width, height);
+
+                if (!Float.isFinite(pa.getX()) || !Float.isFinite(pa.getY()) ||
+                        !Float.isFinite(pb.getX()) || !Float.isFinite(pb.getY())) continue;
+
+                graphicsContext.strokeLine(pa.getX(), pa.getY(), pb.getX(), pb.getY());
+
+                if (Float.isNaN(pa.getX()) || Float.isNaN(pa.getY()) || Float.isNaN(pb.getX()) || Float.isNaN(pb.getY()))
+                    continue;
+
+                graphicsContext.strokeLine(pa.getX(), pa.getY(), pb.getX(), pb.getY());
             }
-
-            if (nVerticesInPolygon > 0)
-                graphicsContext.strokeLine(
-                        resultPoints.get(nVerticesInPolygon - 1).getX(),
-                        resultPoints.get(nVerticesInPolygon - 1).getY(),
-                        resultPoints.get(0).getX(),
-                        resultPoints.get(0).getY());
         }
     }
-//    public static void renderWithRenderingMods1(
-//            final GraphicsContext graphicsContext,
-//            final Camera camera,
-//            final Model mesh,
-//            final int width,
-//            final int height)
-//    {
-//        Matrix4f modelMatrix = rotateScaleTranslate(mesh.currentTransform.scaleX, mesh.currentTransform.scaleY, mesh.currentTransform.scaleZ,
-//                mesh.currentTransform.rotationX, mesh.currentTransform.rotationY, mesh.currentTransform.rotationZ,
-//                mesh.currentTransform.positionX, mesh.currentTransform.positionY, mesh.currentTransform.positionZ);
-//        Matrix4f viewMatrix = camera.getViewMatrix();
-//        Matrix4f projectionMatrix = camera.getProjectionMatrix();
-//
-//        Matrix4f modelViewProjectionMatrix = new Matrix4f(projectionMatrix.getMatrix());
-//        modelViewProjectionMatrix.multiply(viewMatrix);
-//        modelViewProjectionMatrix.multiply(modelMatrix);
-//        Color baseColor = Color.GRAY;
-//        ZBuffer zBuffer = new ZBuffer(width, height);
-//        zBuffer.clear();
-//        final int nPolygons = mesh.polygonsBoundaries.size();
-//        for (int polygonInd = 0; polygonInd < nPolygons; ++polygonInd) {
-//            final int startIndex = mesh.polygonsBoundaries.get(polygonInd);
-//            final int endIndex = (polygonInd + 1 < nPolygons)
-//                    ? mesh.polygonsBoundaries.get(polygonInd + 1)
-//                    : mesh.polygons.size();
-//
-//            final int nVerticesInPolygon = endIndex - startIndex; //Под новую архитектуру модели
-//            // считаем сколько у полигона вершины
-//
-//            ArrayList<Point2f> projectedPoints = new ArrayList<>();
-//            ArrayList<Float> depths = new ArrayList<>();
-//            ArrayList<Vertex> originalVertices = new ArrayList<>();
-//
-//            for (int i = startIndex; i < endIndex; ++i) {
-//                if (i >= mesh.polygons.size()) {
-//                    System.err.printf("ERROR: i=%d >= polygons.size=%d\n", i, mesh.polygons.size());
-//                    break;
-//                }
-//
-//                int vertexIndex = mesh.polygons.get(i);
-//
-//                // Проверка индекса вершины!
-//                if (vertexIndex < 0 || vertexIndex >= mesh.vertices.size()) {
-//                    System.err.printf("ERROR: vertexIndex=%d, vertices.size=%d\n",
-//                            vertexIndex, mesh.vertices.size());
-//                    continue;
-//                }
-//
-//                Vertex vertex = mesh.vertices.get(vertexIndex);
-//
-//                Vector3f pos = vertex.position;
-//                Vector3f posVecmath = new Vector3f(pos.getX(), pos.getY(), pos.getZ());
-//                Vector3f transformed = modelViewProjectionMatrix.multiplyOnVector(posVecmath);
-//                Point2f resultPoint = vertexToPoint(
-//                        transformed, width, height
-//                );
-//
-//                projectedPoints.add(resultPoint);
-//                originalVertices.add(vertex);
-//                depths.add(transformed.getZ());
-//            }
-//
-//
-//            if (!SceneManager.drawMesh && nVerticesInPolygon == 3) {
-//                int i1 = mesh.polygons.get(startIndex);
-//                int i2 = mesh.polygons.get(startIndex+1);
-//                int i3 = mesh.polygons.get(startIndex+2);
-//                Vertex v1 = mesh.vertices.get(i1);
-//                Vertex v2 = mesh.vertices.get(i2);
-//                Vertex v3 = mesh.vertices.get(i3);
-//                Point2f p1 = projectedPoints.get(0);
-//                Point2f p2 = projectedPoints.get(1);
-//                Point2f p3 = projectedPoints.get(2);
-//                float z1 = depths.get(0);
-//                float z2 = depths.get(1);
-//                float z3 = depths.get(2);
-//
-//                Vector2f t1 = mesh.getTextureCoordinateForPolygonVertex(startIndex);
-//                Vector2f t2 = mesh.getTextureCoordinateForPolygonVertex(startIndex + 1);
-//                Vector2f t3 = mesh.getTextureCoordinateForPolygonVertex(startIndex + 2);
-//
-//                if (SceneManager.useTexture && mesh.texture != null) {
-//                    Image texture = mesh.texture;
-//                    Rasterization.PixelCallback callback = (x, y, z, barycentric, texCoord, normal, worldPosition) -> {
-//                        if (zBuffer.testAndSet(x, y, z)) {
-//                            Color color = TextureMapping.getTextureColor(texture, texCoord);
-//                            if (SceneManager.useLight && normal != null) {
-//                                Vector3f cameraRay = SceneManager.activeCamera.getRayToPoint(worldPosition);
-//                                color = TextureMapping.getModifiedColorWithLighting(
-//                                        cameraRay, normal, color, SceneManager.lightIntensity
-//                                );
-//                            }
-//
-//                            graphicsContext.getPixelWriter().setColor(x, y, color);
-//                        }
-//                    };
-//                    Rasterization.rasterizeTriangle(p1, p2, p3, z1, z2, z3, v1, v2, v3, t1, t2, t3, callback);
-//                } else {
-//                    Rasterization.PixelCallback callback = (x, y, z, barycentric, texCoord, normal, worldPosition) -> {
-//                        if (zBuffer.testAndSet(x, y, z)) {
-//                            Color color = baseColor;
-//                            if (SceneManager.useLight && normal != null) {
-//                                Vector3f cameraRay = SceneManager.activeCamera.getRayToPoint(worldPosition);
-//                                color = TextureMapping.getModifiedColorWithLighting(
-//                                        cameraRay, normal, color, SceneManager.lightIntensity
-//                                );
-//                            }
-//                            graphicsContext.getPixelWriter().setColor(x, y, color);
-//                        }
-//                    };
-//                    Rasterization.rasterizeTriangle(p1, p2, p3, z1, z2, z3, v1, v2, v3, t1, t2, t3, callback);
-//                }
-//            }
-//            else if (SceneManager.drawMesh){
-//                graphicsContext.setStroke(Color.web(ThemeSettings.wireframeColor));
-//                graphicsContext.setLineWidth(ThemeSettings.wireframeWidth);
-//
-//                for (int vertexInPolygonInd = 1; vertexInPolygonInd < nVerticesInPolygon; ++vertexInPolygonInd) {
-//                    graphicsContext.strokeLine(
-//                            projectedPoints.get(vertexInPolygonInd - 1).getX(),
-//                            projectedPoints.get(vertexInPolygonInd - 1).getY(),
-//                            projectedPoints.get(vertexInPolygonInd).getX(),
-//                            projectedPoints.get(vertexInPolygonInd).getY());
-//                }
-//
-//                if (nVerticesInPolygon > 0)
-//                    graphicsContext.strokeLine(
-//                            projectedPoints.get(nVerticesInPolygon - 1).getX(),
-//                            projectedPoints.get(nVerticesInPolygon - 1).getY(),
-//                            projectedPoints.get(0).getX(),
-//                            projectedPoints.get(0).getY());
-//            }
-//        }
-//    }
 
     public static void renderWithRenderingMods(
             final GraphicsContext graphicsContext,
             final Camera camera,
             final Model mesh,
             final int width,
-            final int height, ZBuffer zBuffer)
-    {
-        Matrix4f modelMatrix = rotateScaleTranslate(mesh.currentTransform.scaleX, mesh.currentTransform.scaleY, mesh.currentTransform.scaleZ,
+            final int height,
+            ZBuffer zBuffer) {
+
+        Matrix4f modelMatrix = rotateScaleTranslate(
+                mesh.currentTransform.scaleX, mesh.currentTransform.scaleY, mesh.currentTransform.scaleZ,
                 mesh.currentTransform.rotationX, mesh.currentTransform.rotationY, mesh.currentTransform.rotationZ,
                 mesh.currentTransform.positionX, mesh.currentTransform.positionY, mesh.currentTransform.positionZ);
+
         Matrix4f viewMatrix = camera.getViewMatrix();
         Matrix4f projectionMatrix = camera.getProjectionMatrix();
 
-        Matrix4f modelViewProjectionMatrix = new Matrix4f(projectionMatrix.getMatrix());
-        modelViewProjectionMatrix.multiply(viewMatrix);
-        modelViewProjectionMatrix.multiply(modelMatrix);
-
-        Color baseColor = Color.GREEN;
-
-        final int nPolygons = mesh.polygonsBoundaries.size();
-
-        // НОВОЕ: Вспомогательные матрицы для получения мировых координат
+        // Шаг 1: Создаем modelView матрицу (V * M)
         Matrix4f modelViewMatrix = new Matrix4f(viewMatrix.getMatrix());
         modelViewMatrix.multiply(modelMatrix);
+
+        // Шаг 2: Получаем параметры камеры для клиппинга
+        float near = camera.getNearPlane();
+        Vector3f targetView = viewMatrix.multiplyOnVector(camera.getTarget());
+        boolean forwardMinusZ = targetView.getZ() < 0;
+
+        Color baseColor = Color.GREEN;
+        final int nPolygons = mesh.polygonsBoundaries.size();
 
         for (int polygonInd = 0; polygonInd < nPolygons; ++polygonInd) {
             final int startIndex = mesh.polygonsBoundaries.get(polygonInd);
             final int endIndex = (polygonInd + 1 < nPolygons)
                     ? mesh.polygonsBoundaries.get(polygonInd + 1)
                     : mesh.polygons.size();
+
             Point2f p1 = null, p2 = null, p3 = null;
             float z1 = 0, z2 = 0, z3 = 0;
             Vertex v1 = null, v2 = null, v3 = null;
             Vector3f w1 = null, w2 = null, w3 = null;
             Vector2f t1 = null, t2 = null, t3 = null;
 
-            boolean shouldSkipPolygon = false; // НОВОЕ: флаг для пропуска полигона
+            boolean shouldSkipPolygon = false;
 
             for (int local = 0; local < 3; ++local) {
                 int polyIndex = startIndex + local;
@@ -271,7 +141,6 @@ public class RenderEngine {
                 }
 
                 int vertexIndex = mesh.polygons.get(polyIndex);
-
                 if (vertexIndex < 0 || vertexIndex >= mesh.vertices.size()) {
                     System.err.printf("ERROR: vertexIndex=%d, vertices.size=%d\n",
                             vertexIndex, mesh.vertices.size());
@@ -280,30 +149,43 @@ public class RenderEngine {
                 }
 
                 Vertex vertex = mesh.vertices.get(vertexIndex);
-
                 Vector3f pos = vertex.position;
                 Vector3f posVecmath = new Vector3f(pos.getX(), pos.getY(), pos.getZ());
 
-                // НОВОЕ: получаем мировую позицию для освещения
+                // Шаг 3: Мировая позиция для освещения
                 Vector3f worldPos = modelMatrix.multiplyOnVector(posVecmath);
 
+                // Шаг 4: Преобразуем в view-space (V * M * vertex)
+                Vector3f viewPos = modelViewMatrix.multiplyOnVector(posVecmath);
 
-                // Проецируем вершину
-                Vector3f transformed = modelViewProjectionMatrix.multiplyOnVector(posVecmath);
-
-                // НОВОЕ: Проверяем Z-координату после проецирования
-                // Если вершина за камерой (или очень близко к ней), пропускаем весь полигон
-                if (transformed.getZ() <= 0.001f) { // небольшой эпсилон
-                    shouldSkipPolygon = true;
-                    break;
+                // Шаг 5: Клиппинг по near-плоскости в view-space
+                // Проверяем, не находится ли вершина за near-плоскостью
+                if (forwardMinusZ) {
+                    // Камера смотрит вдоль -Z
+                    if (viewPos.getZ() > -near) {
+                        shouldSkipPolygon = true;
+                        break;
+                    }
+                } else {
+                    // Камера смотрит вдоль +Z
+                    if (viewPos.getZ() < near) {
+                        shouldSkipPolygon = true;
+                        break;
+                    }
                 }
 
-                Point2f resultPoint = vertexToPoint(transformed, width, height);
-                float z = transformed.getZ();
+                // Шаг 6: Проекция ПОСЛЕ клиппинга (P * viewPos)
+                Vector3f projected = projectionMatrix.multiplyOnVector(viewPos);
+
+                // Получаем экранные координаты
+                Point2f resultPoint = vertexToPoint(projected, width, height);
+                float z = projected.getZ(); // Это z после проекции для z-буфера
+
                 Vector2f texCoord = null;
                 if (SceneManager.useTexture && mesh.texture != null) {
                     texCoord = mesh.getTextureCoordinateForPolygonVertex(polyIndex);
                 }
+
                 if (local == 0) {
                     p1 = resultPoint;
                     z1 = z;
@@ -325,21 +207,23 @@ public class RenderEngine {
                 }
             }
 
-            // НОВОЕ: пропускаем полигон, если хотя бы одна вершина за камерой
             if (shouldSkipPolygon) {
                 continue;
             }
 
-
             if (p1 == null || p2 == null || p3 == null) {
                 continue;
             }
+
             if (isTriangleOutsideScreen(p1, p2, p3, width, height)) {
                 continue;
             }
+
             boolean shouldRenderFill = !SceneManager.drawMesh ||
                     (SceneManager.useTexture && mesh.texture != null) ||
                     SceneManager.useLight;
+
+            // Рендеринг заливки полигона
             if (shouldRenderFill) {
                 if (SceneManager.useTexture && mesh.texture != null) {
                     Image texture = mesh.texture;
@@ -360,7 +244,7 @@ public class RenderEngine {
 
                     Rasterization.rasterizeTriangleWithWorldPos(p1, p2, p3, z1, z2, z3, v1, v2, v3, t1, t2, t3, w1,
                             w2, w3, callback, modelMatrix);
-                } else if (!SceneManager.useTexture) {
+                } else {
                     Rasterization.PixelCallback callback = (x, y, z, barycentric, texCoord, normal, worldNormal, worldPosition) -> {
                         if (zBuffer.testAndSet(x, y, z)) {
                             Color color = baseColor;
@@ -380,32 +264,31 @@ public class RenderEngine {
                             w2, w3, callback, modelMatrix);
                 }
             }
+
+            // Рендеринг сетки (wireframe)
             if (SceneManager.drawMesh) {
                 float bias = 0.0001f;
                 Color lineColor = Color.web(ThemeSettings.wireframeColor);
-                int lineWidth =  (int) ThemeSettings.wireframeWidth;
-                Rasterization.rasterizeThickLine(p1,p2,z1-bias,z2-bias, lineWidth, ((x, y, z) -> {
+                int lineWidth = (int) ThemeSettings.wireframeWidth;
+
+
+                Rasterization.rasterizeThickLine(p1, p2, z1 - bias, z2 - bias, lineWidth, (x, y, z) -> {
                     if (zBuffer.testAndSet(x, y, z)) {
                         graphicsContext.getPixelWriter().setColor(x, y, lineColor);
                     }
-                }));
-                Rasterization.rasterizeThickLine(p2,p3,z2-bias,z3-bias, lineWidth, ((x, y, z) -> {
+                });
+
+                Rasterization.rasterizeThickLine(p2, p3, z2 - bias, z3 - bias, lineWidth, (x, y, z) -> {
                     if (zBuffer.testAndSet(x, y, z)) {
                         graphicsContext.getPixelWriter().setColor(x, y, lineColor);
                     }
-                }));
-                Rasterization.rasterizeThickLine(p1,p3,z1-bias,z3-bias, lineWidth, ((x, y, z) -> {
+                });
+
+                Rasterization.rasterizeThickLine(p1, p3, z1 - bias, z3 - bias, lineWidth, (x, y, z) -> {
                     if (zBuffer.testAndSet(x, y, z)) {
                         graphicsContext.getPixelWriter().setColor(x, y, lineColor);
                     }
-                }));
-//                graphicsContext.setStroke(Color.web(ThemeSettings.wireframeColor));
-//                graphicsContext.setLineWidth(ThemeSettings.wireframeWidth);
-//
-//
-//                graphicsContext.strokeLine(p1.getX(), p1.getY(), p2.getX(), p2.getY());
-//                graphicsContext.strokeLine(p2.getX(), p2.getY(), p3.getX(), p3.getY());
-//                graphicsContext.strokeLine(p3.getX(), p3.getY(), p1.getX(), p1.getY());
+                });
             }
         }
     }
@@ -416,5 +299,26 @@ public class RenderEngine {
         float maxY = Math.max(Math.max(p1.getY(), p2.getY()), p3.getY());
 
         return (maxX < 0 || minX > width || maxY < 0 || minY > height);
+    }
+    private static Vector3f[] clipLineToNear(Vector3f a, Vector3f b, float near, boolean forwardMinusZ) {
+        float za = a.getZ();
+        float zb = b.getZ();
+
+        float planeZ = forwardMinusZ ? -near : near;
+
+        boolean ina = forwardMinusZ ? (za <= planeZ) : (za >= planeZ);
+        boolean inb = forwardMinusZ ? (zb <= planeZ) : (zb >= planeZ);
+
+        if (!ina && !inb) return null;
+        if (ina && inb) return new Vector3f[]{a,b};
+
+        float denom = (zb - za);
+        if (Math.abs(denom) < 1e-8f) return null;
+
+        float t = (planeZ - za) / denom;
+        Vector3f p = a.added(b.subbed(a).multiplied(t));
+
+        if (!ina) a = p; else b = p;
+        return new Vector3f[]{a,b};
     }
 }

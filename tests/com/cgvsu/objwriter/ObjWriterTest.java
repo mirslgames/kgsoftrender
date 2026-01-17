@@ -138,6 +138,7 @@ public class ObjWriterTest {
         model.vertices = new ArrayList<>();
         model.polygons = new ArrayList<>();
         model.polygonsBoundaries = new ArrayList<>();
+        model.polygonsTextureCoordinateIndices = new ArrayList<>();
 
         Vertex v1 = new Vertex(-1, -1, 0);
         Vertex v2 = new Vertex(-1,  1, 0);
@@ -151,11 +152,12 @@ public class ObjWriterTest {
         v4.normal = new Vector3f(0, 0, -1);
         v5.normal = new Vector3f(0, 0,  1);
 
-        v1.textureCoordinate = new Vector2f(0.0f, 0.0f);
-        v2.textureCoordinate = new Vector2f(0.0f, 1.0f);
-        v3.textureCoordinate = new Vector2f(1.0f, 1.0f);
-        v4.textureCoordinate = new Vector2f(1.0f, 0.0f);
-        v5.textureCoordinate = new Vector2f(0.5f, 0.5f);
+        //Добавляем UV для каждой вершины
+        v1.getOrAddTextureCoordinate(new Vector2f(0.0f, 0.0f));
+        v2.getOrAddTextureCoordinate(new Vector2f(0.0f, 1.0f));
+        v3.getOrAddTextureCoordinate(new Vector2f(1.0f, 1.0f));
+        v4.getOrAddTextureCoordinate(new Vector2f(1.0f, 0.0f));
+        v5.getOrAddTextureCoordinate(new Vector2f(0.5f, 0.5f));
 
         model.vertices.add(v1);
         model.vertices.add(v2);
@@ -163,30 +165,33 @@ public class ObjWriterTest {
         model.vertices.add(v4);
         model.vertices.add(v5);
 
+        //На каждый добавленный индекс вершины (угол) локальный индекс uv будет 0
         model.polygonsBoundaries.add(0);
         model.polygons.addAll(List.of(0, 1, 2, 3));
+        model.polygonsTextureCoordinateIndices.addAll(List.of(0, 0, 0, 0));
 
         model.polygonsBoundaries.add(4);
         model.polygons.addAll(List.of(0, 1, 4));
+        model.polygonsTextureCoordinateIndices.addAll(List.of(0, 0, 0));
 
         model.polygonsBoundaries.add(7);
         model.polygons.addAll(List.of(1, 2, 4));
+        model.polygonsTextureCoordinateIndices.addAll(List.of(0, 0, 0));
 
         model.polygonsBoundaries.add(10);
         model.polygons.addAll(List.of(2, 3, 4));
+        model.polygonsTextureCoordinateIndices.addAll(List.of(0, 0, 0));
 
         model.polygonsBoundaries.add(13);
         model.polygons.addAll(List.of(3, 0, 4));
+        model.polygonsTextureCoordinateIndices.addAll(List.of(0, 0, 0));
 
         Path outFile = tempDir.resolve("pyramid_with_vt.obj");
 
         boolean ok = ObjWriter.writeModelToFile(model, outFile.toString());
 
-        assertTrue(ok,
-                "writeModelToFile(): вернул false — запись модели с vt/vn не удалась (ошибка формирования строк или записи файла).");
-
-        assertTrue(Files.exists(outFile),
-                "Файл после записи не найден: " + outFile + " (ожидалось, что ObjWriter создаст файл).");
+        assertTrue(ok, "writeModelToFile(): вернул false");
+        assertTrue(Files.exists(outFile), "Файл после записи не найден: " + outFile);
 
         List<String> actual = Files.readAllLines(outFile);
 
@@ -202,6 +207,7 @@ public class ObjWriterTest {
         expected.add(v( 0,  0, 1));
         expected.add("");
 
+        //vt пишутся уникальные без дубликатов
         expected.add(vt(0.0f, 0.0f));
         expected.add(vt(0.0f, 1.0f));
         expected.add(vt(1.0f, 1.0f));
@@ -222,19 +228,16 @@ public class ObjWriterTest {
         expected.add("f 3/3/3 4/4/4 5/5/5");
         expected.add("f 4/4/4 1/1/1 5/5/5");
 
+
         assertEquals(expected.size(), actual.size(),
-                "Разное количество строк в файле.\n" +
-                        "Ожидалось: " + expected.size() + "\n" +
-                        "Получилось: " + actual.size());
+                "Разное количество строк в файле.\nОжидалось: " + expected.size() + "\nПолучилось: " + actual.size());
 
         for (int i = 0; i < expected.size(); i++) {
-            String exp = expected.get(i);
-            String act = actual.get(i);
-
-            assertEquals(exp, act,
-                    "Несовпадение в строке №" + (i + 1) + "\n" +
-                            "Ожидалось: " + exp + "\n" +
-                            "Получилось: " + act);
+            assertEquals(expected.get(i), actual.get(i),
+                    "Несовпадение в строке №" + (i + 1) +
+                            "\nОжидалось: " + expected.get(i) +
+                            "\nПолучилось: " + actual.get(i));
         }
     }
+
 }

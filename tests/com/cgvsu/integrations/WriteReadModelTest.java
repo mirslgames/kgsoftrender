@@ -1,5 +1,6 @@
 package com.cgvsu.integrations;
 
+import com.cgvsu.math.vectors.Vector2f;
 import com.cgvsu.model.Model;
 import com.cgvsu.model.Vertex;
 import com.cgvsu.objreader.ObjReader;
@@ -43,10 +44,6 @@ public class WriteReadModelTest {
         return true;
     }
 
-    private static boolean allHaveTex(Model m) {
-        for (Vertex v : m.vertices) if (v.textureCoordinate == null) return false;
-        return true;
-    }
 
     private static void assertModelsEqual(Model expected, Model actual) {
         assertNotNull(expected);
@@ -57,7 +54,7 @@ public class WriteReadModelTest {
         assertEquals(expected.vertices.size(), actual.vertices.size(), "Разное количество вершин");
 
         boolean compareNormals = allHaveNormals(expected) && allHaveNormals(actual);
-        boolean compareTex = allHaveTex(expected) && allHaveTex(actual);
+        boolean compareTex = expected.getHasTextureVertex() && actual.getHasTextureVertex();
 
         for (int i = 0; i < expected.vertices.size(); i++) {
             Vertex e = expected.vertices.get(i);
@@ -77,13 +74,6 @@ public class WriteReadModelTest {
                 assertEquals(e.normal.getY(), a.normal.getY(), EPS, "NY вершины " + (i + 1));
                 assertEquals(e.normal.getZ(), a.normal.getZ(), EPS, "NZ вершины " + (i + 1));
             }
-
-            if (compareTex) {
-                assertNotNull(e.textureCoordinate);
-                assertNotNull(a.textureCoordinate);
-                assertEquals(e.textureCoordinate.getX(), a.textureCoordinate.getX(), EPS, "U вершины " + (i + 1));
-                assertEquals(e.textureCoordinate.getY(), a.textureCoordinate.getY(), EPS, "V вершины " + (i + 1));
-            }
         }
 
         assertNotNull(expected.polygons);
@@ -100,6 +90,25 @@ public class WriteReadModelTest {
             assertEquals(expected.polygonsBoundaries.get(i), actual.polygonsBoundaries.get(i), "Boundary в позиции " + i);
         }
 
+        //Сравнение UV по углам, а не по вершинам
+        if (compareTex) {
+            assertNotNull(expected.polygonsTextureCoordinateIndices);
+            assertNotNull(actual.polygonsTextureCoordinateIndices);
+
+            assertEquals(expected.polygonsTextureCoordinateIndices.size(), actual.polygonsTextureCoordinateIndices.size(),
+                    "Разный размер polygonsTextureCoordinateIndices");
+
+            for (int corner = 0; corner < expected.polygons.size(); corner++) {
+                Vector2f euv = expected.getTextureCoordinateForPolygonVertex(corner);
+                Vector2f auv = actual.getTextureCoordinateForPolygonVertex(corner);
+
+                assertNotNull(euv, "UV ожидаемый is null в углу " + corner);
+                assertNotNull(auv, "UV актуальный is null в углу corner " + corner);
+
+                assertEquals(euv.getX(), auv.getX(), EPS, "U в углу " + corner);
+                assertEquals(euv.getY(), auv.getY(), EPS, "V в углу " + corner);
+            }
+        }
     }
 
     @Test
