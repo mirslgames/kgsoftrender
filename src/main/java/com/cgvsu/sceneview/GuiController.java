@@ -945,5 +945,9 @@ public class GuiController {
 
     public void setZoom(ScrollEvent scrollEvent) {
         SceneManager.activeCamera.zoomCamera((float) scrollEvent.getDeltaY() / 20);
+        if(currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
+                currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
+            renderFrame();
+        }
     }
 }
