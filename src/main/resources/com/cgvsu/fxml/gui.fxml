@@ -36,6 +36,11 @@
                   <RadioMenuItem fx:id="cameraTransformFrameMenuItem" mnemonicParsing="false" onAction="#cameraTransformFrameMenuItemClick" text="Рендерить и камеру и трансформации" toggleGroup="$renderMode" />
                   <RadioMenuItem fx:id="everyFrameMenuItem" mnemonicParsing="false" onAction="#everyFrameMenuItemClick" text="Рендерить каждый кадр" toggleGroup="$renderMode" />
                </items></Menu>
+            <Menu mnemonicParsing="false" text="Справка">
+              <items>
+                <MenuItem mnemonicParsing="false" onAction="#shortcutsInfoMenuItemClick" text="Горячие клавиши" />
+              </items>
+            </Menu>
           </MenuBar>
          <SplitPane dividerPositions="0.7312186978297162" prefHeight="481.0" prefWidth="814.0" VBox.vgrow="ALWAYS">
            <items>

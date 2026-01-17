@@ -46,11 +46,14 @@ import javafx.scene.Parent;
 
 import com.cgvsu.model.Model;
 import com.cgvsu.objreader.ObjReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static java.nio.file.Path.*;
 
 public class GuiController {
 
+    private static final Logger log = LoggerFactory.getLogger(GuiController.class);
     final private float TRANSLATION = 5F;
     final private float ROT = 0.5F;
     private float pastRotateX = 0;
@@ -147,6 +150,7 @@ public class GuiController {
 
     @FXML
     private void initialize() {
+
         try {
             Image img = new Image(
                     Objects.requireNonNull(getClass().getResourceAsStream("/default_texture.png"))
@@ -240,6 +244,7 @@ public class GuiController {
             timeline.play();
         }
         catch(Exception exception){
+            logError("Ошибка инициализации сцены");
             showError("Ошибка инициализации сцены");
         }
     }
@@ -302,7 +307,9 @@ public class GuiController {
         try {
             return Float.parseFloat(s);
         } catch (NumberFormatException e) {
+            logError(e.getMessage());
             showError(e.getMessage());
+
         }
         return 0;
     }
@@ -366,6 +373,7 @@ public class GuiController {
             }*/
         }
         catch (Exception exception){
+            logError("Ошибка при применении темы");
             showError("Ошибка при применении темы");
         }
     }
@@ -592,23 +600,32 @@ public class GuiController {
     }
 
     @FXML
+    private void shortcutsInfoMenuItemClick(){
+        showInfo(ShortcutsSettings.getInfo());
+    }
+
+    @FXML
     private void onSaveModelMenuItemClick() {
 
         try {
             if (SceneManager.activeModel == null) {
+                logWarning("Для сохранения надо выбрать конкретную модель");
                 showWarning("Выберите конкретную модель");
             } else {
                 Optional<SaveVariant> choice = askSaveVariant();
                 if (choice.isEmpty()) return;
 
                 Model toSaveModel = null;
+                String varik = "";
                 SaveVariant variant = choice.get();
                 switch (variant) {
                     case ORIGINAL -> {
                         toSaveModel = SceneManager.getOriginalModelFromModifiedModel(SceneManager.activeModel);
+                        varik = "Исходная загруженная версия";
                     }
                     case MODIFIED -> {
                         toSaveModel = SceneManager.activeModel;
+                        varik = "Измененная версия";
                     }
                 }
 
@@ -619,10 +636,11 @@ public class GuiController {
                 File file = fileChooser.showSaveDialog((Stage) sceneCanvas.getScene().getWindow());
                 Path fileName = Path.of(file.getAbsolutePath());
                 ObjWriter.writeModelToFile(toSaveModel, fileName.toString());
-                logInfo(String.format("Модель %s была успешно сохранена", SceneManager.activeModel.modelName));
+                logInfo(String.format("Модель %s (%s) была успешно сохранена", SceneManager.activeModel.modelName, varik));
             }
         }
         catch(Exception exception){
+            logError(exception.getMessage());
             showError(exception.getMessage());
         }
     }
@@ -678,6 +696,7 @@ public class GuiController {
             addModelButton(mesh, meshClone);
             logInfo(String.format("Модель %s была успешно загружена", mesh.modelName));
         } catch (Exception exception) {
+            logError(exception.getMessage());
             showError(exception.getMessage());
         }
     }
@@ -714,6 +733,12 @@ public class GuiController {
         alert.setTitle("Предупреждение");
         alert.setHeaderText(null);
         alert.setContentText(text);
+
+        Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+        stage.getIcons().add(new Image(
+                Objects.requireNonNull(getClass().getResourceAsStream("/main_icon.png"))
+        ));
+
         alert.showAndWait();
     }
 
@@ -722,6 +747,12 @@ public class GuiController {
         alert.setTitle("Ошибка");
         alert.setHeaderText(null);
         alert.setContentText(text);
+
+        Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+        stage.getIcons().add(new Image(
+                Objects.requireNonNull(getClass().getResourceAsStream("/main_icon.png"))
+        ));
+
         alert.showAndWait();
     }
 
@@ -731,15 +762,26 @@ public class GuiController {
         alert.setHeaderText(null);
         alert.setContentText(text);
 
+        Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+        stage.getIcons().add(new Image(
+                Objects.requireNonNull(getClass().getResourceAsStream("/main_icon.png"))
+        ));
+
         Optional<ButtonType> result = alert.showAndWait();
         return result.isPresent() && result.get() == ButtonType.OK;
     }
 
-    public static void showInfo(String text) {
+    public void showInfo(String text) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Информация");
         alert.setHeaderText(null);
         alert.setContentText(text);
+
+        Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+        stage.getIcons().add(new Image(
+                Objects.requireNonNull(getClass().getResourceAsStream("/main_icon.png"))
+        ));
+
         alert.showAndWait();
     }
     @FXML private void onDeleteTextureButtonClick(ActionEvent event){
