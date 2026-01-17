@@ -240,8 +240,12 @@ public class GuiController {
         ZBuffer zBuffer = new ZBuffer((int) width, (int) height);
         zBuffer.clear();
         for (Model model : SceneManager.models) {
+<<<<<<< Updated upstream
             RenderEngine.renderWithRenderingMods(sceneCanvas.getGraphicsContext2D(), SceneManager.activeCamera, model, (int) width, (int) height, zBuffer);
             //RenderEngine.render(sceneCanvas.getGraphicsContext2D(), SceneManager.activeCamera, model, (int) width, (int) height);
+=======
+            RenderEngine.renderWithRenderingMods(sceneCanvas.getGraphicsContext2D(), SceneManager.activeCamera, model, (int) width, (int) height);
+>>>>>>> Stashed changes
         }
         //ВАРИАНТ рендерить только активную модель
         /*if (SceneManager.activeModel != null) {

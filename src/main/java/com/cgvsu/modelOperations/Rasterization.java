@@ -437,55 +437,55 @@ public class Rasterization {
             }
         }
     }
-    public static void rasterizeTriangleWithWorldPos(
-            Point2f v1, Point2f v2, Point2f v3,
-            float z1, float z2, float z3,
-            Vertex vertex1, Vertex vertex2, Vertex vertex3,
-            Vector2f tex1, Vector2f tex2, Vector2f tex3,
-            Vector3f worldPos1, Vector3f worldPos2, Vector3f worldPos3,
-            PixelCallback pixelCallback, Matrix4f modelMatrix) {
-
-        int[] bbox = getBoundingBox(v1, v2, v3);
-        int minX = bbox[0];
-        int minY = bbox[1];
-        int maxX = bbox[2];
-        int maxY = bbox[3];
-
-        for (int y = minY; y <= maxY; y++) {
-            for (int x = minX; x <= maxX; x++) {
-                Point2f pixel = new Point2f(x, y);
-                float[] barycentric = calculateBarycentricCoordinates(pixel, v1, v2, v3);
-
-                if (isInsideTriangle(barycentric)) {
-                    float z = interpolate(z1, z2, z3, barycentric);
-
-                    // Интерполируем мировую позицию
-                    Vector3f worldPosition = interpolateWorldPositionWithPerspective(
-                            worldPos1, worldPos2, worldPos3,
-                            z1, z2, z3,
-                            barycentric
-                    );
-                    // Интерполируем текстурные координаты (передаются отдельно от Vertex)
-                    Vector2f texCoord = null;
-                    if (tex1 != null && tex2 != null && tex3 != null) {
-                        texCoord = interpolateWithPerspective(tex1, tex2, tex3, z1, z2, z3, barycentric);
-                    } else if (!(tex1 == null && tex2 == null && tex3 == null)) {
-                        texCoord = new Vector2f(0, 0);
-                    }
-                    // Интерполируем нормаль
-                    Vector3f normal = interpolateNormalWithPerspective(
-                            vertex1, vertex2, vertex3,
-                            z1, z2, z3,
-                            barycentric
-                    );
-                    Vector3f worldNormal = modelMatrix.multiplyOnVector(normal);
-                    worldNormal.normalize();
-
-                    pixelCallback.onPixel(x, y, z, barycentric, texCoord, normal, worldPosition);
-                }
-            }
-        }
-    }
+//    public static void rasterizeTriangleWithWorldPos(
+//            Point2f v1, Point2f v2, Point2f v3,
+//            float z1, float z2, float z3,
+//            Vertex vertex1, Vertex vertex2, Vertex vertex3,
+//            Vector2f tex1, Vector2f tex2, Vector2f tex3,
+//            Vector3f worldPos1, Vector3f worldPos2, Vector3f worldPos3,
+//            PixelCallback pixelCallback, Matrix4f modelMatrix) {
+//
+//        int[] bbox = getBoundingBox(v1, v2, v3);
+//        int minX = bbox[0];
+//        int minY = bbox[1];
+//        int maxX = bbox[2];
+//        int maxY = bbox[3];
+//
+//        for (int y = minY; y <= maxY; y++) {
+//            for (int x = minX; x <= maxX; x++) {
+//                Point2f pixel = new Point2f(x, y);
+//                float[] barycentric = calculateBarycentricCoordinates(pixel, v1, v2, v3);
+//
+//                if (isInsideTriangle(barycentric)) {
+//                    float z = interpolate(z1, z2, z3, barycentric);
+//
+//                    // Интерполируем мировую позицию
+//                    Vector3f worldPosition = interpolateWorldPositionWithPerspective(
+//                            worldPos1, worldPos2, worldPos3,
+//                            z1, z2, z3,
+//                            barycentric
+//                    );
+//                    // Интерполируем текстурные координаты (передаются отдельно от Vertex)
+//                    Vector2f texCoord = null;
+//                    if (tex1 != null && tex2 != null && tex3 != null) {
+//                        texCoord = interpolateWithPerspective(tex1, tex2, tex3, z1, z2, z3, barycentric);
+//                    } else if (!(tex1 == null && tex2 == null && tex3 == null)) {
+//                        texCoord = new Vector2f(0, 0);
+//                    }
+//                    // Интерполируем нормаль
+//                    Vector3f normal = interpolateNormalWithPerspective(
+//                            vertex1, vertex2, vertex3,
+//                            z1, z2, z3,
+//                            barycentric
+//                    );
+//                    Vector3f worldNormal = modelMatrix.multiplyOnVector(normal);
+//                    worldNormal.normalize();
+//
+//                    pixelCallback.onPixel(x, y, z, barycentric, texCoord, normal, worldPosition);
+//                }
+//            }
+//        }
+//    }
 
     /**
      * Интерфейс callback для обработки пикселей при растеризации.

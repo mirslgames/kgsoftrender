@@ -13,6 +13,7 @@ public class Vertex {
     public boolean equals(Vertex vertex) {
         return vertex.position.equals(position);
     }
+<<<<<<< Updated upstream
 
     public Vertex(float x, float y, float z){
         position = new Vector3f(x, y, z);
@@ -22,6 +23,20 @@ public class Vertex {
         position = new Vector3f(0,0,0);
     }
 
+=======
+    public Vertex(final Vector3f position) {
+        this.position = position;
+        this.normal = null;
+    }
+
+    public Vertex(final float x, final float y, final float z) {
+        this(new Vector3f(x, y, z));
+    }
+
+    public Vertex() {
+        this(new Vector3f(0, 0, 0));
+    }
+>>>>>>> Stashed changes
     public int getOrAddTextureCoordinate(final Vector2f uv) {
         if (uv == null) return -1;
 
