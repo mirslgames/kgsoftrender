@@ -142,7 +142,7 @@ class ModelTest {
                 "У вершины v0 список textureCoordinates должен быть инициализирован.");
 
         assertEquals(2, v0.textureCoordinates.size(),
-                "У вершины v0 должно быть 2 UV-варианта, так как она участвует в UV seam.");
+                "У вершины v0 должно быть 2 UV-варианта");
 
         Vector2f uvFirstUse = m.getTextureCoordinateForPolygonVertex(0);
         Vector2f uvSecondUse = m.getTextureCoordinateForPolygonVertex(3);
@@ -157,6 +157,97 @@ class ModelTest {
                 "Первое использование вершины v0 должно иметь V=0.0 (local UV 0).");
 
         assertEquals(0.5f, uvSecondUse.getY(), EPS,
-                "Второе использование вершины v0 должно иметь V=0.5 (local UV 1), что и демонстрирует UV seam.");
+                "Второе использование вершины v0 должно иметь V=0.5 (local UV 1)");
+    }
+    @Test
+    void testModelDeepCopyCreatesIndependentCopy() {
+        Model original = new Model();
+        original.modelName = "test";
+        original.hasTexture = true;
+        original.texture = null;
+        original.textureName = "По умолчанию";
+
+        original.currentTransform = new Transform(1, 2, 3, 10, 20, 30, 1, 1, 1);
+        original.transformHistory = new ArrayList<>();
+        original.transformHistory.add(new Transform(0, 0, 0, 0, 0, 0, 1, 1, 1));
+        original.transformHistory.add(new Transform(5, 6, 7, 0, 0, 0, 2, 2, 2));
+
+        Vertex v0 = new Vertex();
+        v0.position = new Vector3f(0, 0, 0);
+        v0.normal = new Vector3f(0, 1, 0);
+        v0.getOrAddTextureCoordinate(new Vector2f(0f, 0f));
+
+        Vertex v1 = new Vertex();
+        v1.position = new Vector3f(1, 0, 0);
+        v1.normal = new Vector3f(0, 1, 0);
+        v1.getOrAddTextureCoordinate(new Vector2f(1f, 0f));
+
+        original.vertices = new ArrayList<>(List.of(v0, v1));
+
+        original.polygons = new ArrayList<>(List.of(0, 1));
+        original.polygonsBoundaries = new ArrayList<>(List.of(0));
+        original.polygonsTextureCoordinateIndices = new ArrayList<>(List.of(0, 0));
+
+        Model copy = original.deepCopy();
+
+        assertNotNull(copy, "Копия модели не должна быть null.");
+        assertNotSame(original, copy, "Копия модели должна быть новым объектом, а не той же ссылкой.");
+
+        assertEquals(original.modelName, copy.modelName, "modelName должен совпадать.");
+        assertEquals(original.hasTexture, copy.hasTexture, "hasTexture должен совпадать.");
+        assertEquals(original.textureName, copy.textureName, "textureName должен совпадать.");
+        assertSame(original.texture, copy.texture,
+                "texture допускается шарить ссылкой (обычно это нормально и экономит память).");
+
+        assertNotSame(original.polygons, copy.polygons, "polygons должен быть скопирован в новый список.");
+        assertNotSame(original.polygonsBoundaries, copy.polygonsBoundaries, "polygonsBoundaries должен быть скопирован в новый список.");
+        assertNotSame(original.polygonsTextureCoordinateIndices, copy.polygonsTextureCoordinateIndices,
+                "polygonsTextureCoordinateIndices должен быть скопирован в новый список.");
+
+        assertEquals(original.polygons, copy.polygons, "polygons по содержимому должен совпадать.");
+        assertEquals(original.polygonsBoundaries, copy.polygonsBoundaries, "polygonsBoundaries по содержимому должен совпадать.");
+        assertEquals(original.polygonsTextureCoordinateIndices, copy.polygonsTextureCoordinateIndices,
+                "polygonsTextureCoordinateIndices по содержимому должен совпадать.");
+
+        assertNotSame(original.vertices, copy.vertices, "vertices должен быть скопирован в новый список.");
+        assertEquals(original.vertices.size(), copy.vertices.size(), "Количество вершин в копии должно совпадать.");
+
+        for (int i = 0; i < original.vertices.size(); i++) {
+            Vertex ov = original.vertices.get(i);
+            Vertex cv = copy.vertices.get(i);
+            assertNotSame(ov, cv, "Каждая вершина должна быть отдельным объектом в копии (deep copy).");
+
+            assertNotNull(cv.position, "position в копии вершины не должен быть null.");
+            assertNotSame(ov.position, cv.position, "position в вершине должен быть скопирован глубоко.");
+
+            assertEquals(ov.position.getX(), cv.position.getX(), EPS, "X position вершины должен совпадать.");
+            assertEquals(ov.position.getY(), cv.position.getY(), EPS, "Y position вершины должен совпадать.");
+            assertEquals(ov.position.getZ(), cv.position.getZ(), EPS, "Z position вершины должен совпадать.");
+        }
+
+        assertNotNull(copy.currentTransform, "currentTransform в копии не должен быть null.");
+        assertNotSame(original.currentTransform, copy.currentTransform,
+                "currentTransform должен быть скопирован глубоко");
+
+        assertNotNull(copy.transformHistory, "transformHistory в копии не должен быть null.");
+        assertNotSame(original.transformHistory, copy.transformHistory, "transformHistory должен быть новым списком.");
+        assertEquals(original.transformHistory.size(), copy.transformHistory.size(), "Размер transformHistory должен совпадать.");
+
+        assertNotSame(original.transformHistory.get(0), copy.transformHistory.get(0),
+                "Элементы transformHistory должны быть скопированы глубоко.");
+
+        copy.polygons.add(999);
+        assertEquals(2, original.polygons.size(),
+                "При изменении polygons у копии, оригинал не должен изменяться.");
+        assertEquals(3, copy.polygons.size(),
+                "При добавлении в polygons копии, размер polygons у копии должен увеличиться.");
+
+        copy.currentTransform.positionX = 123;
+        assertNotEquals(123, original.currentTransform.positionX,
+                "При изменении currentTransform в копии, original.currentTransform не должен меняться.");
+
+        copy.vertices.get(0).position = new Vector3f(777, 777, 777);
+        assertNotEquals(777, original.vertices.get(0).position.getX(),
+                "При изменении позиции вершины в копии, оригинальная вершина не должна изменяться.");
     }
 }

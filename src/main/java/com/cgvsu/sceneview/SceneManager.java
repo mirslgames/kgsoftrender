@@ -19,9 +19,8 @@ public class SceneManager {
     public static Dictionary<String, Model> cacheNameSceneModels = new Hashtable<>(); // чтобы быстро найти по имени модель а не перебирать все загруженные
     public static HashMap<String, Integer> historyModelName = new HashMap<>();
 
-    //Задел на будущее подумать как сохранять исходную модель и модель преобразованную
-    public static ArrayList<Model> originalModels = new ArrayList<>();
-    public static Dictionary<String, Model> originalcacheNameSceneModels = new Hashtable<>();
+    public static ArrayList<Model> originalModels = new ArrayList<>(); //Клон оригинальных  загруженных моделей
+    public static Dictionary<String, Model> originalCacheNameSceneModels = new Hashtable<>();
     //todo: Подумать как организовать источник света
 
 
@@ -48,6 +47,11 @@ public class SceneManager {
         cacheNameSceneModels.put(model.modelName, model);
     }
 
+    public static void loadOriginalModelToScene(Model model){
+        originalModels.add(model);
+        originalCacheNameSceneModels.put(model.modelName, model);
+    }
+
 
     public static boolean removeModelFromScene(Model model) {
         if (model == null) return false;
@@ -60,7 +64,11 @@ public class SceneManager {
         Model model = cacheNameSceneModels.get(modelName);
         if (model == null) return false;
 
-        models.remove(model);
+        for(int i = 0; i < models.size(); i++){
+            if (models.get(i).modelName.equals(modelName)){
+                models.remove(i);
+            }
+        }
         cacheNameSceneModels.remove(modelName);
 
         if (activeModel != null && activeModel.modelName != null && activeModel.modelName.equals(model.modelName)) {
@@ -68,7 +76,18 @@ public class SceneManager {
             isSceneEntitySelect = false;
         }
 
+        for(int i = 0; i < originalModels.size(); i++){
+            if (originalModels.get(i).modelName.equals(modelName)){
+                originalModels.remove(i);
+            }
+        }
+        originalCacheNameSceneModels.remove(modelName);
+
         return true;
+    }
+
+    public static Model getOriginalModelFromModifiedModel(Model model){
+        return originalCacheNameSceneModels.get(model.modelName);
     }
 
 }

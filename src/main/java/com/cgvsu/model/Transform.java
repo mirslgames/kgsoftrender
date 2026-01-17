@@ -24,4 +24,13 @@ public class Transform {
         this.scaleY = scaleY;
         this.scaleZ = scaleZ;
     }
+
+    public Transform deepCopy() {
+        return new Transform(
+                positionX, positionY, positionZ,
+                rotationX, rotationY, rotationZ,
+                scaleX, scaleY, scaleZ
+        );
+    }
+
 }

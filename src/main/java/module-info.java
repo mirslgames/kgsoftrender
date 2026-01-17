@@ -3,7 +3,7 @@ module com.cgvsu {
     requires javafx.fxml;
     requires vecmath;
     requires java.desktop;
-
+    requires org.slf4j;
 
 
     opens com.cgvsu to javafx.fxml;

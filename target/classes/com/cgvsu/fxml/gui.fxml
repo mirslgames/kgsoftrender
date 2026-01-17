@@ -10,18 +10,35 @@
    <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
       <children>
           <MenuBar fx:id="menuBar">
-              <Menu mnemonicParsing="false" text="File">
-                  <MenuItem fx:id="openModeMenuItem" mnemonicParsing="false" onAction="#onOpenModelMenuItemClick" text="Load Model">
+              <Menu mnemonicParsing="false" text="Файл">
+                  <MenuItem fx:id="openModeMenuItem" mnemonicParsing="false" onAction="#onOpenModelMenuItemClick" text="Загрузить модель">
                   <accelerator>
                       <KeyCodeCombination alt="UP" code="F" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
                   </accelerator>
                   </MenuItem>
-               <MenuItem fx:id="saveModeMenuItem" mnemonicParsing="false" onAction="#onSaveModelMenuItemClick" text="Save model" />
+               <MenuItem fx:id="saveModeMenuItem" mnemonicParsing="false" onAction="#onSaveModelMenuItemClick" text="Сохранить модель" />
               </Menu>
-            <Menu mnemonicParsing="false" text="Theme">
+            <Menu mnemonicParsing="false" text="Тема">
               <items>
-                <MenuItem mnemonicParsing="false" onAction="#onLightThemeMenuItemClick" text="Light" />
-                  <MenuItem mnemonicParsing="false" onAction="#onDarkThemeMenuItemClick" text="Dark" />
+                <MenuItem mnemonicParsing="false" onAction="#onLightThemeMenuItemClick" text="Светлая" />
+                  <MenuItem mnemonicParsing="false" onAction="#onDarkThemeMenuItemClick" text="Темная" />
+              </items>
+            </Menu>
+            <Menu mnemonicParsing="false" text="Режим рендера">
+               <items>
+                  <RadioMenuItem fx:id="oneFrameMenuItem" mnemonicParsing="false" onAction="#oneFrameMenuItemClick" selected="true" text="Рендерить один кадр по кнопке">
+                     <toggleGroup>
+                        <ToggleGroup fx:id="renderMode" />
+                     </toggleGroup>
+                  </RadioMenuItem>
+                  <RadioMenuItem fx:id="transformFrameMenuItem" mnemonicParsing="false" onAction="#transformFrameMenuItemClick" text="Рендерить каждую трансформацию" toggleGroup="$renderMode" />
+                  <RadioMenuItem fx:id="cameraFrameMenuItem" mnemonicParsing="false" onAction="#cameraFrameMenuItemClick" text="Рендерить каждое движение камеры" toggleGroup="$renderMode" />
+                  <RadioMenuItem fx:id="cameraTransformFrameMenuItem" mnemonicParsing="false" onAction="#cameraTransformFrameMenuItemClick" text="Рендерить и камеру и трансформации" toggleGroup="$renderMode" />
+                  <RadioMenuItem fx:id="everyFrameMenuItem" mnemonicParsing="false" onAction="#everyFrameMenuItemClick" text="Рендерить каждый кадр" toggleGroup="$renderMode" />
+               </items></Menu>
+            <Menu mnemonicParsing="false" text="Справка">
+              <items>
+                <MenuItem mnemonicParsing="false" onAction="#shortcutsInfoMenuItemClick" text="Горячие клавиши" />
               </items>
             </Menu>
           </MenuBar>
@@ -37,7 +54,7 @@
                                   <Canvas fx:id="sceneCanvas" height="870" width="1600" AnchorPane.topAnchor="0.0" />
                               </children>
                            </AnchorPane>
-                         <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="100.0" prefWidth="160.0">
+                         <AnchorPane fx:id="logAnchorPane" minHeight="0.0" minWidth="0.0" prefHeight="100.0" prefWidth="160.0">
                               <children>
                                  <TextArea fx:id="logTextArea" editable="false" layoutX="56.0" layoutY="-47.0" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                               </children></AnchorPane>
@@ -47,7 +64,7 @@
                </AnchorPane>
              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
                   <children>
-                     <SplitPane dividerPositions="0.35667963683527887" layoutX="32.0" layoutY="40.0" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                     <SplitPane dividerPositions="0.22827496757457846" layoutX="32.0" layoutY="40.0" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                        <items>
                          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="150.0" prefWidth="292.0">
                               <children>
@@ -67,33 +84,6 @@
                                           <VBox.margin>
                                              <Insets top="10.0" />
                                           </VBox.margin></Button>
-                                       <RadioButton fx:id="oneFrameRadioButton" mnemonicParsing="false" onAction="#oneFrameRadioButtonSelect" selected="true" text="Рендерить один кадр по кнопке">
-                                          <VBox.margin>
-                                             <Insets top="10.0" />
-                                          </VBox.margin>
-                                          <toggleGroup>
-                                             <ToggleGroup fx:id="renderMode" />
-                                          </toggleGroup></RadioButton>
-                                       <RadioButton fx:id="transformFrameRadioButton" layoutX="10.0" layoutY="142.0" mnemonicParsing="false" onAction="#transformFrameRadioButtonSelect" text="Рендерить каждую трансформацию" toggleGroup="$renderMode">
-                                          <VBox.margin>
-                                             <Insets top="5.0" />
-                                          </VBox.margin>
-                                       </RadioButton>
-                                       <RadioButton fx:id="cameraFrameRadioButton" layoutX="10.0" layoutY="164.0" mnemonicParsing="false" onAction="#cameraFrameRadioButtonSelect" text="Рендерить каждое движение камеры" toggleGroup="$renderMode">
-                                          <VBox.margin>
-                                             <Insets top="5.0" />
-                                          </VBox.margin>
-                                       </RadioButton>
-                                       <RadioButton fx:id="cameraTransformFrameRadioButton" layoutX="10.0" layoutY="186.0" mnemonicParsing="false" onAction="#cameraTransformFrameRadioButtonSelect" text="Рендерить и камеру и трансформации" toggleGroup="$renderMode">
-                                          <VBox.margin>
-                                             <Insets top="5.0" />
-                                          </VBox.margin>
-                                       </RadioButton>
-                                       <RadioButton fx:id="everyFrameRadioButton" layoutX="10.0" layoutY="208.0" mnemonicParsing="false" onAction="#everyFrameRadioButtonSelect" text="Рендерить каждый кадр" toggleGroup="$renderMode">
-                                          <VBox.margin>
-                                             <Insets top="5.0" />
-                                          </VBox.margin>
-                                       </RadioButton>
                                     </children>
                                  </VBox>
                               </children></AnchorPane>

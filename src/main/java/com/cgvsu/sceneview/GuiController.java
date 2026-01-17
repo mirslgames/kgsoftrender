@@ -47,11 +47,14 @@ import javafx.scene.Parent;
 
 import com.cgvsu.model.Model;
 import com.cgvsu.objreader.ObjReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static java.nio.file.Path.*;
 
 public class GuiController {
 
+    private static final Logger log = LoggerFactory.getLogger(GuiController.class);
     final private float TRANSLATION = 5F;
     final private float ROT = 0.5F;
     private float pastRotateX = 0;
@@ -122,110 +125,131 @@ public class GuiController {
     @FXML
     private Button renderButton;
     @FXML
-    private RadioButton oneFrameRadioButton;
+    private RadioMenuItem oneFrameMenuItem;
     @FXML
-    private RadioButton transformFrameRadioButton;
+    private RadioMenuItem transformFrameMenuItem;
     @FXML
-    private RadioButton cameraFrameRadioButton;
+    private RadioMenuItem cameraFrameMenuItem;
     @FXML
-    private RadioButton cameraTransformFrameRadioButton;
+    private RadioMenuItem cameraTransformFrameMenuItem;
     @FXML
-    private RadioButton everyFrameRadioButton;
+    private RadioMenuItem everyFrameMenuItem;
+    @FXML
+    private AnchorPane logAnchorPane;
 
     private RenderMode currentRenderMode;
 
     private Timeline timeline;
 
+    private enum SaveVariant {
+        ORIGINAL("Исходная модель"),
+        MODIFIED("Изменённая");
+
+        final String title;
+        SaveVariant(String title) { this.title = title; }
+
+        @Override public String toString() { return title; }
+    }
+
     @FXML
     private void initialize() {
 
-        currentRenderMode = RenderMode.ONE_FRAME;
-        lightIntensityLabel.textProperty().bind(
-                lightIntensitySlider.valueProperty().asString("%.2f")
-        );
+        try {
+            Image img = new Image(
+                    Objects.requireNonNull(getClass().getResourceAsStream("/default_texture.png"))
+            );
+            Model.defaultTexture = img;
+            currentRenderMode = RenderMode.ONE_FRAME;
+            lightIntensityLabel.textProperty().bind(
+                    lightIntensitySlider.valueProperty().asString("%.2f")
+            );
 
-        lightIntensitySlider.valueProperty().addListener((obs, oldV, newV) -> {
-            SceneManager.lightIntensity = newV.floatValue();
-        });
-
-
-        positionXTextField.setOnKeyReleased(e -> onPositionXChanged());
-        positionYTextField.setOnKeyReleased(e -> onPositionYChanged());
-        positionZTextField.setOnKeyReleased(e -> onPositionZChanged());
-
-        rotationXTextField.setOnKeyReleased(e -> onRotationXChanged());
-        rotationYTextField.setOnKeyReleased(e -> onRotationYChanged());
-        rotationZTextField.setOnKeyReleased(e -> onRotationZChanged());
-
-        scaleXTextField.setOnKeyReleased(e -> onScaleXChanged());
-        scaleYTextField.setOnKeyReleased(e -> onScaleYChanged());
-        scaleZTextField.setOnKeyReleased(e -> onScaleZChanged());
-
-        installNumericFloatFilter(positionXTextField);
-        installNumericFloatFilter(positionYTextField);
-        installNumericFloatFilter(positionZTextField);
-
-        installNumericFloatFilter(rotationXTextField);
-        installNumericFloatFilter(rotationYTextField);
-        installNumericFloatFilter(rotationZTextField);
-
-        installNumericFloatFilter(scaleXTextField);
-        installNumericFloatFilter(scaleYTextField);
-        installNumericFloatFilter(scaleZTextField);
+            lightIntensitySlider.valueProperty().addListener((obs, oldV, newV) -> {
+                SceneManager.lightIntensity = newV.floatValue();
+            });
 
 
-        openModeMenuItem.setAccelerator(KeyCombination.keyCombination(ShortcutsSettings.openModel));
-        saveModeMenuItem.setAccelerator(KeyCombination.keyCombination(ShortcutsSettings.saveModel));
+            positionXTextField.setOnKeyReleased(e -> onPositionXChanged());
+            positionYTextField.setOnKeyReleased(e -> onPositionYChanged());
+            positionZTextField.setOnKeyReleased(e -> onPositionZChanged());
 
-        canvasParentAnchorPane.setOnMouseDragged(this::changeCameraPosition);
-        canvasParentAnchorPane.setOnMousePressed(this::setPastXY);
-        canvasParentAnchorPane.setOnScroll(this::setZoom);
+            rotationXTextField.setOnKeyReleased(e -> onRotationXChanged());
+            rotationYTextField.setOnKeyReleased(e -> onRotationYChanged());
+            rotationZTextField.setOnKeyReleased(e -> onRotationZChanged());
 
-        Platform.runLater(() -> {
-            ThemeSettings.setLightTheme();
-            applyTheme();
+            scaleXTextField.setOnKeyReleased(e -> onScaleXChanged());
+            scaleYTextField.setOnKeyReleased(e -> onScaleYChanged());
+            scaleZTextField.setOnKeyReleased(e -> onScaleZChanged());
 
-            Scene scene = sceneCanvas.getScene();
-            if (scene != null) {
-                installHoverForAllButtons(scene.getRoot());
-            }
-        });
-        SceneManager.initialize();
+            installNumericFloatFilter(positionXTextField, true);
+            installNumericFloatFilter(positionYTextField, true);
+            installNumericFloatFilter(positionZTextField, true);
 
-        sceneCanvas.setFocusTraversable(true);
-        sceneCanvas.setOnMouseClicked(e -> sceneCanvas.requestFocus());
+            installNumericFloatFilter(rotationXTextField, true);
+            installNumericFloatFilter(rotationYTextField, true);
+            installNumericFloatFilter(rotationZTextField, true);
 
-        sceneCanvas.widthProperty().bind(canvasParentAnchorPane.widthProperty());
-        sceneCanvas.heightProperty().bind(canvasParentAnchorPane.heightProperty());
-        deleteActiveEntityButton.setVisible(false);
-        transformationTitledPane.setVisible(false);
-        drawMeshCheckBox.setSelected(SceneManager.drawMesh);
-        useTextureCheckBox.setSelected(SceneManager.useTexture);
-        useLightCheckBox.setSelected(SceneManager.useLight);
-        drawMeshCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
-            SceneManager.drawMesh = newVal;
-        });
-
-        useTextureCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
-            SceneManager.useTexture = newVal;
-        });
-
-        useLightCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
-            SceneManager.useLight = newVal;
-        });
-        timeline = new Timeline();
-        timeline.setCycleCount(Animation.INDEFINITE);
-
-        KeyFrame frame = new KeyFrame(Duration.millis(15), e -> {
-            if(currentRenderMode == RenderMode.EVERY_FRAME){
-                renderFrame();
-            }
-        });
+            installNumericFloatFilter(scaleXTextField, false);
+            installNumericFloatFilter(scaleYTextField, false);
+            installNumericFloatFilter(scaleZTextField, false);
 
 
-        timeline.getKeyFrames().add(frame);
-        timeline.play();
+            openModeMenuItem.setAccelerator(KeyCombination.keyCombination(ShortcutsSettings.openModel));
+            saveModeMenuItem.setAccelerator(KeyCombination.keyCombination(ShortcutsSettings.saveModel));
 
+            canvasParentAnchorPane.setOnMouseDragged(this::changeCameraPosition);
+            canvasParentAnchorPane.setOnMousePressed(this::setPastXY);
+            canvasParentAnchorPane.setOnScroll(this::setZoom);
+
+            Platform.runLater(() -> {
+                ThemeSettings.setLightTheme();
+                applyTheme();
+
+                Scene scene = sceneCanvas.getScene();
+                if (scene != null) {
+                    installHoverForAllButtons(scene.getRoot());
+                }
+            });
+            SceneManager.initialize();
+
+            sceneCanvas.setFocusTraversable(true);
+            sceneCanvas.setOnMouseClicked(e -> sceneCanvas.requestFocus());
+
+            sceneCanvas.widthProperty().bind(canvasParentAnchorPane.widthProperty());
+            sceneCanvas.heightProperty().bind(canvasParentAnchorPane.heightProperty());
+            deleteActiveEntityButton.setVisible(false);
+            transformationTitledPane.setVisible(false);
+            drawMeshCheckBox.setSelected(SceneManager.drawMesh);
+            useTextureCheckBox.setSelected(SceneManager.useTexture);
+            useLightCheckBox.setSelected(SceneManager.useLight);
+            drawMeshCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+                SceneManager.drawMesh = newVal;
+            });
+
+            useTextureCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+                SceneManager.useTexture = newVal;
+            });
+
+            useLightCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+                SceneManager.useLight = newVal;
+            });
+            timeline = new Timeline();
+            timeline.setCycleCount(Animation.INDEFINITE);
+
+            KeyFrame frame = new KeyFrame(Duration.millis(15), e -> {
+                if (currentRenderMode == RenderMode.EVERY_FRAME) {
+                    renderFrame();
+                }
+            });
+
+
+            timeline.getKeyFrames().add(frame);
+            timeline.play();
+        }
+        catch(Exception exception){
+            logError("Ошибка инициализации сцены");
+            showError("Ошибка инициализации сцены");
+        }
     }
 
     private void renderFrame() {
@@ -253,36 +277,47 @@ public class GuiController {
         }*/
     }
 
-    private void installNumericFloatFilter(TextField tf) {
+    private void installNumericFloatFilter(TextField tf, boolean allowNegative) {
         if (tf == null) return;
 
         UnaryOperator<TextFormatter.Change> filter = change -> {
             String newText = change.getControlNewText();
 
-            // Разрешаем как промежуточный ввод
-            if (newText.equals("-") || newText.equals("-.") || newText.equals("-,")) return change;
+            // Разрешаем пустую строку
+            if (newText.isEmpty()) return change;
 
-            // Полноценное число:
-            // 123
-            // -123
-            // 12.34
-            // -12,34
-            if (newText.matches("-?\\d+([\\.,]\\d*)?")) return change;
+            // Промежуточные состояния
+            if (allowNegative) {
+                if (newText.equals("-") || newText.equals("-.") || newText.equals("-,"))
+                    return change;
+            }
+            if (newText.equals(".") || newText.equals(",")) return change;
 
-            return null; //Запрещаем другие изменения и также пустую строчку
+            //Полноценные числа с учетом знака
+            String sign = allowNegative ? "-?" : "";
+            String pattern = sign + "(?:\\d+(?:[\\.,]\\d*)?|[\\.,]\\d+)";
+
+            if (newText.matches(pattern)) return change;
+
+            return null;
         };
 
         tf.setTextFormatter(new TextFormatter<>(filter));
     }
 
+
     private float parseFloat(TextField textField) {
         String s = textField.getText();
         s = s.trim().replace(',', '.');
-
+        if(s.isEmpty() || s.equals("-") || s.equals("-.") || s.isBlank() || s.endsWith(".") || s.endsWith(",")){
+            return 0;
+        }
         try {
             return Float.parseFloat(s);
         } catch (NumberFormatException e) {
+            logError(e.getMessage());
             showError(e.getMessage());
+
         }
         return 0;
     }
@@ -346,6 +381,7 @@ public class GuiController {
             }*/
         }
         catch (Exception exception){
+            logError("Ошибка при применении темы");
             showError("Ошибка при применении темы");
         }
     }
@@ -369,25 +405,37 @@ public class GuiController {
         }
     }
 
-    @FXML private void oneFrameRadioButtonSelect(ActionEvent event){
+    @FXML private void oneFrameMenuItemClick(ActionEvent event){
         currentRenderMode = RenderMode.ONE_FRAME;
         renderButton.setDisable(false);
     }
-    @FXML private void transformFrameRadioButtonSelect(ActionEvent event){
+    @FXML private void transformFrameMenuItemClick(ActionEvent event){
         currentRenderMode = RenderMode.EVERY_TRANSFORM_FRAME;
         renderButton.setDisable(true);
     }
-    @FXML private void cameraFrameRadioButtonSelect(ActionEvent event){
+    @FXML private void cameraFrameMenuItemClick(ActionEvent event){
         currentRenderMode = RenderMode.EVERY_CAMERA_MOTION_FRAME;
         renderButton.setDisable(true);
     }
-    @FXML private void cameraTransformFrameRadioButtonSelect(ActionEvent event){
+    @FXML private void cameraTransformFrameMenuItemClick(ActionEvent event){
         currentRenderMode = RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME;
         renderButton.setDisable(true);
     }
-    @FXML private void everyFrameRadioButtonSelect(ActionEvent event){
+    @FXML private void everyFrameMenuItemClick(ActionEvent event){
         currentRenderMode = RenderMode.EVERY_FRAME;
         renderButton.setDisable(true);
+    }
+
+    private Optional<SaveVariant> askSaveVariant() {
+        ChoiceDialog<SaveVariant> dialog = new ChoiceDialog<>(
+                SaveVariant.MODIFIED,
+                List.of(SaveVariant.ORIGINAL, SaveVariant.MODIFIED)
+        );
+        dialog.setTitle("Сохранение модели");
+        dialog.setHeaderText("Какую модель сохранить?");
+        dialog.setContentText("Выберите вариант:");
+
+        return dialog.showAndWait();
     }
 
     @FXML
@@ -560,23 +608,47 @@ public class GuiController {
     }
 
     @FXML
+    private void shortcutsInfoMenuItemClick(){
+        showInfo(ShortcutsSettings.getInfo());
+    }
+
+    @FXML
     private void onSaveModelMenuItemClick() {
 
         try {
             if (SceneManager.activeModel == null) {
+                logWarning("Для сохранения надо выбрать конкретную модель");
                 showWarning("Выберите конкретную модель");
             } else {
+                Optional<SaveVariant> choice = askSaveVariant();
+                if (choice.isEmpty()) return;
+
+                Model toSaveModel = null;
+                String varik = "";
+                SaveVariant variant = choice.get();
+                switch (variant) {
+                    case ORIGINAL -> {
+                        toSaveModel = SceneManager.getOriginalModelFromModifiedModel(SceneManager.activeModel);
+                        varik = "Исходная загруженная версия";
+                    }
+                    case MODIFIED -> {
+                        toSaveModel = SceneManager.activeModel;
+                        varik = "Измененная версия";
+                    }
+                }
+
                 FileChooser fileChooser = new FileChooser();
                 fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Model (*.obj)", "*.obj"));
                 fileChooser.setTitle("Save Model");
 
                 File file = fileChooser.showSaveDialog((Stage) sceneCanvas.getScene().getWindow());
                 Path fileName = Path.of(file.getAbsolutePath());
-                ObjWriter.writeModelToFile(SceneManager.activeModel, fileName.toString());
-                logInfo(String.format("Модель %s была успешно сохранена", SceneManager.activeModel.modelName));
+                ObjWriter.writeModelToFile(toSaveModel, fileName.toString());
+                logInfo(String.format("Модель %s (%s) была успешно сохранена", SceneManager.activeModel.modelName, varik));
             }
         }
         catch(Exception exception){
+            logError(exception.getMessage());
             showError(exception.getMessage());
         }
     }
@@ -624,13 +696,15 @@ public class GuiController {
             String fileContent = Files.readString(fileName);
             Model mesh = ObjReader.readModelFromFile(fileContent, fileName.getFileName().toString(), SceneManager.historyModelName);
             validateAndCorrectDuplicateModelName(mesh);
+
+            Model meshClone = mesh.deepCopy();
             mesh.triangulate();
 
-
             //Добавление кнопки
-            addModelButton(mesh);
+            addModelButton(mesh, meshClone);
             logInfo(String.format("Модель %s была успешно загружена", mesh.modelName));
         } catch (Exception exception) {
+            logError(exception.getMessage());
             showError(exception.getMessage());
         }
     }
@@ -667,6 +741,12 @@ public class GuiController {
         alert.setTitle("Предупреждение");
         alert.setHeaderText(null);
         alert.setContentText(text);
+
+        Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+        stage.getIcons().add(new Image(
+                Objects.requireNonNull(getClass().getResourceAsStream("/main_icon.png"))
+        ));
+
         alert.showAndWait();
     }
 
@@ -675,6 +755,12 @@ public class GuiController {
         alert.setTitle("Ошибка");
         alert.setHeaderText(null);
         alert.setContentText(text);
+
+        Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+        stage.getIcons().add(new Image(
+                Objects.requireNonNull(getClass().getResourceAsStream("/main_icon.png"))
+        ));
+
         alert.showAndWait();
     }
 
@@ -684,23 +770,35 @@ public class GuiController {
         alert.setHeaderText(null);
         alert.setContentText(text);
 
+        Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+        stage.getIcons().add(new Image(
+                Objects.requireNonNull(getClass().getResourceAsStream("/main_icon.png"))
+        ));
+
         Optional<ButtonType> result = alert.showAndWait();
         return result.isPresent() && result.get() == ButtonType.OK;
     }
 
-    public static void showInfo(String text) {
+    public void showInfo(String text) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Информация");
         alert.setHeaderText(null);
         alert.setContentText(text);
+
+        Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+        stage.getIcons().add(new Image(
+                Objects.requireNonNull(getClass().getResourceAsStream("/main_icon.png"))
+        ));
+
         alert.showAndWait();
     }
     @FXML private void onDeleteTextureButtonClick(ActionEvent event){
         SceneManager.activeModel.hasTexture = false;
-        SceneManager.activeModel.texture = null;
-        SceneManager.activeModel.textureName = "";
-        currentTextureLabel.setText("Текущая текстура: Нет");
+        SceneManager.activeModel.texture = Model.defaultTexture;
+        SceneManager.activeModel.textureName = "По умолчанию";
+        currentTextureLabel.setText("Текущая текстура: По умолчанию");
         deleteTextureButton.setVisible(false);
+
     }
 
     @FXML
@@ -749,7 +847,7 @@ public class GuiController {
         activeButton.setStyle(ThemeSettings.activeButtonStyle);
 
         deleteTextureButton.setVisible(false);
-        String currentTextureName = "Нет";
+        String currentTextureName = "По умолчанию";
         loadTextureButton.setVisible(true);
         if (!model.getHasTextureVertex()){
             currentTextureName = "У модели отсутствуют текстурные координаты";
@@ -780,8 +878,9 @@ public class GuiController {
 
     }
 
-    private void addModelButton(Model model) {
+    private void addModelButton(Model model, Model clone) {
         SceneManager.loadModelToScene(model);
+        SceneManager.loadOriginalModelToScene(clone);
 
         Button btn = new Button(model.modelName);
         btn.setMaxWidth(Double.MAX_VALUE);
@@ -850,5 +949,9 @@ public class GuiController {
 
     public void setZoom(ScrollEvent scrollEvent) {
         SceneManager.activeCamera.zoomCamera((float) scrollEvent.getDeltaY() / 20);
+        if(currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
+                currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
+            renderFrame();
+        }
     }
 }
