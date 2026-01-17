@@ -195,5 +195,13 @@ public class Model {
 
         return copy;
     }
+
+    public boolean deleteVertexFromIndex(int vertexIndex){
+        return false;
+    }
+
+    public boolean deletePolygonFromIndex(int polygonBoundaryIndex){
+        return false;
+    }
 }
 

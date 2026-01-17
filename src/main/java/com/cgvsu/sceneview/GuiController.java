@@ -1,5 +1,6 @@
 package com.cgvsu.sceneview;
 
+import com.cgvsu.model.Vertex;
 import com.cgvsu.modelOperations.ZBuffer;
 import com.cgvsu.objwriter.ObjWriter;
 import com.cgvsu.math.vectors.Vector3f;
@@ -84,6 +85,12 @@ public class GuiController {
     public static Dictionary<String, Button> cacheNameSceneModelButtons = new Hashtable<>();
     private Button activeButton;
 
+    private final ArrayList<Button> vertexButtons = new ArrayList<>();
+    private Button activeVertexButton;
+
+    private final ArrayList<Button> polygonButtons = new ArrayList<>();
+    private Button activePolygonButton;
+
     @FXML
     private TextField positionXTextField;
     @FXML
@@ -136,6 +143,25 @@ public class GuiController {
     private RadioMenuItem everyFrameMenuItem;
     @FXML
     private AnchorPane logAnchorPane;
+    @FXML
+    private SplitPane canvasSplitPane;
+    @FXML
+    private TitledPane camersPane;
+    @FXML
+    private VBox camersBox;
+    @FXML
+    private VBox polygonsBox;
+    @FXML
+    private VBox vertexBox;
+    @FXML
+    private TitledPane polygonPane;
+    @FXML
+    private TitledPane vertexPane;
+    @FXML
+    private Button deleteVertex;
+    @FXML
+    private Button deletePolygon;
+
 
     private RenderMode currentRenderMode;
 
@@ -153,7 +179,6 @@ public class GuiController {
 
     @FXML
     private void initialize() {
-
         try {
             Image img = new Image(
                     Objects.requireNonNull(getClass().getResourceAsStream("/default_texture.png"))
@@ -168,6 +193,10 @@ public class GuiController {
                 SceneManager.lightIntensity = newV.floatValue();
             });
 
+            deleteVertex.setVisible(false);
+            deletePolygon.setVisible(false);
+            vertexPane.setVisible(false);
+            polygonPane.setVisible(false);
 
             positionXTextField.setOnKeyReleased(e -> onPositionXChanged());
             positionYTextField.setOnKeyReleased(e -> onPositionYChanged());
@@ -209,6 +238,7 @@ public class GuiController {
                 if (scene != null) {
                     installHoverForAllButtons(scene.getRoot());
                 }
+
             });
             SceneManager.initialize();
 
@@ -224,14 +254,17 @@ public class GuiController {
             useLightCheckBox.setSelected(SceneManager.useLight);
             drawMeshCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
                 SceneManager.drawMesh = newVal;
+                renderFrame();
             });
 
             useTextureCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
                 SceneManager.useTexture = newVal;
+                renderFrame();
             });
 
             useLightCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
                 SceneManager.useLight = newVal;
+                renderFrame();
             });
             timeline = new Timeline();
             timeline.setCycleCount(Animation.INDEFINITE);
@@ -272,6 +305,7 @@ public class GuiController {
             RenderEngine.render(sceneCanvas.getGraphicsContext2D(), SceneManager.activeCamera, SceneManager.activeModel, (int) width, (int) height);
         }*/
     }
+
 
     private void installNumericFloatFilter(TextField tf, boolean allowNegative) {
         if (tf == null) return;
@@ -554,6 +588,46 @@ public class GuiController {
         });
     }
 
+    private void installHoverForVertexButton(ButtonBase button) {
+        if (button == null) return;
+
+        button.setOnMouseEntered(e -> {
+            if (button == activeVertexButton) {
+                button.setStyle(ThemeSettings.activeButtonStyle);
+            } else {
+                button.setStyle(ThemeSettings.buttonHoverStyle);
+            }
+        });
+
+        button.setOnMouseExited(e -> {
+            if (button == activeVertexButton) {
+                button.setStyle(ThemeSettings.activeButtonStyle);
+            } else {
+                button.setStyle(ThemeSettings.buttonStyle);
+            }
+        });
+    }
+
+    private void installHoverForPolygonButton(ButtonBase button) {
+        if (button == null) return;
+
+        button.setOnMouseEntered(e -> {
+            if (button == activePolygonButton) {
+                button.setStyle(ThemeSettings.activeButtonStyle);
+            } else {
+                button.setStyle(ThemeSettings.buttonHoverStyle);
+            }
+        });
+
+        button.setOnMouseExited(e -> {
+            if (button == activePolygonButton) {
+                button.setStyle(ThemeSettings.activeButtonStyle);
+            } else {
+                button.setStyle(ThemeSettings.buttonStyle);
+            }
+        });
+    }
+
     private void installHoverForAllButtons(Parent root) {
         if (root == null) return;
 
@@ -698,7 +772,9 @@ public class GuiController {
 
             //Добавление кнопки
             addModelButton(mesh, meshClone);
+            renderFrame(); //рендерим кадр сразу после загрузки модели
             logInfo(String.format("Модель %s была успешно загружена", mesh.modelName));
+
         } catch (Exception exception) {
             logError(exception.getMessage());
             showError(exception.getMessage());
@@ -813,7 +889,19 @@ public class GuiController {
 
             deleteActiveEntityButton.setVisible(false);
             transformationTitledPane.setVisible(false);
+            polygonPane.setVisible(false);
+            vertexPane.setVisible(false);
+            deleteVertex.setVisible(false);
+            deletePolygon.setVisible(false);
+            activeVertexButton = null;
+            activePolygonButton = null;
+            vertexButtons.clear();
+            polygonButtons.clear();
+            vertexBox.getChildren().clear();
+            polygonsBox.getChildren().clear();
+
         }
+
 
 
     }
@@ -859,7 +947,128 @@ public class GuiController {
 
         deleteActiveEntityButton.setVisible(true);
         transformationTitledPane.setVisible(true);
+
+        polygonPane.setVisible(true);
+        vertexPane.setVisible(true);
+        vertexButtons.clear();
+        polygonButtons.clear();
+        vertexBox.getChildren().clear();
+        polygonsBox.getChildren().clear();
+
+        if(activeVertexButton != null){
+            activeVertexButton.setStyle(ThemeSettings.buttonStyle);
+        }
+        activeVertexButton = null;
+
+        if(activePolygonButton != null){
+            activePolygonButton.setStyle(ThemeSettings.buttonStyle);
+        }
+        activePolygonButton = null;
+
+        deleteVertex.setVisible(false);
+        deletePolygon.setVisible(false);
+
+        generateVertexButtonsFromModel(model.vertices);
+        generatePolygonButtonsFromModel(model.polygonsBoundaries);
     }
+
+    private void generateVertexButtonsFromModel(ArrayList<Vertex> vertices){
+        for(int i = 0; i < vertices.size(); i++){
+            String btnName = String.format("Вершина %d", i);
+            Button btn = new Button(btnName);
+            btn.setMaxWidth(Double.MAX_VALUE);
+            btn.setOnAction(this::onVertexButtonClick);
+
+            installHoverForVertexButton(btn);
+            vertexButtons.add(btn);
+            btn.setStyle(ThemeSettings.buttonStyle);
+            vertexBox.getChildren().add(btn);
+        }
+
+    }
+
+    private void generatePolygonButtonsFromModel(ArrayList<Integer> polygons){
+        for(int i = 0; i < polygons.size(); i++){
+            String btnName = String.format("Полигон %d", i);
+            Button btn = new Button(btnName);
+            btn.setMaxWidth(Double.MAX_VALUE);
+            btn.setOnAction(this::onPolygonButtonClick);
+
+            installHoverForPolygonButton(btn);
+            polygonButtons.add(btn);
+            btn.setStyle(ThemeSettings.buttonStyle);
+            polygonsBox.getChildren().add(btn);
+        }
+
+    }
+
+    private void onPolygonButtonClick(ActionEvent event){
+        //В этот момент надо подсвечивать на рендере полигон
+        Button button = (Button) event.getSource();
+        String btnText = button.getText();
+        if (activePolygonButton != null) {
+            activePolygonButton.setStyle(ThemeSettings.buttonStyle);
+        }
+        activePolygonButton = button;
+        activePolygonButton.setStyle(ThemeSettings.activeButtonStyle);
+        deleteVertex.setVisible(false);
+        deletePolygon.setVisible(true);
+        deleteActiveEntityButton.setVisible(false);
+
+        if(activeVertexButton != null){
+            activeVertexButton.setStyle(ThemeSettings.buttonStyle);
+        }
+        activeVertexButton = null;
+
+    }
+
+    private void onVertexButtonClick(ActionEvent event){
+        //В этот момент надо подсвечивать на рендере вершину
+        Button button = (Button) event.getSource();
+        String btnText = button.getText();
+        if (activeVertexButton != null) {
+            activeVertexButton.setStyle(ThemeSettings.buttonStyle);
+        }
+        activeVertexButton = button;
+        activeVertexButton.setStyle(ThemeSettings.activeButtonStyle);
+        deleteVertex.setVisible(true);
+        deletePolygon.setVisible(false);
+        deleteActiveEntityButton.setVisible(false);
+
+        if(activePolygonButton != null){
+            activePolygonButton.setStyle(ThemeSettings.buttonStyle);
+        }
+        activePolygonButton = null;
+    }
+
+    @FXML
+    private void deleteVertexClick(ActionEvent event){
+        //Удаление вершины у модели
+        deleteVertex.setVisible(false);
+        if(activeVertexButton != null){
+            activeVertexButton.setStyle(ThemeSettings.buttonStyle);
+        }
+        activeVertexButton = null;
+        vertexButtons.clear();
+        vertexBox.getChildren().clear();
+        generateVertexButtonsFromModel(SceneManager.activeModel.vertices);
+    }
+
+    @FXML
+    private void deletePolygonClick(ActionEvent event){
+        //Удаление полигона у модели
+        //int index = activePolygonButton.getText();
+        //SceneManager.activeModel.deletePolygonFromIndex();
+        deletePolygon.setVisible(false);
+        if(activePolygonButton != null){
+            activePolygonButton.setStyle(ThemeSettings.buttonStyle);
+        }
+        activePolygonButton = null;
+        polygonButtons.clear();
+        polygonsBox.getChildren().clear();
+        generatePolygonButtonsFromModel(SceneManager.activeModel.polygonsBoundaries);
+    }
+
 
     private void setTextFieldModelTransform(Model model){
         positionXTextField.setText(""+model.currentTransform.positionX);
@@ -881,6 +1090,7 @@ public class GuiController {
         Button btn = new Button(model.modelName);
         btn.setMaxWidth(Double.MAX_VALUE);
         btn.setOnAction(this::onModelButtonClick);
+        installHoverForButton(btn);
 
         modelButtons.add(btn);
         cacheNameSceneModelButtons.put(model.modelName, btn);

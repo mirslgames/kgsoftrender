@@ -46,7 +46,7 @@
            <items>
              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
                   <children>
-                     <SplitPane dividerPositions="0.859538784067086" orientation="VERTICAL" prefHeight="479.0" prefWidth="583.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                     <SplitPane fx:id="canvasSplitPane" dividerPositions="0.85" minHeight="1.0" orientation="VERTICAL" prefHeight="479.0" prefWidth="583.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                        <items>
                          <AnchorPane fx:id="canvasParentAnchorPane" minHeight="0.0" minWidth="0.0" prefHeight="100.0" prefWidth="160.0">
                               <children>
@@ -95,22 +95,90 @@
                                           <children>
                                              <VBox layoutX="39.0" layoutY="32.0" prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                                 <children>
-                                                   <TitledPane fx:id="modelsPane" animated="false" text="Модели">
-                                                     <content>
-                                                       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
-                                                            <children>
-                                                               <ScrollPane fx:id="modelsScrollPane" layoutX="-22.0" layoutY="-20.0" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                                                                 <content>
-                                                                   <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="200.0" prefWidth="200.0">
-                                                                        <children>
-                                                                           <VBox fx:id="modelsBox" layoutX="-9.0" layoutY="-14.0" prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-                                                                        </children>
-                                                                     </AnchorPane>
-                                                                 </content>
-                                                               </ScrollPane>
-                                                            </children></AnchorPane>
-                                                     </content>
-                                                   </TitledPane>
+                                                   <HBox prefHeight="100.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
+                                                      <children>
+                                                         <TitledPane fx:id="modelsPane" animated="false" text="Модели" HBox.hgrow="ALWAYS">
+                                                           <content>
+                                                             <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                                                                  <children>
+                                                                      <ScrollPane fx:id="modelsScrollPane"
+                                                                                  fitToWidth="true"
+                                                                                  AnchorPane.topAnchor="0.0"
+                                                                                  AnchorPane.rightAnchor="0.0"
+                                                                                  AnchorPane.bottomAnchor="0.0"
+                                                                                  AnchorPane.leftAnchor="0.0">
+                                                                          <content>
+                                                                              <VBox fx:id="modelsBox" spacing="4.0" fillWidth="true"/>
+                                                                          </content>
+                                                                      </ScrollPane>
+                                                                  </children>
+                                                               </AnchorPane>
+                                                           </content>
+                                                         </TitledPane>
+                                                         <TitledPane fx:id="camersPane" animated="false" layoutX="10.0" layoutY="10.0" text="Камеры" HBox.hgrow="ALWAYS">
+                                                            <content>
+                                                               <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                                                                  <children>
+                                                                      <ScrollPane fx:id="camersScrollPane"
+                                                                                  fitToWidth="true"
+                                                                                  AnchorPane.topAnchor="0.0"
+                                                                                  AnchorPane.rightAnchor="0.0"
+                                                                                  AnchorPane.bottomAnchor="0.0"
+                                                                                  AnchorPane.leftAnchor="0.0">
+
+                                                                          <content>
+                                                                              <VBox fx:id="camersBox" spacing="4.0" fillWidth="true"/>
+                                                                          </content>
+                                                                      </ScrollPane>
+                                                                  </children>
+                                                               </AnchorPane>
+                                                            </content>
+                                                         </TitledPane>
+                                                      </children>
+                                                   </HBox>
+                                                   <HBox prefHeight="100.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
+                                                      <children>
+                                                         <TitledPane fx:id="vertexPane" animated="false" text="Вершины" HBox.hgrow="ALWAYS">
+                                                            <content>
+                                                               <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                                                                  <children>
+                                                                      <ScrollPane fx:id="vertexScrollPane"
+                                                                                  fitToWidth="true"
+                                                                                  AnchorPane.topAnchor="0.0"
+                                                                                  AnchorPane.rightAnchor="0.0"
+                                                                                  AnchorPane.bottomAnchor="0.0"
+                                                                                  AnchorPane.leftAnchor="0.0">
+
+                                                                          <content>
+                                                                              <VBox fx:id="vertexBox" spacing="4.0" fillWidth="true"/>
+                                                                          </content>
+                                                                      </ScrollPane>
+
+                                                                  </children>
+                                                               </AnchorPane>
+                                                            </content>
+                                                         </TitledPane>
+                                                         <TitledPane fx:id="polygonPane" animated="false" text="Полигоны" HBox.hgrow="ALWAYS">
+                                                            <content>
+                                                               <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                                                                  <children>
+                                                                      <ScrollPane fx:id="polygonScrollPane"
+                                                                                  fitToWidth="true"
+                                                                                  AnchorPane.topAnchor="0.0"
+                                                                                  AnchorPane.rightAnchor="0.0"
+                                                                                  AnchorPane.bottomAnchor="0.0"
+                                                                                  AnchorPane.leftAnchor="0.0">
+
+                                                                          <content>
+                                                                              <VBox fx:id="polygonsBox" spacing="4.0" fillWidth="true"/>
+                                                                          </content>
+                                                                      </ScrollPane>
+                                                                  </children>
+                                                               </AnchorPane>
+                                                            </content>
+                                                         </TitledPane>
+                                                      </children>
+                                                   </HBox>
                                                 </children>
                                              </VBox>
                                           </children></AnchorPane>
@@ -224,6 +292,8 @@
                                                      </content>
                                                    </TitledPane>
                                                    <Button fx:id="deleteActiveEntityButton" mnemonicParsing="false" onAction="#onDeleteActiveEntityButtonClick" text="Удалить со сцены" />
+                                                   <Button fx:id="deleteVertex" mnemonicParsing="false" onAction="#deleteVertexClick" text="Удалить вершину" />
+                                                   <Button fx:id="deletePolygon" mnemonicParsing="false" onAction="#deletePolygonClick" text="Удалить полигон" />
                                                 </children>
                                              </VBox>
                                           </children></AnchorPane>
