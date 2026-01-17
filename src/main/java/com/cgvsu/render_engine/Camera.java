@@ -59,7 +59,7 @@ public class Camera {
     }
 
     public void zoomCamera(float deltaS) {
-        radius = clamp(radius - deltaS, (float) (Math.max(nearPlane * 1.2, 50f)), 400f);
+        radius = clamp(radius - deltaS, 0.5f, Float.MAX_VALUE);
         updatePositionFromAngles();
     }
 
@@ -69,14 +69,54 @@ public class Camera {
 
     public void rotateCamera(float yawDeg, float pitchDeg) {
 
-        yaw += yawDeg;
-        pitch += pitchDeg;
+        Vector3f worldUp = new Vector3f(0, 1, 0);
 
-        yaw = wrapAngle(yaw);
-        pitch = clamp(pitch, -89f, 89f);
+        Vector3f offset = position.subbed(target);
 
-        updatePositionFromAngles();
+        offset = rotateAroundAxis(offset, worldUp, (float) Math.toRadians(yawDeg));
 
+        Vector3f forward = offset.multiplied(-1).normalized();
+        Vector3f right = forward.crossed(worldUp);
+
+        if (right.len() < EPS) {
+            right = new Vector3f(1, 0, 0);
+        } else {
+            right = right.normalized();
+        }
+
+        Vector3f newOffset = rotateAroundAxis(offset, right, (float) Math.toRadians(pitchDeg));
+
+        Vector3f newForward = newOffset.multiplied(-1).normalized();
+        float dotUp = Math.abs(newForward.dot(worldUp));
+        if (dotUp < 0.9995f) {
+            offset = newOffset;
+        }
+
+        position = target.added(offset);
+        radius = offset.len();
+
+        forward = target.subbed(position).normalized();
+        right = forward.crossed(worldUp);
+        if (right.len() < EPS) right = new Vector3f(1, 0, 0);
+        else right = right.normalized();
+
+        cameraUp = right.crossed(forward).normalized();
+
+        yaw = (float) Math.toDegrees(Math.atan2(offset.getX(), offset.getZ()));
+        pitch = (float) Math.toDegrees(Math.asin(offset.getY() / radius));
+
+    }
+
+    private Vector3f rotateAroundAxis(Vector3f v, Vector3f axis, float angleRad) {
+        Vector3f k = axis.normalized();
+        float cos = (float) Math.cos(angleRad);
+        float sin = (float) Math.sin(angleRad);
+
+        Vector3f term1 = v.multiplied(cos);
+        Vector3f term2 = k.crossed(v).multiplied(sin);
+        Vector3f term3 = k.multiplied(k.dot(v) * (1f - cos));
+
+        return term1.added(term2).added(term3);
     }
 
     private float clamp(float v, float lo, float hi) {

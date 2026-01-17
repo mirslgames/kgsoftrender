@@ -236,7 +236,7 @@ public class GuiController {
             timeline = new Timeline();
             timeline.setCycleCount(Animation.INDEFINITE);
 
-            KeyFrame frame = new KeyFrame(Duration.millis(15), e -> {
+            KeyFrame frame = new KeyFrame(Duration.millis(30), e -> {
                 if (currentRenderMode == RenderMode.EVERY_FRAME) {
                     renderFrame();
                 }
@@ -918,7 +918,7 @@ public class GuiController {
         pastRotateX = (float) mouseEvent.getX();
         pastRotateY = (float) mouseEvent.getY();
 
-        SceneManager.activeCamera.rotateCamera(-deltaX * ROT, -deltaY * ROT);
+        SceneManager.activeCamera.rotateCamera(deltaX * ROT, -deltaY * ROT);
         if(currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
                 currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
             renderFrame();
@@ -944,7 +944,7 @@ public class GuiController {
     }
 
     public void setZoom(ScrollEvent scrollEvent) {
-        SceneManager.activeCamera.zoomCamera((float) scrollEvent.getDeltaY() / 20);
+        SceneManager.activeCamera.zoomCamera((float) scrollEvent.getDeltaY() / 10);
         if(currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
                 currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
             renderFrame();
