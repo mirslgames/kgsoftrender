@@ -85,88 +85,7 @@ public class RenderEngine {
                 if (Float.isNaN(pa.getX()) || Float.isNaN(pa.getY()) || Float.isNaN(pb.getX()) || Float.isNaN(pb.getY()))
                     continue;
 
-<<<<<<< Updated upstream
-                graphicsContext.strokeLine(pa.getX(), pa.getY(), pb.getX(), pb.getY());
-=======
-                Vertex vertex = mesh.vertices.get(vertexIndex);
 
-                Vector3f pos = vertex.position;
-                Vector3f posVecmath = new Vector3f(pos.getX(), pos.getY(), pos.getZ());
-                Vector3f transformed = modelViewProjectionMatrix.multiplyOnVector(posVecmath);
-                Point2f resultPoint = vertexToPoint(
-                        transformed, width, height
-                );
-
-                projectedPoints.add(resultPoint);
-                originalVertices.add(vertex);
-                depths.add(transformed.getZ());
-            }
-
-
-            if (!SceneManager.drawMesh && nVerticesInPolygon == 3) {
-                int i1 = mesh.polygons.get(startIndex);
-                int i2 = mesh.polygons.get(startIndex+1);
-                int i3 = mesh.polygons.get(startIndex+2);
-                Vertex v1 = mesh.vertices.get(i1);
-                Vertex v2 = mesh.vertices.get(i2);
-                Vertex v3 = mesh.vertices.get(i3);
-                Point2f p1 = projectedPoints.get(0);
-                Point2f p2 = projectedPoints.get(1);
-                Point2f p3 = projectedPoints.get(2);
-                float z1 = depths.get(0);
-                float z2 = depths.get(1);
-                float z3 = depths.get(2);
-                if (SceneManager.useTexture && mesh.texture != null) {
-                    Image texture = mesh.texture;
-                    Rasterization.PixelCallback callback = (x, y, z, barycentric, texCoord, normal, worldPosition) -> {
-                        if (zBuffer.testAndSet(x, y, z)) {
-                            Color color = TextureMapping.getTextureColor(texture, texCoord);
-                            if (SceneManager.useLight && normal != null) {
-                                Vector3f cameraRay = SceneManager.activeCamera.getRayToPoint(worldPosition);
-                                color = TextureMapping.getModifiedColorWithLighting(
-                                        cameraRay, normal, color, SceneManager.lightIntensity
-                                );
-                            }
-
-                            graphicsContext.getPixelWriter().setColor(x, y, color);
-                        }
-                    };
-                    //Rasterization.rasterizeTriangle(p1,p2,p3,z1,z2,z3,v1,v2,v3,  callback);
-                } else {
-                    Rasterization.PixelCallback callback = (x, y, z, barycentric, texCoord, normal, worldPosition) -> {
-                        if (zBuffer.testAndSet(x, y, z)) {
-                            Color color = baseColor;
-                            if (SceneManager.useLight && normal != null) {
-                                Vector3f cameraRay = SceneManager.activeCamera.getRayToPoint(worldPosition);
-                                color = TextureMapping.getModifiedColorWithLighting(
-                                        cameraRay, normal, color, SceneManager.lightIntensity
-                                );
-                            }
-                            graphicsContext.getPixelWriter().setColor(x, y, color);
-                        }
-                    };
-                    //Rasterization.rasterizeTriangle(p1,p2,p3,z1,z2,z3,v1,v2,v3, callback);
-                }
-            }
-            else if (SceneManager.drawMesh){
-                graphicsContext.setStroke(Color.web(ThemeSettings.wireframeColor));
-                graphicsContext.setLineWidth(ThemeSettings.wireframeWidth);
-
-                for (int vertexInPolygonInd = 1; vertexInPolygonInd < nVerticesInPolygon; ++vertexInPolygonInd) {
-                    graphicsContext.strokeLine(
-                            projectedPoints.get(vertexInPolygonInd - 1).getX(),
-                            projectedPoints.get(vertexInPolygonInd - 1).getY(),
-                            projectedPoints.get(vertexInPolygonInd).getX(),
-                            projectedPoints.get(vertexInPolygonInd).getY());
-                }
-
-                if (nVerticesInPolygon > 0)
-                    graphicsContext.strokeLine(
-                            projectedPoints.get(nVerticesInPolygon - 1).getX(),
-                            projectedPoints.get(nVerticesInPolygon - 1).getY(),
-                            projectedPoints.get(0).getX(),
-                            projectedPoints.get(0).getY());
->>>>>>> Stashed changes
             }
         }
     }
@@ -322,13 +241,9 @@ public class RenderEngine {
                             graphicsContext.getPixelWriter().setColor(x, y, color);
                         }
                     };
-<<<<<<< Updated upstream
 
                     Rasterization.rasterizeTriangleWithWorldPos(p1, p2, p3, z1, z2, z3, v1, v2, v3, t1, t2, t3, w1,
-=======
-                    // НОВОЕ: передаем мировые позиции для интерполяции
-                    Rasterization.rasterizeTriangleWithWorldPos(p1, p2, p3, z1, z2, z3, v1, v2, v3, t1,t2,t3, w1,
->>>>>>> Stashed changes
+
                             w2, w3, callback, modelMatrix);
                 } else {
                     Rasterization.PixelCallback callback = (x, y, z, barycentric, texCoord, normal, worldNormal, worldPosition) -> {
@@ -346,11 +261,8 @@ public class RenderEngine {
                         }
                     };
 
-<<<<<<< Updated upstream
+
                     Rasterization.rasterizeTriangleWithWorldPos(p1, p2, p3, z1, z2, z3, v1, v2, v3, t1, t2, t3, w1,
-=======
-                    Rasterization.rasterizeTriangleWithWorldPos(p1, p2, p3, z1, z2, z3, v1, v2, v3, t1,t2, t3, w1,
->>>>>>> Stashed changes
                             w2, w3, callback, modelMatrix);
                 }
             }
