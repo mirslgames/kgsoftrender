@@ -133,6 +133,8 @@ public class GuiController {
     private RadioMenuItem cameraTransformFrameMenuItem;
     @FXML
     private RadioMenuItem everyFrameMenuItem;
+    @FXML
+    private AnchorPane logAnchorPane;
 
     private RenderMode currentRenderMode;
 
