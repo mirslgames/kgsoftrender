@@ -40,4 +40,28 @@ public class Vertex {
         if (localIndex < 0 || localIndex >= textureCoordinates.size()) return null;
         return textureCoordinates.get(localIndex);
     }
+
+    public Vertex deepCopy() {
+        Vertex copy = new Vertex();
+
+        if (this.position != null) {
+            copy.position = new Vector3f(this.position.getX(), this.position.getY(), this.position.getZ());
+        }
+        if (this.normal != null) {
+            copy.normal = new Vector3f(this.normal.getX(), this.normal.getY(), this.normal.getZ());
+        }
+
+        copy.textureCoordinates = new ArrayList<>();
+        if (this.textureCoordinates != null) {
+            for (Vector2f uv : this.textureCoordinates) {
+                if (uv == null) {
+                    copy.textureCoordinates.add(null);
+                } else {
+                    copy.textureCoordinates.add(new Vector2f(uv.getX(), uv.getY()));
+                }
+            }
+        }
+
+        return copy;
+    }
 }

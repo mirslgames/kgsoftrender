@@ -1,5 +1,6 @@
 package com.cgvsu;
 
+import com.cgvsu.model.Model;
 import com.cgvsu.service.ThemeSettings;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;

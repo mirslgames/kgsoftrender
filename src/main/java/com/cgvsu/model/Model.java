@@ -18,7 +18,7 @@ public class Model {
     public boolean hasTexture;
     public Image texture;
     public String textureName;
-    //todo: дефолтная текстура
+    public static Image defaultTexture; //Дефолтная текстура
 
     //Положение модельки в сцене
     public Transform currentTransform;
@@ -112,6 +112,11 @@ public class Model {
                 MyVertexNormalCalc calc = new MyVertexNormalCalc();
                 calc.calculateVertexNormals(result);
 
+                if (result.getHasTextureVertex()){
+                    result.texture = Model.defaultTexture;
+                    result.textureName = "По умолчанию";
+                }
+
                 return result;
             } catch (Exception exception) {
                 throw new RuntimeException("Ошибка при построении модели на основе прочитанных данных: " + exception.getMessage());
@@ -158,6 +163,37 @@ public class Model {
         polygons = newPolygons;
         polygonsTextureCoordinateIndices = newTextureLocalIndices;
         polygonsBoundaries = newBoundaries;
+    }
+
+    public Model deepCopy() {
+        Model copy = new Model();
+
+        copy.modelName = this.modelName;
+        copy.hasTexture = this.hasTexture;
+        copy.texture = this.texture;
+        copy.textureName = this.textureName;
+
+        copy.vertices = new ArrayList<>(this.vertices.size());
+        for (Vertex v : this.vertices) {
+            copy.vertices.add(v == null ? null : v.deepCopy());
+        }
+
+        copy.polygons = new ArrayList<>(this.polygons);
+        copy.polygonsBoundaries = new ArrayList<>(this.polygonsBoundaries);
+        copy.polygonsTextureCoordinateIndices = new ArrayList<>(this.polygonsTextureCoordinateIndices);
+
+        copy.currentTransform = (this.currentTransform == null) ? null : this.currentTransform.deepCopy();
+
+        if (this.transformHistory != null) {
+            copy.transformHistory = new ArrayList<>(this.transformHistory.size());
+            for (Transform t : this.transformHistory) {
+                copy.transformHistory.add(t == null ? null : t.deepCopy());
+            }
+        } else {
+            copy.transformHistory = null;
+        }
+
+        return copy;
     }
 }
 
