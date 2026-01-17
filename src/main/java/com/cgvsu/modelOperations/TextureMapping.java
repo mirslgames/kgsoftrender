@@ -83,26 +83,54 @@ public class TextureMapping {
         return getTextureColor(texture, texCoord);
     }
 
-    /**
-     *
-     * @param ray луч света от камеры
-     * @param normal нормаль в текущей точке
-     * @param baseColor базовые цвет из текстуры
-     * @param lightIntensity интенсивность света, задаётся через интерфейс
-     * @return цвет с учётом освещения
-     */
-    public static Color getModifiedColorWithLighting(Vector3f ray, Vector3f normal, Color baseColor,
-                                                     float lightIntensity){
+//    /**
+//     *
+//     * @param ray луч света от камеры
+//     * @param normal нормаль в текущей точке
+//     * @param baseColor базовые цвет из текстуры
+//     * @param lightIntensity интенсивность света, задаётся через интерфейс
+//     * @return цвет с учётом освещения
+//     */
+//    public static Color getModifiedColorWithLighting(Vector3f ray, Vector3f normal, Color baseColor,
+//                                                     float lightIntensity){
+//
+//        float l = -1 * ray.dot(normal);
+//        if (l < 0){
+//            l = 0;
+//        }
+//        double new_r = baseColor.getRed() * (1-lightIntensity) + baseColor.getRed() * l * lightIntensity;
+//        double new_g = baseColor.getGreen() * (1-lightIntensity) + baseColor.getGreen() * l * lightIntensity;
+//        double new_b = baseColor.getBlue() * (1-lightIntensity) + baseColor.getBlue() * l * lightIntensity;
+//        return new Color(new_r, new_g, new_b, baseColor.getOpacity());
+//    }
+public static Color getModifiedColorWithLighting(
+        Vector3f worldNormal,
+        Vector3f worldPosition,
+        Color baseColor,
+        float k
+) {
+    // 1. Нормаль в точке
+    Vector3f n = worldNormal.normalize();
 
-        float l = -1 * ray.dot(normal);
-        if (l < 0){
-            l = 0;
-        }
-        double new_r = baseColor.getRed() * (1-lightIntensity) + baseColor.getRed() * l * lightIntensity;
-        double new_g = baseColor.getGreen() * (1-lightIntensity) + baseColor.getGreen() * l * lightIntensity;
-        double new_b = baseColor.getBlue() * (1-lightIntensity) + baseColor.getBlue() * l * lightIntensity;
-        return new Color(new_r, new_g, new_b, baseColor.getOpacity());
-    }
+    // 2. Луч света (от камеры к точке)
+    Vector3f cameraPos = SceneManager.activeCamera.getPosition();
+    Vector3f ray = worldPosition.subbed(cameraPos).normalize();
+
+    // 3. Коэффициент освещения
+    float l = -n.dot(ray);
+    if (l < 0f) l = 0f;
+
+    // 4. Итоговый коэффициент яркости
+    float intensity = (1f - k) + k * l;
+
+    return new Color(
+            baseColor.getRed()   * intensity,
+            baseColor.getGreen() * intensity,
+            baseColor.getBlue()  * intensity,
+            baseColor.getOpacity()
+    );
+}
+
 
 }
 

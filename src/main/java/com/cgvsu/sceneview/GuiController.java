@@ -1,5 +1,6 @@
 package com.cgvsu.sceneview;
 
+import com.cgvsu.modelOperations.ZBuffer;
 import com.cgvsu.objwriter.ObjWriter;
 import com.cgvsu.math.vectors.Vector3f;
 import com.cgvsu.render_engine.RenderEngine;
@@ -236,9 +237,10 @@ public class GuiController {
         gc.fillRect(0, 0, width, height);
         SceneManager.activeCamera.setAspectRatio((float) (width / height));
 
-
+        ZBuffer zBuffer = new ZBuffer((int) width, (int) height);
+        zBuffer.clear();
         for (Model model : SceneManager.models) {
-            RenderEngine.renderWithRenderingMods(sceneCanvas.getGraphicsContext2D(), SceneManager.activeCamera, model, (int) width, (int) height);
+            RenderEngine.renderWithRenderingMods(sceneCanvas.getGraphicsContext2D(), SceneManager.activeCamera, model, (int) width, (int) height, zBuffer);
             //RenderEngine.render(sceneCanvas.getGraphicsContext2D(), SceneManager.activeCamera, model, (int) width, (int) height);
         }
         //ВАРИАНТ рендерить только активную модель
