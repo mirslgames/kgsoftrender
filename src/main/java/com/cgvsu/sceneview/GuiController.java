@@ -388,6 +388,11 @@ public class GuiController {
                 deleteCameraButton.setVisible(false);
                 generateCameraButtons();
                 logInfo(String.format("Камера: %s была успешно удалена", logString));
+                if(currentRenderMode == RenderMode.EVERY_TRANSFORM_FRAME ||
+                        currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
+                        currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
+                    renderFrame();
+                }
             }
 
 
