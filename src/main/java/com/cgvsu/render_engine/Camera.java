@@ -75,7 +75,6 @@ public class Camera {
 
     public void zoomCamera(float deltaS) {
         radius = clamp(radius - deltaS, 0.5f, Float.MAX_VALUE);
-        System.out.println(Math.abs(target.subbed(position).normalized().dot(new Vector3f(0,1,0))));
         updatePositionFromAngles();
     }
 
@@ -176,13 +175,14 @@ public class Camera {
         cameraUp = right.crossed(forward).normalized();
     }
 
-    Matrix4f getViewMatrix() {
+    public Matrix4f getViewMatrix() {
         return GraphicConveyor.lookAt(position, target, cameraUp);
     }
 
-    Matrix4f getProjectionMatrix() {
+    public Matrix4f getProjectionMatrix() {
         return GraphicConveyor.perspective(fov, aspectRatio, nearPlane, farPlane);
     }
+
     public Vector3f getRayToPoint(Vector3f worldPosition) {
         if (worldPosition == null ||
                 Float.isNaN(worldPosition.getX()) ||
