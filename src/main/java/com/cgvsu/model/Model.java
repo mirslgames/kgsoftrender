@@ -50,7 +50,33 @@ public class Model {
         return vertices.get(vIndex).getTextureCoordinate(uvLocalIndex);
     }
 
+    public void bakeCurrentTransformIntoGeometry() {
+        if (currentTransform == null || vertices == null) return;
 
+        // Та же матрица, что используется в рендере
+        com.cgvsu.math.matrixs.Matrix4f modelMatrix =
+                com.cgvsu.render_engine.GraphicConveyor.rotateScaleTranslate(
+                        currentTransform.scaleX, currentTransform.scaleY, currentTransform.scaleZ,
+                        currentTransform.rotationX, currentTransform.rotationY, currentTransform.rotationZ,
+                        currentTransform.positionX, currentTransform.positionY, currentTransform.positionZ
+                );
+
+        for (Vertex v : vertices) {
+            if (v == null || v.position == null) return;
+            v.position = modelMatrix.multiplyOnVector(v.position);
+        }
+
+        // Нормали проще и надёжнее пересчитать заново
+        try {
+            new MyVertexNormalCalc().calculateVertexNormals(this);
+        } catch (Exception ignored) { }
+    }
+
+    public Model copyWithTransform() {
+        Model copy = this.deepCopy();
+        copy.bakeCurrentTransformIntoGeometry();
+        return copy;
+    }
 
 
     public Model() {

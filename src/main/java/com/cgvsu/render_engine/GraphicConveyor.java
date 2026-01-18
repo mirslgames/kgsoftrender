@@ -93,7 +93,8 @@ public class GraphicConveyor {
                 resultX.getX(), resultX.getY(), resultX.getZ(), -resultX.dot(eye),
                 resultY.getX(), resultY.getY(), resultY.getZ(), -resultY.dot(eye),
                 resultZ.getX(), resultZ.getY(), resultZ.getZ(), -resultZ.dot(eye),
-                0, 0, 0, 1};
+                0, 0, 0, 1
+        };
         return new Matrix4f(matrix);
     }
 
