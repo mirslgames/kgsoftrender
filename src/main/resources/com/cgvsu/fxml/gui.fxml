@@ -74,7 +74,7 @@
                                        <CheckBox fx:id="drawMeshCheckBox" mnemonicParsing="false" text="Рисовать полигональную сетку" />
                                        <CheckBox fx:id="useTextureCheckBox" mnemonicParsing="false" text="Использовать текстуру" />
                                        <CheckBox fx:id="useLightCheckBox" mnemonicParsing="false" text="Использовать освещение" />
-                                       <Label fx:id="lightIntensityLabel" text="Интенсивность освещения">
+                                       <Label fx:id="lightIntensityLabel" text="Интенсивность освещения:">
                                           <VBox.margin>
                                              <Insets top="5.0" />
                                           </VBox.margin>
@@ -89,7 +89,7 @@
                               </children></AnchorPane>
                          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="100.0" prefWidth="160.0">
                               <children>
-                                 <SplitPane dividerPositions="0.40826446280991735" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                 <SplitPane dividerPositions="0.4859504132231405" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                    <items>
                                      <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="100.0" prefWidth="160.0">
                                           <children>
@@ -158,6 +158,21 @@
                                                             </content>
                                                          </TitledPane>
                                                       </children>
+                                                   </HBox>
+                                                   <HBox fillHeight="false" prefWidth="200.0">
+                                                      <children>
+                                                         <Button fx:id="createCameraButton" mnemonicParsing="false" onAction="#createCameraButtonClick" text="Создать новую камеру">
+                                                            <HBox.margin>
+                                                               <Insets bottom="5.0" top="5.0" />
+                                                            </HBox.margin></Button>
+                                                         <Button fx:id="deleteCameraButton" mnemonicParsing="false" onAction="#deleteCameraButtonClick" text="Удалить камеру">
+                                                            <HBox.margin>
+                                                               <Insets bottom="5.0" left="5.0" top="5.0" />
+                                                            </HBox.margin></Button>
+                                                      </children>
+                                                      <VBox.margin>
+                                                         <Insets />
+                                                      </VBox.margin>
                                                    </HBox>
                                                 </children>
                                              </VBox>
@@ -271,22 +286,30 @@
                                                          </AnchorPane>
                                                      </content>
                                                    </TitledPane>
-                                                   <Button fx:id="deleteActiveEntityButton" mnemonicParsing="false" onAction="#onDeleteActiveEntityButtonClick" text="Удалить со сцены" />
-                                                   <Button fx:id="deleteVertex" mnemonicParsing="false" onAction="#deleteVertexClick" text="Удалить вершину" />
-                                                   <HBox prefHeight="100.0" prefWidth="200.0">
+                                                   <AnchorPane prefWidth="315.0">
                                                       <children>
-                                                         <Button fx:id="deletePolygon" mnemonicParsing="false" onAction="#deletePolygonClick" text="Удалить полигон">
-                                                            <HBox.margin>
-                                                               <Insets top="5.0" />
-                                                            </HBox.margin>
-                                                         </Button>
-                                                         <CheckBox fx:id="deleteFreeVertexCheckbox" mnemonicParsing="false" text="Удалять свободные вершины">
-                                                            <HBox.margin>
-                                                               <Insets left="5.0" top="10.0" />
-                                                            </HBox.margin>
-                                                         </CheckBox>
+                                                         <VBox prefWidth="100.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                                            <children>
+                                                               <Button fx:id="deleteActiveEntityButton" mnemonicParsing="false" onAction="#onDeleteActiveEntityButtonClick" text="Удалить со сцены" />
+                                                               <Button fx:id="deleteVertex" mnemonicParsing="false" onAction="#deleteVertexClick" text="Удалить вершину" />
+                                                               <HBox prefWidth="200.0">
+                                                                  <children>
+                                                                     <Button fx:id="deletePolygon" mnemonicParsing="false" onAction="#deletePolygonClick" text="Удалить полигон">
+                                                                        <HBox.margin>
+                                                                           <Insets top="5.0" />
+                                                                        </HBox.margin>
+                                                                     </Button>
+                                                                     <CheckBox fx:id="deleteFreeVertexCheckbox" mnemonicParsing="false" text="Удалять свободные вершины">
+                                                                        <HBox.margin>
+                                                                           <Insets left="5.0" top="10.0" />
+                                                                        </HBox.margin>
+                                                                     </CheckBox>
+                                                                  </children>
+                                                               </HBox>
+                                                            </children>
+                                                         </VBox>
                                                       </children>
-                                                   </HBox>
+                                                   </AnchorPane>
                                                 </children>
                                              </VBox>
                                           </children></AnchorPane>

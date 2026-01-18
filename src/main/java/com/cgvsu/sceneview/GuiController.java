@@ -4,9 +4,11 @@ import com.cgvsu.model.Vertex;
 import com.cgvsu.modelOperations.ZBuffer;
 import com.cgvsu.objwriter.ObjWriter;
 import com.cgvsu.math.vectors.Vector3f;
+import com.cgvsu.render_engine.Camera;
 import com.cgvsu.render_engine.RenderEngine;
 import com.cgvsu.service.ShortcutsSettings;
 import com.cgvsu.service.ThemeSettings;
+import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
@@ -31,6 +33,9 @@ import javafx.util.Duration;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 
+import java.nio.charset.Charset;
+import java.nio.charset.MalformedInputException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.function.UnaryOperator;
@@ -55,7 +60,7 @@ import static java.nio.file.Path.*;
 
 public class GuiController {
 
-    private static final Logger log = LoggerFactory.getLogger(GuiController.class);
+    //private static final Logger log = LoggerFactory.getLogger(GuiController.class);
     final private float TRANSLATION = 5F;
     final private float ROT = 0.5F;
     private float pastRotateX = 0;
@@ -90,6 +95,9 @@ public class GuiController {
 
     private final ArrayList<Button> polygonButtons = new ArrayList<>();
     private Button activePolygonButton;
+
+    private final ArrayList<Button> cameraButtons = new ArrayList<>();
+    private Button activeCameraButton;
 
     @FXML
     private TextField positionXTextField;
@@ -163,6 +171,11 @@ public class GuiController {
     private Button deletePolygon;
     @FXML
     private CheckBox deleteFreeVertexCheckbox;
+    @FXML
+    private Button createCameraButton;
+    @FXML
+    private Button deleteCameraButton;
+
 
     private RenderMode currentRenderMode;
 
@@ -187,11 +200,20 @@ public class GuiController {
             Model.defaultTexture = img;
             currentRenderMode = RenderMode.ONE_FRAME;
             lightIntensityLabel.textProperty().bind(
-                    lightIntensitySlider.valueProperty().asString("%.2f")
+                    Bindings.format(
+                            "Интенсивность освещения: %.2f",
+                            Bindings.subtract(1.0, lightIntensitySlider.valueProperty())
+                    )
             );
 
             lightIntensitySlider.valueProperty().addListener((obs, oldV, newV) -> {
                 SceneManager.lightIntensity = newV.floatValue();
+                if(currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
+                        currentRenderMode == RenderMode.EVERY_TRANSFORM_FRAME ||
+                        currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
+                    renderFrame();
+                }
+
             });
 
             deleteVertex.setVisible(false);
@@ -233,6 +255,9 @@ public class GuiController {
             canvasParentAnchorPane.setOnMouseClicked(this::setDefaultPosition);
             canvasParentAnchorPane.setOnScroll(this::setZoom);
 
+
+            SceneManager.initialize();
+
             Platform.runLater(() -> {
                 ThemeSettings.setLightTheme();
                 applyTheme();
@@ -242,8 +267,10 @@ public class GuiController {
                     installHoverForAllButtons(scene.getRoot());
                 }
 
+                deleteCameraButton.setVisible(false);
+                generateCameraButtons();
+
             });
-            SceneManager.initialize();
 
             sceneCanvas.setFocusTraversable(true);
             sceneCanvas.setOnMouseClicked(e -> sceneCanvas.requestFocus());
@@ -269,6 +296,10 @@ public class GuiController {
                 SceneManager.useLight = newVal;
                 renderFrame();
             });
+
+
+
+
             timeline = new Timeline();
             timeline.setCycleCount(Animation.INDEFINITE);
 
@@ -310,6 +341,78 @@ public class GuiController {
         }*/
     }
 
+    private void generateCameraButtons(){
+        try {
+            for (int i = 0; i < SceneManager.cameras.size(); i++) {
+                String btnName = SceneManager.cameras.get(i).cameraName;
+                Button btn = new Button(btnName);
+                btn.setMaxWidth(Double.MAX_VALUE);
+                btn.setOnAction(this::onCameraButtonClick);
+
+                installHoverForCameraButton(btn);
+                cameraButtons.add(btn);
+                btn.setStyle(ThemeSettings.buttonStyle);
+                camersBox.getChildren().add(btn);
+
+                if (SceneManager.activeCamera.cameraName.equals(btnName)) {
+                    activeCameraButton = btn;
+                    activeCameraButton.setStyle(ThemeSettings.activeButtonStyle);
+                }
+            }
+        } catch(Exception exception){
+            logError("Ошибка при генерации кнопок для камер");
+            showError("Ошибка при генерации кнопок для камер");
+        }
+    }
+
+    @FXML
+    private void deleteCameraButtonClick(ActionEvent event) {
+        String logString = "";
+        try {
+            Camera currentActiveCamera = SceneManager.activeCamera;
+            if (currentActiveCamera.cameraName.equals("Начальная камера")) {
+                showWarning("Вы не можете удалить начальную камеру");
+            } else {
+                logString = currentActiveCamera.cameraName;
+                SceneManager.deleteCameraFromScene(currentActiveCamera.cameraName);
+                for (Camera camera : SceneManager.cameras) {
+                    if (camera.cameraName.equals("Начальная камера")) {
+                        SceneManager.activeCamera = camera;
+                        break;
+                    }
+                }
+                cameraButtons.clear();
+                camersBox.getChildren().clear();
+                deleteCameraButton.setVisible(false);
+                generateCameraButtons();
+                logInfo(String.format("Камера: %s была успешно удалена", logString));
+            }
+
+
+        } catch (Exception exception){
+            logError("Ошибка при удалении камеры");
+            showError("Ошибка при удалении камеры");
+        }
+
+    }
+
+    private void onCameraButtonClick(ActionEvent event){
+        try {
+            Button button = (Button) event.getSource();
+            String cameraName = button.getText();
+            Camera targetCamera = SceneManager.cacheNameCameras.get(cameraName);
+            SceneManager.activeCamera = targetCamera;
+            if (activeCameraButton != null) {
+                activeCameraButton.setStyle(ThemeSettings.buttonStyle);
+            }
+            activeCameraButton = button;
+            activeCameraButton.setStyle(ThemeSettings.activeButtonStyle);
+            deleteCameraButton.setVisible(true);
+        } catch (Exception exception){
+            logError("Ошибка при выборе камеры");
+            showError("Ошибка при выборе камеры");
+        }
+    }
 
     private void installNumericFloatFilter(TextField tf, boolean allowNegative) {
         if (tf == null) return;
@@ -354,6 +457,20 @@ public class GuiController {
 
         }
         return 0;
+    }
+
+    @FXML
+    private void createCameraButtonClick(ActionEvent event){
+        try{
+            SceneManager.createNewCamera();
+            cameraButtons.clear();
+            camersBox.getChildren().clear();
+            generateCameraButtons();
+            logInfo("Камера была успешно создана");
+        } catch (Exception exception){
+            logError("Ошибка при создании новой камеры");
+            showError("Ошибка при создании новой камеры");
+        }
     }
 
     @FXML
@@ -632,6 +749,26 @@ public class GuiController {
         });
     }
 
+    private void installHoverForCameraButton(ButtonBase button) {
+        if (button == null) return;
+
+        button.setOnMouseEntered(e -> {
+            if (button == activeCameraButton) {
+                button.setStyle(ThemeSettings.activeButtonStyle);
+            } else {
+                button.setStyle(ThemeSettings.buttonHoverStyle);
+            }
+        });
+
+        button.setOnMouseExited(e -> {
+            if (button == activeCameraButton) {
+                button.setStyle(ThemeSettings.activeButtonStyle);
+            } else {
+                button.setStyle(ThemeSettings.buttonStyle);
+            }
+        });
+    }
+
     private void installHoverForAllButtons(Parent root) {
         if (root == null) return;
 
@@ -687,7 +824,7 @@ public class GuiController {
         sb.append(ShortcutsSettings.getInfo());
         sb.append("\n===Управление камерой===\n");
         sb.append("ЛКМ - поворот камеры\n");
-        sb.append("ПКМ - перемещение камеры\n");
+        sb.append("ПКМ или Shift + СКМ - перемещение камеры\n");
         sb.append("Колесико мыши - зум\n");
         sb.append("Двойной клик - вернуться обратно\n");
         showInfo(sb.toString());
@@ -778,7 +915,15 @@ public class GuiController {
             Path fileName = Path.of(file.getAbsolutePath());
 
 
-            String fileContent = Files.readString(fileName);
+            String fileContent;
+
+            try {
+                fileContent = Files.readString(fileName, StandardCharsets.UTF_8);
+            } catch (MalformedInputException e) {
+                //Если файл не UTF-8 для русской кодировки
+                fileContent = Files.readString(fileName, Charset.forName("windows-1251"));
+            }
+
             Model mesh = ObjReader.readModelFromFile(fileContent, fileName.getFileName().toString(), SceneManager.historyModelName);
             validateAndCorrectDuplicateModelName(mesh);
 
@@ -791,8 +936,8 @@ public class GuiController {
             logInfo(String.format("Модель %s была успешно загружена", mesh.modelName));
 
         } catch (Exception exception) {
-            logError(exception.getMessage());
-            showError(exception.getMessage());
+            logError("Ошибка при загрузке модели" + exception.getMessage());
+            showError("Ошибка при загрузке модели" + exception.getMessage());
         }
     }
 
@@ -920,6 +1065,12 @@ public class GuiController {
             polygonButtons.clear();
             vertexBox.getChildren().clear();
             polygonsBox.getChildren().clear();
+
+            if(currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
+                    currentRenderMode == RenderMode.EVERY_TRANSFORM_FRAME ||
+                    currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
+                renderFrame();
+            }
 
         }
 
