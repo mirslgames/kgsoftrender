@@ -61,12 +61,12 @@ public class Camera {
         Vector3f forward = target.subbed(position).normalized();
         Vector3f worldUp = new Vector3f(0, 1, 0);
 
-// как в lookAt: x = up × z
+        // как в lookAt: x = up × z
         Vector3f right = worldUp.crossed(forward);
         if (right.len() < EPS) right = new Vector3f(1, 0, 0);
         else right = right.normalized();
 
-// как в lookAt: y = z × x
+        // как в lookAt: y = z × x
         Vector3f up = forward.crossed(right).normalized();
 
         // знак подбери под “как нравится” (обычно X инвертируют)

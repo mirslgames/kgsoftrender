@@ -21,73 +21,73 @@ import static com.cgvsu.render_engine.GraphicConveyor.*;
 
 public class RenderEngine {
 
-    public static void render(
-            final GraphicsContext graphicsContext,
-            final Camera camera,
-            final Model mesh,
-            final int width,
-            final int height) {
-
-        Matrix4f modelMatrix = rotateScaleTranslate(
-                mesh.currentTransform.scaleX, mesh.currentTransform.scaleY, mesh.currentTransform.scaleZ,
-                mesh.currentTransform.rotationX, mesh.currentTransform.rotationY, mesh.currentTransform.rotationZ,
-                mesh.currentTransform.positionX, mesh.currentTransform.positionY, mesh.currentTransform.positionZ
-        );
-
-        Matrix4f viewMatrix = camera.getViewMatrix();
-        Matrix4f projMatrix = camera.getProjectionMatrix();
-
-        Vector3f targetView = viewMatrix.multiplyOnVector(camera.getTarget());
-        boolean forwardMinusZ = targetView.getZ() < 0;
-
-        Matrix4f modelView = new Matrix4f(viewMatrix.getMatrix());
-        modelView.multiply(modelMatrix);
-
-        final int nPolygons = mesh.polygonsBoundaries.size();
-        graphicsContext.setStroke(Color.web(ThemeSettings.wireframeColor));
-        graphicsContext.setLineWidth(ThemeSettings.wireframeWidth);
-
-        float near = camera.getNearPlane();
-
-        for (int polygonInd = 0; polygonInd < nPolygons; ++polygonInd) {
-            int startIndex = mesh.polygonsBoundaries.get(polygonInd);
-            int endIndex = (polygonInd + 1 < nPolygons)
-                    ? mesh.polygonsBoundaries.get(polygonInd + 1)
-                    : mesh.polygons.size();
-
-            int n = endIndex - startIndex;
-            if (n < 2) continue;
-
-            ArrayList<Vector3f> viewPts = new ArrayList<>(n);
-            for (int i = startIndex; i < endIndex; ++i) {
-                int vertexIndex = mesh.polygons.get(i);
-                Vector3f p = mesh.vertices.get(vertexIndex).position;
-                Vector3f viewP = modelView.multiplyOnVector(new Vector3f(p.getX(), p.getY(), p.getZ()));
-                viewPts.add(viewP);
-            }
-
-            for (int i = 0; i < n; i++) {
-                Vector3f a0 = viewPts.get(i);
-                Vector3f b0 = viewPts.get((i + 1) % n);
-
-                Vector3f a = new Vector3f(a0.getX(), a0.getY(), a0.getZ());
-                Vector3f b = new Vector3f(b0.getX(), b0.getY(), b0.getZ());
-
-                Vector3f[] seg = clipLineToNear(a, b, near, forwardMinusZ);
-                if (seg == null) continue;
-
-                Point2f pa = vertexToPoint(projMatrix.multiplyOnVector(seg[0]), width, height);
-                Point2f pb = vertexToPoint(projMatrix.multiplyOnVector(seg[1]), width, height);
-
-                if (!Float.isFinite(pa.getX()) || !Float.isFinite(pa.getY()) ||
-                        !Float.isFinite(pb.getX()) || !Float.isFinite(pb.getY())) {
-                    continue;
-                }
-
-                graphicsContext.strokeLine(pa.getX(), pa.getY(), pb.getX(), pb.getY());
-            }
-        }
-    }
+//    public static void render(
+//            final GraphicsContext graphicsContext,
+//            final Camera camera,
+//            final Model mesh,
+//            final int width,
+//            final int height) {
+//
+//        Matrix4f modelMatrix = rotateScaleTranslate(
+//                mesh.currentTransform.scaleX, mesh.currentTransform.scaleY, mesh.currentTransform.scaleZ,
+//                mesh.currentTransform.rotationX, mesh.currentTransform.rotationY, mesh.currentTransform.rotationZ,
+//                mesh.currentTransform.positionX, mesh.currentTransform.positionY, mesh.currentTransform.positionZ
+//        );
+//
+//        Matrix4f viewMatrix = camera.getViewMatrix();
+//        Matrix4f projMatrix = camera.getProjectionMatrix();
+//
+//        Vector3f targetView = viewMatrix.multiplyOnVector(camera.getTarget());
+//        boolean forwardMinusZ = targetView.getZ() < 0;
+//
+//        Matrix4f modelView = new Matrix4f(viewMatrix.getMatrix());
+//        modelView.multiply(modelMatrix);
+//
+//        final int nPolygons = mesh.polygonsBoundaries.size();
+//        graphicsContext.setStroke(Color.web(ThemeSettings.wireframeColor));
+//        graphicsContext.setLineWidth(ThemeSettings.wireframeWidth);
+//
+//        float near = camera.getNearPlane();
+//
+//        for (int polygonInd = 0; polygonInd < nPolygons; ++polygonInd) {
+//            int startIndex = mesh.polygonsBoundaries.get(polygonInd);
+//            int endIndex = (polygonInd + 1 < nPolygons)
+//                    ? mesh.polygonsBoundaries.get(polygonInd + 1)
+//                    : mesh.polygons.size();
+//
+//            int n = endIndex - startIndex;
+//            if (n < 2) continue;
+//
+//            ArrayList<Vector3f> viewPts = new ArrayList<>(n);
+//            for (int i = startIndex; i < endIndex; ++i) {
+//                int vertexIndex = mesh.polygons.get(i);
+//                Vector3f p = mesh.vertices.get(vertexIndex).position;
+//                Vector3f viewP = modelView.multiplyOnVector(new Vector3f(p.getX(), p.getY(), p.getZ()));
+//                viewPts.add(viewP);
+//            }
+//
+//            for (int i = 0; i < n; i++) {
+//                Vector3f a0 = viewPts.get(i);
+//                Vector3f b0 = viewPts.get((i + 1) % n);
+//
+//                Vector3f a = new Vector3f(a0.getX(), a0.getY(), a0.getZ());
+//                Vector3f b = new Vector3f(b0.getX(), b0.getY(), b0.getZ());
+//
+//                Vector3f[] seg = clipLineToNear(a, b, near, forwardMinusZ);
+//                if (seg == null) continue;
+//
+//                Point2f pa = vertexToPoint(projMatrix.multiplyOnVector(seg[0]), width, height);
+//                Point2f pb = vertexToPoint(projMatrix.multiplyOnVector(seg[1]), width, height);
+//
+//                if (!Float.isFinite(pa.getX()) || !Float.isFinite(pa.getY()) ||
+//                        !Float.isFinite(pb.getX()) || !Float.isFinite(pb.getY())) {
+//                    continue;
+//                }
+//
+//                graphicsContext.strokeLine(pa.getX(), pa.getY(), pb.getX(), pb.getY());
+//            }
+//        }
+//    }
 
     public static void renderWithRenderingMods(
             final GraphicsContext graphicsContext,
@@ -463,5 +463,68 @@ public class RenderEngine {
         float y = v.getX() * m.getValue(1, 0) + v.getY() * m.getValue(1, 1) + v.getZ() * m.getValue(1, 2);
         float z = v.getX() * m.getValue(2, 0) + v.getY() * m.getValue(2, 1) + v.getZ() * m.getValue(2, 2);
         return new Vector3f(x, y, z);
+    }
+    public static void render(
+            final GraphicsContext graphicsContext,
+            final Camera camera,
+            final Model mesh,
+            final int width,
+            final int height) {
+        Matrix4f modelMatrix = rotateScaleTranslate(mesh.currentTransform.scaleX, mesh.currentTransform.scaleY, mesh.currentTransform.scaleZ,
+                mesh.currentTransform.rotationX, mesh.currentTransform.rotationY, mesh.currentTransform.rotationZ,
+                mesh.currentTransform.positionX, mesh.currentTransform.positionY, mesh.currentTransform.positionZ);
+
+        Matrix4f viewMatrix = camera.getViewMatrix();
+        Matrix4f projMatrix = camera.getProjectionMatrix();
+
+        Matrix4f modelViewMatrix = new Matrix4f(viewMatrix.getMatrix());
+        modelViewMatrix.multiply(modelMatrix);
+
+        float near = camera.getNearPlane();
+        Vector3f targetView = viewMatrix.multiplyOnVector(camera.getTarget());
+        boolean forwardMinusZ = targetView.getZ() < 0;
+
+        final int nPolygons = mesh.polygonsBoundaries.size();
+        graphicsContext.setStroke(Color.web(ThemeSettings.wireframeColor));
+        graphicsContext.setLineWidth(ThemeSettings.wireframeWidth);
+
+
+
+        for (int polygonInd = 0; polygonInd < nPolygons; ++polygonInd) {
+            int startIndex = mesh.polygonsBoundaries.get(polygonInd);
+            int endIndex = (polygonInd + 1 < nPolygons) ? mesh.polygonsBoundaries.get(polygonInd + 1) : mesh.polygons.size();
+            int n = endIndex - startIndex;
+
+            ArrayList<Vector3f> viewPts = new ArrayList<>(n);
+            for (int i = startIndex; i < endIndex; ++i) {
+                int vertexIndex = mesh.polygons.get(i);
+                Vector3f p = mesh.vertices.get(vertexIndex).position;
+                Vector3f viewP = modelViewMatrix.multiplyOnVector(new Vector3f(p.getX(), p.getY(), p.getZ()));
+                viewPts.add(viewP);
+            }
+
+            for (int i = 0; i < n; i++) {
+                Vector3f a0 = viewPts.get(i);
+                Vector3f b0 = viewPts.get((i + 1) % n);
+
+                Vector3f a = new Vector3f(a0.getX(), a0.getY(), a0.getZ());
+                Vector3f b = new Vector3f(b0.getX(), b0.getY(), b0.getZ());
+
+                Vector3f[] seg = clipLineToNear(a, b, near, forwardMinusZ);
+                if (seg == null) continue;
+
+                Point2f pa = vertexToPoint(projMatrix.multiplyOnVector(seg[0]), width, height);
+                Point2f pb = vertexToPoint(projMatrix.multiplyOnVector(seg[1]), width, height);
+
+                if (!Float.isFinite(pa.getX()) || !Float.isFinite(pa.getY()) ||
+                        !Float.isFinite(pb.getX()) || !Float.isFinite(pb.getY())) continue;
+
+
+                if (Float.isNaN(pa.getX()) || Float.isNaN(pa.getY()) || Float.isNaN(pb.getX()) || Float.isNaN(pb.getY()))
+                    continue;
+
+                graphicsContext.strokeLine(pa.getX(), pa.getY(), pb.getX(), pb.getY());
+            }
+        }
     }
 }
