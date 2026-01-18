@@ -103,38 +103,39 @@ public class TextureMapping {
 //        double new_b = baseColor.getBlue() * (1-lightIntensity) + baseColor.getBlue() * l * lightIntensity;
 //        return new Color(new_r, new_g, new_b, baseColor.getOpacity());
 //    }
-public static Color getModifiedColorWithLighting(
-        Vector3f worldNormal,
-        Vector3f worldPosition,
-        Color baseColor,
-        float k
-) {
-    // 1. Нормаль в точке
-    Vector3f n = worldNormal.normalize();
+    public static Color getModifiedColorWithLighting(
+            Vector3f worldNormal,
+            Vector3f worldPosition,
+            Color baseColor,
+            float k
+    ) {
+        // 1. Нормаль в точке
+        Vector3f n = worldNormal.normalize();
 
-    // 2. Луч света (от точки к камере = направление К источнику света в камере)
-    Vector3f cameraPos = SceneManager.activeCamera.getPosition();
-    Vector3f ray = cameraPos.subbed(worldPosition).normalize();
+        // 2. Луч света (от точки к камере = направление К источнику света в камере)
+        Vector3f cameraPos = SceneManager.activeCamera.getPosition();
+        Vector3f ray = cameraPos.subbed(worldPosition).normalize();
 
-    // 3. Коэффициент освещения (Lambertian diffuse)
-    // ray направлен от точки к камере (к источнику света)
-    // Если нормаль направлена к камере, n.dot(ray) положительный = ярко
-    float l = n.dot(ray);
-    if (l < 0f) l = 0f;
+        // 3. Коэффициент освещения (Lambertian diffuse)
+        // ray направлен от точки к камере (к источнику света)
+        // Если нормаль направлена к камере, n.dot(ray) положительный = ярко
+        float l = n.dot(ray);
+        if (l < 0f) l = 0f;
 
-    // 4. Итоговый коэффициент яркости
-    float intensity = (1f - k) + k * l;
+        // 4. Итоговый коэффициент яркости
+        float intensity = (1f - k) + k * l;
 
-    return new Color(
-            baseColor.getRed()   * intensity,
-            baseColor.getGreen() * intensity,
-            baseColor.getBlue()  * intensity,
-            baseColor.getOpacity()
-    );
+        return new Color(
+                baseColor.getRed()   * intensity,
+                baseColor.getGreen() * intensity,
+                baseColor.getBlue()  * intensity,
+                baseColor.getOpacity()
+        );
+    }
+
+
+
 }
 
-
-
-}
 
 

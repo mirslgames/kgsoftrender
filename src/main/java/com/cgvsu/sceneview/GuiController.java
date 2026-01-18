@@ -330,8 +330,10 @@ public class GuiController {
         ZBuffer zBuffer = new ZBuffer((int) width, (int) height);
         zBuffer.clear();
         for (Model model : SceneManager.models) {
+
             RenderEngine.renderWithRenderingMods(sceneCanvas.getGraphicsContext2D(), SceneManager.activeCamera, model, (int) width, (int) height, zBuffer);
             //RenderEngine.render(sceneCanvas.getGraphicsContext2D(), SceneManager.activeCamera, model, (int) width, (int) height);
+
         }
         //ВАРИАНТ рендерить только активную модель
         /*if (SceneManager.acti

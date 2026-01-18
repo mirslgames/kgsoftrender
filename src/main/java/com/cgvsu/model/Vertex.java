@@ -14,12 +14,17 @@ public class Vertex {
         return vertex.position.equals(position);
     }
 
-    public Vertex(float x, float y, float z){
-        position = new Vector3f(x, y, z);
+    public Vertex(final Vector3f position) {
+        this.position = position;
+        this.normal = null;
     }
 
-    public Vertex(){
-        position = new Vector3f(0,0,0);
+    public Vertex(final float x, final float y, final float z) {
+        this(new Vector3f(x, y, z));
+    }
+
+    public Vertex() {
+        this(new Vector3f(0, 0, 0));
     }
 
     public int getOrAddTextureCoordinate(final Vector2f uv) {

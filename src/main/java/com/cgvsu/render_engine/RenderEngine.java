@@ -1,13 +1,10 @@
 package com.cgvsu.render_engine;
 
-import java.util.ArrayList;
-
-
 import com.cgvsu.math.matrixs.Matrix4f;
 import com.cgvsu.math.point.Point2f;
-import com.cgvsu.math.point.Point3f;
-import com.cgvsu.math.vectors.Vector3f;
 import com.cgvsu.math.vectors.Vector2f;
+import com.cgvsu.math.vectors.Vector3f;
+import com.cgvsu.model.Model;
 import com.cgvsu.model.Vertex;
 import com.cgvsu.modelOperations.Rasterization;
 import com.cgvsu.modelOperations.TextureMapping;
@@ -15,12 +12,10 @@ import com.cgvsu.modelOperations.ZBuffer;
 import com.cgvsu.sceneview.SceneManager;
 import com.cgvsu.service.ThemeSettings;
 import javafx.scene.canvas.GraphicsContext;
-import com.cgvsu.render_engine.GraphicConveyor.*;
-
-import com.cgvsu.model.Model;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 
+import java.util.ArrayList;
 
 import static com.cgvsu.render_engine.GraphicConveyor.*;
 
@@ -32,9 +27,12 @@ public class RenderEngine {
             final Model mesh,
             final int width,
             final int height) {
-        Matrix4f modelMatrix = rotateScaleTranslate(mesh.currentTransform.scaleX, mesh.currentTransform.scaleY, mesh.currentTransform.scaleZ,
+
+        Matrix4f modelMatrix = rotateScaleTranslate(
+                mesh.currentTransform.scaleX, mesh.currentTransform.scaleY, mesh.currentTransform.scaleZ,
                 mesh.currentTransform.rotationX, mesh.currentTransform.rotationY, mesh.currentTransform.rotationZ,
-                mesh.currentTransform.positionX, mesh.currentTransform.positionY, mesh.currentTransform.positionZ);
+                mesh.currentTransform.positionX, mesh.currentTransform.positionY, mesh.currentTransform.positionZ
+        );
 
         Matrix4f viewMatrix = camera.getViewMatrix();
         Matrix4f projMatrix = camera.getProjectionMatrix();
@@ -53,8 +51,12 @@ public class RenderEngine {
 
         for (int polygonInd = 0; polygonInd < nPolygons; ++polygonInd) {
             int startIndex = mesh.polygonsBoundaries.get(polygonInd);
-            int endIndex = (polygonInd + 1 < nPolygons) ? mesh.polygonsBoundaries.get(polygonInd + 1) : mesh.polygons.size();
+            int endIndex = (polygonInd + 1 < nPolygons)
+                    ? mesh.polygonsBoundaries.get(polygonInd + 1)
+                    : mesh.polygons.size();
+
             int n = endIndex - startIndex;
+            if (n < 2) continue;
 
             ArrayList<Vector3f> viewPts = new ArrayList<>(n);
             for (int i = startIndex; i < endIndex; ++i) {
@@ -78,18 +80,15 @@ public class RenderEngine {
                 Point2f pb = vertexToPoint(projMatrix.multiplyOnVector(seg[1]), width, height);
 
                 if (!Float.isFinite(pa.getX()) || !Float.isFinite(pa.getY()) ||
-                        !Float.isFinite(pb.getX()) || !Float.isFinite(pb.getY())) continue;
-
-
-                if (Float.isNaN(pa.getX()) || Float.isNaN(pa.getY()) || Float.isNaN(pb.getX()) || Float.isNaN(pb.getY()))
+                        !Float.isFinite(pb.getX()) || !Float.isFinite(pb.getY())) {
                     continue;
+                }
 
                 graphicsContext.strokeLine(pa.getX(), pa.getY(), pb.getX(), pb.getY());
             }
         }
     }
 
-    /*
     public static void renderWithRenderingMods(
             final GraphicsContext graphicsContext,
             final Camera camera,
@@ -101,19 +100,21 @@ public class RenderEngine {
         Matrix4f modelMatrix = rotateScaleTranslate(
                 mesh.currentTransform.scaleX, mesh.currentTransform.scaleY, mesh.currentTransform.scaleZ,
                 mesh.currentTransform.rotationX, mesh.currentTransform.rotationY, mesh.currentTransform.rotationZ,
-                mesh.currentTransform.positionX, mesh.currentTransform.positionY, mesh.currentTransform.positionZ);
+                mesh.currentTransform.positionX, mesh.currentTransform.positionY, mesh.currentTransform.positionZ
+        );
 
         Matrix4f viewMatrix = camera.getViewMatrix();
         Matrix4f projectionMatrix = camera.getProjectionMatrix();
 
-        // Шаг 1: Создаем modelView матрицу (V * M)
         Matrix4f modelViewMatrix = new Matrix4f(viewMatrix.getMatrix());
         modelViewMatrix.multiply(modelMatrix);
 
-        // Шаг 2: Получаем параметры камеры для клиппинга
         float near = camera.getNearPlane();
         Vector3f targetView = viewMatrix.multiplyOnVector(camera.getTarget());
         boolean forwardMinusZ = targetView.getZ() < 0;
+
+        // Нормаль-матрица (inverse-transpose верхней 3x3 modelMatrix)
+        final float[] normalMatrix = buildNormalMatrix3x3(modelMatrix);
 
         Color baseColor = Color.GREEN;
         final int nPolygons = mesh.polygonsBoundaries.size();
@@ -124,10 +125,22 @@ public class RenderEngine {
                     ? mesh.polygonsBoundaries.get(polygonInd + 1)
                     : mesh.polygons.size();
 
+            // Этот рендерер работает по треугольникам (берём первые 3 индекса полигона).
+            if (endIndex - startIndex < 3) continue;
+
             Point2f p1 = null, p2 = null, p3 = null;
-            float z1 = 0, z2 = 0, z3 = 0;
+
+            // view-depth (положительный), меньше = ближе.
+            float zD1 = 0, zD2 = 0, zD3 = 0;
+
             Vertex v1 = null, v2 = null, v3 = null;
-            Vector3f w1 = null, w2 = null, w3 = null;
+
+            // Оригинальные world позиции
+            Vector3f w1Orig = null, w2Orig = null, w3Orig = null;
+
+            // Копии worldPos для Rasterization (чтобы она их не мутировала)
+            Vector3f w1Work = null, w2Work = null, w3Work = null;
+
             Vector2f t1 = null, t2 = null, t3 = null;
 
             boolean shouldSkipPolygon = false;
@@ -135,51 +148,54 @@ public class RenderEngine {
             for (int local = 0; local < 3; ++local) {
                 int polyIndex = startIndex + local;
                 if (polyIndex >= mesh.polygons.size()) {
-                    System.err.printf("ERROR: i=%d >= polygons.size=%d\n", polyIndex, mesh.polygons.size());
                     shouldSkipPolygon = true;
                     break;
                 }
 
                 int vertexIndex = mesh.polygons.get(polyIndex);
                 if (vertexIndex < 0 || vertexIndex >= mesh.vertices.size()) {
-                    System.err.printf("ERROR: vertexIndex=%d, vertices.size=%d\n",
-                            vertexIndex, mesh.vertices.size());
                     shouldSkipPolygon = true;
                     break;
                 }
 
                 Vertex vertex = mesh.vertices.get(vertexIndex);
                 Vector3f pos = vertex.position;
-                Vector3f posVecmath = new Vector3f(pos.getX(), pos.getY(), pos.getZ());
+                Vector3f posVec = new Vector3f(pos.getX(), pos.getY(), pos.getZ());
 
-                // Шаг 3: Мировая позиция для освещения
-                Vector3f worldPos = modelMatrix.multiplyOnVector(posVecmath);
+                // world pos (для освещения)
+                Vector3f worldPos = modelMatrix.multiplyOnVector(posVec);
 
-                // Шаг 4: Преобразуем в view-space (V * M * vertex)
-                Vector3f viewPos = modelViewMatrix.multiplyOnVector(posVecmath);
+                // view pos (для клиппинга/глубины)
+                Vector3f viewPos = modelViewMatrix.multiplyOnVector(posVec);
 
-                // Шаг 5: Клиппинг по near-плоскости в view-space
-                // Проверяем, не находится ли вершина за near-плоскостью
+                // Near-plane check в view-space
                 if (forwardMinusZ) {
-                    // Камера смотрит вдоль -Z
-                    if (viewPos.getZ() > -near) {
+                    if (viewPos.getZ() > -near) { // камера смотрит вдоль -Z
                         shouldSkipPolygon = true;
                         break;
                     }
                 } else {
-                    // Камера смотрит вдоль +Z
-                    if (viewPos.getZ() < near) {
+                    if (viewPos.getZ() < near) {  // камера смотрит вдоль +Z
                         shouldSkipPolygon = true;
                         break;
                     }
                 }
 
-                // Шаг 6: Проекция ПОСЛЕ клиппинга (P * viewPos)
+                // Проекция
                 Vector3f projected = projectionMatrix.multiplyOnVector(viewPos);
+                Point2f screenPoint = vertexToPoint(projected, width, height);
 
-                // Получаем экранные координаты
-                Point2f resultPoint = vertexToPoint(projected, width, height);
-                float z = projected.getZ(); // Это z после проекции для z-буфера
+                if (!Float.isFinite(screenPoint.getX()) || !Float.isFinite(screenPoint.getY())) {
+                    shouldSkipPolygon = true;
+                    break;
+                }
+
+                // Положительная глубина вдоль направления взгляда
+                float zViewDepth = forwardMinusZ ? -viewPos.getZ() : viewPos.getZ();
+                if (!Float.isFinite(zViewDepth) || zViewDepth <= 1e-6f) {
+                    shouldSkipPolygon = true;
+                    break;
+                }
 
                 Vector2f texCoord = null;
                 if (SceneManager.useTexture && mesh.texture != null) {
@@ -187,266 +203,143 @@ public class RenderEngine {
                 }
 
                 if (local == 0) {
-                    p1 = resultPoint;
-                    z1 = z;
+                    p1 = screenPoint;
+                    zD1 = zViewDepth;
                     v1 = vertex;
-                    w1 = worldPos;
+                    w1Orig = worldPos;
+                    w1Work = new Vector3f(worldPos.getX(), worldPos.getY(), worldPos.getZ());
                     t1 = texCoord;
                 } else if (local == 1) {
-                    p2 = resultPoint;
-                    z2 = z;
+                    p2 = screenPoint;
+                    zD2 = zViewDepth;
                     v2 = vertex;
-                    w2 = worldPos;
+                    w2Orig = worldPos;
+                    w2Work = new Vector3f(worldPos.getX(), worldPos.getY(), worldPos.getZ());
                     t2 = texCoord;
                 } else {
-                    p3 = resultPoint;
-                    z3 = z;
+                    p3 = screenPoint;
+                    zD3 = zViewDepth;
                     v3 = vertex;
-                    w3 = worldPos;
+                    w3Orig = worldPos;
+                    w3Work = new Vector3f(worldPos.getX(), worldPos.getY(), worldPos.getZ());
                     t3 = texCoord;
                 }
             }
 
-            if (shouldSkipPolygon) {
-                continue;
-            }
+            if (shouldSkipPolygon) continue;
+            if (p1 == null || p2 == null || p3 == null) continue;
+            if (isTriangleOutsideScreen(p1, p2, p3, width, height)) continue;
 
-            if (p1 == null || p2 == null || p3 == null) {
-                continue;
-            }
+            // фолбэк face normal (world)
+            final Vector3f faceNormalWorld = computeFaceNormalWorld(w1Orig, w2Orig, w3Orig);
 
-            if (isTriangleOutsideScreen(p1, p2, p3, width, height)) {
-                continue;
-            }
+            boolean shouldRenderFill = !SceneManager.drawMesh
+                    || (SceneManager.useTexture && mesh.texture != null)
+                    || SceneManager.useLight;
 
-            boolean shouldRenderFill = !SceneManager.drawMesh ||
-                    (SceneManager.useTexture && mesh.texture != null) ||
-                    SceneManager.useLight;
-
-            // Рендеринг заливки полигона
             if (shouldRenderFill) {
-                if (SceneManager.useTexture && mesh.texture != null) {
-                    Image texture = mesh.texture;
-                    Rasterization.PixelCallback callback = (x, y, z, barycentric, texCoord, normal, worldNormal, worldPosition) -> {
-                        if (zBuffer.testAndSet(x, y, z)) {
-                            Color color = TextureMapping.getTextureColor(texture, texCoord);
-                            if (SceneManager.useLight && normal != null) {
-                                color = TextureMapping.getModifiedColorWithLighting(
-                                        worldNormal,
-                                        worldPosition,
-                                        color,
-                                        SceneManager.lightIntensity
-                                );
-                            }
-                            graphicsContext.getPixelWriter().setColor(x, y, color);
-                        }
-                    };
+                // ---- ВАЖНО: делаем final-копии для лямбды ----
+                final float fZ1 = zD1, fZ2 = zD2, fZ3 = zD3;
+                final Vector3f fW1 = w1Orig, fW2 = w2Orig, fW3 = w3Orig;
+                final Vector3f fFaceN = faceNormalWorld;
 
-                    Rasterization.rasterizeTriangleWithWorldPos(p1, p2, p3, z1, z2, z3, v1, v2, v3, t1, t2, t3, w1,
-                            w2, w3, callback, modelMatrix, width, height);
-                } else {
-                    Rasterization.PixelCallback callback = (x, y, z, barycentric, texCoord, normal, worldNormal, worldPosition) -> {
-                        if (zBuffer.testAndSet(x, y, z)) {
-                            Color color = baseColor;
-                            if (SceneManager.useLight && normal != null) {
-                                color = TextureMapping.getModifiedColorWithLighting(
-                                        worldNormal,
-                                        worldPosition,
-                                        color,
-                                        SceneManager.lightIntensity
-                                );
-                            }
-                            graphicsContext.getPixelWriter().setColor(x, y, color);
-                        }
-                    };
+                final boolean fTextured = SceneManager.useTexture && mesh.texture != null;
+                final Image fTexture = mesh.texture;
+                final Color fBaseColor = baseColor;
 
-                    Rasterization.rasterizeTriangleWithWorldPos(p1, p2, p3, z1, z2, z3, v1, v2, v3, t1, t2, t3, w1,
-                            w2, w3, callback, modelMatrix, width, height);
-                }
+                final float[] fNormalMatrix = normalMatrix;
+                final Matrix4f fModelMatrix = modelMatrix;
+
+                Rasterization.PixelCallback callback = (x, y, zIgnored, barycentric, texCoord, normal, worldNormalIgnored, worldPosIgnored) -> {
+                    if (barycentric == null || barycentric.length < 3) return;
+
+                    float alpha = barycentric[0];
+                    float beta = barycentric[1];
+                    float gamma = barycentric[2];
+
+                    // 1) Перспективно-корректная глубина для ZBuffer (view-depth)
+                    float depth = perspectiveCorrectDepth(fZ1, fZ2, fZ3, alpha, beta, gamma);
+                    if (!Float.isFinite(depth)) return;
+
+                    if (!zBuffer.testAndSet(x, y, depth)) return;
+
+                    // 2) Базовый цвет
+                    Color color = fTextured ? TextureMapping.getTextureColor(fTexture, texCoord) : fBaseColor;
+
+                    // 3) Освещение
+                    if (SceneManager.useLight) {
+                        Vector3f n = normal;
+                        if (n == null || n.len() < 1e-6f) {
+                            n = fFaceN;
+                        }
+
+                        Vector3f worldN = transformNormal(fNormalMatrix, fModelMatrix, n);
+
+                        // мировая позиция пикселя (перспективно-корректно, из ОРИГИНАЛЬНЫХ worldPos)
+                        Vector3f worldP = perspectiveCorrectInterpolate3(
+                                fW1, fW2, fW3,
+                                fZ1, fZ2, fZ3,
+                                alpha, beta, gamma
+                        );
+
+                        color = TextureMapping.getModifiedColorWithLighting(
+                                worldN,
+                                worldP,
+                                color,
+                                SceneManager.lightIntensity
+                        );
+                    }
+
+                    graphicsContext.getPixelWriter().setColor(x, y, color);
+                };
+
+                // В Rasterization отдаём копии worldPos, чтобы её multiply() не портили оригиналы
+                Rasterization.rasterizeTriangleWithWorldPos(
+                        p1, p2, p3,
+                        zD1, zD2, zD3,
+                        v1, v2, v3,
+                        t1, t2, t3,
+                        w1Work, w2Work, w3Work,
+                        callback,
+                        modelMatrix
+                );
             }
 
-            // Рендеринг сетки (wireframe)
+            // Wireframe
             if (SceneManager.drawMesh) {
                 float bias = 0.0001f;
                 Color lineColor = Color.web(ThemeSettings.wireframeColor);
                 int lineWidth = (int) ThemeSettings.wireframeWidth;
 
-
-                Rasterization.rasterizeThickLine(p1, p2, z1 - bias, z2 - bias, lineWidth, (x, y, z) -> {
-                    if (zBuffer.testAndSet(x, y, z)) {
+                Rasterization.rasterizeThickLine(p1, p2, zD1 - bias, zD2 - bias, lineWidth, (x, y, zLine) -> {
+                    if (zBuffer.testAndSet(x, y, zLine)) {
                         graphicsContext.getPixelWriter().setColor(x, y, lineColor);
                     }
                 });
 
-                Rasterization.rasterizeThickLine(p2, p3, z2 - bias, z3 - bias, lineWidth, (x, y, z) -> {
-                    if (zBuffer.testAndSet(x, y, z)) {
+                Rasterization.rasterizeThickLine(p2, p3, zD2 - bias, zD3 - bias, lineWidth, (x, y, zLine) -> {
+                    if (zBuffer.testAndSet(x, y, zLine)) {
                         graphicsContext.getPixelWriter().setColor(x, y, lineColor);
                     }
                 });
 
-                Rasterization.rasterizeThickLine(p1, p3, z1 - bias, z3 - bias, lineWidth, (x, y, z) -> {
-                    if (zBuffer.testAndSet(x, y, z)) {
+                Rasterization.rasterizeThickLine(p1, p3, zD1 - bias, zD3 - bias, lineWidth, (x, y, zLine) -> {
+                    if (zBuffer.testAndSet(x, y, zLine)) {
                         graphicsContext.getPixelWriter().setColor(x, y, lineColor);
                     }
-                });
-            }
-        }
-    } */
-
-    public static void renderWithRenderingMods(
-            final GraphicsContext graphicsContext,
-            final Camera camera,
-            final Model mesh,
-            final int width,
-            final int height,
-            ZBuffer zBuffer) {
-
-        boolean needFill = !SceneManager.drawMesh ||
-                (SceneManager.useTexture && mesh.texture != null) ||
-                SceneManager.useLight;
-
-        if (!needFill && SceneManager.drawMesh) {
-            render(graphicsContext, camera, mesh, width, height);
-            return;
-        }
-
-        Matrix4f modelMatrix = rotateScaleTranslate(
-                mesh.currentTransform.scaleX, mesh.currentTransform.scaleY, mesh.currentTransform.scaleZ,
-                mesh.currentTransform.rotationX, mesh.currentTransform.rotationY, mesh.currentTransform.rotationZ,
-                mesh.currentTransform.positionX, mesh.currentTransform.positionY, mesh.currentTransform.positionZ);
-
-        Matrix4f viewMatrix = camera.getViewMatrix();
-        Matrix4f projectionMatrix = camera.getProjectionMatrix();
-
-        Matrix4f modelViewMatrix = new Matrix4f(viewMatrix.getMatrix());
-        modelViewMatrix.multiply(modelMatrix);
-
-        float near = camera.getNearPlane();
-        Vector3f targetView = viewMatrix.multiplyOnVector(camera.getTarget());
-        boolean forwardMinusZ = targetView.getZ() < 0;
-
-        final var pw = graphicsContext.getPixelWriter();
-        final boolean useTex = SceneManager.useTexture && mesh.texture != null;
-        final boolean useLight = SceneManager.useLight;
-        final Image texture = mesh.texture;
-        final float lightI = SceneManager.lightIntensity;
-        final Color baseColor = Color.GREEN;
-
-        final Color wireColor = Color.web(ThemeSettings.wireframeColor);
-        final int lineWidth = (int) ThemeSettings.wireframeWidth;
-
-        // --- КЕШ ПО ВЕРШИНАМ (главный ускоритель) ---
-        int vCount = mesh.vertices.size();
-        Point2f[] screen = new Point2f[vCount];
-        float[] depth = new float[vCount];
-        Vector3f[] world = new Vector3f[vCount];
-        boolean[] bad = new boolean[vCount];
-
-        for (int i = 0; i < vCount; i++) {
-            Vertex vert = mesh.vertices.get(i);
-            Vector3f pos = vert.position; // БЕЗ new Vector3f(...)
-
-            Vector3f viewPos = modelViewMatrix.multiplyOnVector(pos);
-
-            boolean behindNear = forwardMinusZ ? (viewPos.getZ() > -near) : (viewPos.getZ() < near);
-            if (behindNear) {
-                bad[i] = true;
-                continue;
-            }
-
-            Vector3f projected = projectionMatrix.multiplyOnVector(viewPos);
-            Point2f sp = vertexToPoint(projected, width, height);
-
-            if (!Float.isFinite(sp.getX()) || !Float.isFinite(sp.getY()) || !Float.isFinite(projected.getZ())) {
-                bad[i] = true;
-                continue;
-            }
-
-            screen[i] = sp;
-            depth[i] = projected.getZ();
-            world[i] = modelMatrix.multiplyOnVector(pos);
-            bad[i] = false;
-        }
-
-        final Rasterization.PixelCallback fillCallback = (x, y, z, bary, texCoord, normal, worldNormal, worldPos) -> {
-            if (!zBuffer.testAndSet(x, y, z)) return;
-
-            Color c = useTex ? TextureMapping.getTextureColor(texture, texCoord) : baseColor;
-            if (useLight && normal != null) {
-                c = TextureMapping.getModifiedColorWithLighting(worldNormal, worldPos, c, lightI);
-            }
-            pw.setColor(x, y, c);
-        };
-
-        final int nPolygons = mesh.polygonsBoundaries.size();
-
-        for (int polygonInd = 0; polygonInd < nPolygons; ++polygonInd) {
-            final int startIndex = mesh.polygonsBoundaries.get(polygonInd);
-
-            int i0 = mesh.polygons.get(startIndex);
-            int i1 = mesh.polygons.get(startIndex + 1);
-            int i2 = mesh.polygons.get(startIndex + 2);
-
-            if (i0 < 0 || i0 >= vCount || i1 < 0 || i1 >= vCount || i2 < 0 || i2 >= vCount) continue;
-            if (bad[i0] || bad[i1] || bad[i2]) continue;
-
-            Point2f p1 = screen[i0];
-            Point2f p2 = screen[i1];
-            Point2f p3 = screen[i2];
-            if (p1 == null || p2 == null || p3 == null) continue;
-
-            float z1 = depth[i0], z2 = depth[i1], z3 = depth[i2];
-            Vector3f w1 = world[i0], w2 = world[i1], w3 = world[i2];
-
-            Vertex v1 = mesh.vertices.get(i0);
-            Vertex v2 = mesh.vertices.get(i1);
-            Vertex v3 = mesh.vertices.get(i2);
-
-            // Текстурные координаты — зависят от угла полигона (polyIndex), поэтому оставляем так:
-            Vector2f t1 = useTex ? mesh.getTextureCoordinateForPolygonVertex(startIndex) : null;
-            Vector2f t2 = useTex ? mesh.getTextureCoordinateForPolygonVertex(startIndex + 1) : null;
-            Vector2f t3 = useTex ? mesh.getTextureCoordinateForPolygonVertex(startIndex + 2) : null;
-
-            boolean shouldRenderFill = !SceneManager.drawMesh || useTex || useLight;
-
-            if (shouldRenderFill) {
-                Rasterization.rasterizeTriangleWithWorldPos(
-                        p1, p2, p3,
-                        z1, z2, z3,
-                        v1, v2, v3,
-                        t1, t2, t3,
-                        w1, w2, w3,
-                        fillCallback,
-                        modelMatrix,
-                        width, height
-                );
-            }
-
-            if (SceneManager.drawMesh) {
-                float bias = 0.0001f;
-                Rasterization.rasterizeThickLine(p1, p2, z1 - bias, z2 - bias, lineWidth, (x, y, z) -> {
-                    if (zBuffer.testAndSet(x, y, z)) pw.setColor(x, y, wireColor);
-                });
-                Rasterization.rasterizeThickLine(p2, p3, z2 - bias, z3 - bias, lineWidth, (x, y, z) -> {
-                    if (zBuffer.testAndSet(x, y, z)) pw.setColor(x, y, wireColor);
-                });
-                Rasterization.rasterizeThickLine(p1, p3, z1 - bias, z3 - bias, lineWidth, (x, y, z) -> {
-                    if (zBuffer.testAndSet(x, y, z)) pw.setColor(x, y, wireColor);
                 });
             }
         }
     }
-
-
 
     private static boolean isTriangleOutsideScreen(Point2f p1, Point2f p2, Point2f p3, int width, int height) {
         float minX = Math.min(Math.min(p1.getX(), p2.getX()), p3.getX());
         float maxX = Math.max(Math.max(p1.getX(), p2.getX()), p3.getX());
         float minY = Math.min(Math.min(p1.getY(), p2.getY()), p3.getY());
         float maxY = Math.max(Math.max(p1.getY(), p2.getY()), p3.getY());
-
         return (maxX < 0 || minX > width || maxY < 0 || minY > height);
     }
+
     private static Vector3f[] clipLineToNear(Vector3f a, Vector3f b, float near, boolean forwardMinusZ) {
         float za = a.getZ();
         float zb = b.getZ();
@@ -457,7 +350,7 @@ public class RenderEngine {
         boolean inb = forwardMinusZ ? (zb <= planeZ) : (zb >= planeZ);
 
         if (!ina && !inb) return null;
-        if (ina && inb) return new Vector3f[]{a,b};
+        if (ina && inb) return new Vector3f[]{a, b};
 
         float denom = (zb - za);
         if (Math.abs(denom) < 1e-8f) return null;
@@ -465,7 +358,110 @@ public class RenderEngine {
         float t = (planeZ - za) / denom;
         Vector3f p = a.added(b.subbed(a).multiplied(t));
 
-        if (!ina) a = p; else b = p;
-        return new Vector3f[]{a,b};
+        if (!ina) a = p;
+        else b = p;
+
+        return new Vector3f[]{a, b};
+    }
+
+    // -------------------- helpers (depth, normals, world pos) --------------------
+
+    // Перспективно-корректная глубина (если используем viewDepth > 0)
+    private static float perspectiveCorrectDepth(float z1, float z2, float z3,
+                                                 float a, float b, float c) {
+        float denom = a / z1 + b / z2 + c / z3;
+        if (Math.abs(denom) < 1e-12f) return Float.POSITIVE_INFINITY;
+        return 1.0f / denom;
+    }
+
+    // Перспективно-корректная интерполяция Vector3f (world position)
+    private static Vector3f perspectiveCorrectInterpolate3(
+            Vector3f p1, Vector3f p2, Vector3f p3,
+            float z1, float z2, float z3,
+            float a, float b, float c) {
+
+        float iz1 = 1.0f / z1;
+        float iz2 = 1.0f / z2;
+        float iz3 = 1.0f / z3;
+
+        Vector3f p1oz = p1.multiplied(iz1);
+        Vector3f p2oz = p2.multiplied(iz2);
+        Vector3f p3oz = p3.multiplied(iz3);
+
+        Vector3f sum = p1oz.multiplied(a)
+                .added(p2oz.multiplied(b))
+                .added(p3oz.multiplied(c));
+
+        float iz = a * iz1 + b * iz2 + c * iz3;
+        if (Math.abs(iz) < 1e-12f) return new Vector3f(0, 0, 0);
+
+        return sum.multiplied(1.0f / iz);
+    }
+
+    // Face normal в world space (на случай битых вершинных нормалей)
+    private static Vector3f computeFaceNormalWorld(Vector3f w1, Vector3f w2, Vector3f w3) {
+        if (w1 == null || w2 == null || w3 == null) return new Vector3f(0, 1, 0);
+        Vector3f e1 = w2.subbed(w1);
+        Vector3f e2 = w3.subbed(w1);
+        Vector3f n = e1.crossed(e2);
+        if (n.len() < 1e-8f) return new Vector3f(0, 1, 0);
+        return n.normalized();
+    }
+
+    // Строим (L^-1)^T для верхней 3x3 матрицы modelMatrix (нужно для нормалей при scale)
+    // Возвращает 9 значений построчно, или null если матрица вырожденная.
+    private static float[] buildNormalMatrix3x3(Matrix4f m) {
+        float a = m.getValue(0, 0), b = m.getValue(0, 1), c = m.getValue(0, 2);
+        float d = m.getValue(1, 0), e = m.getValue(1, 1), f = m.getValue(1, 2);
+        float g = m.getValue(2, 0), h = m.getValue(2, 1), i = m.getValue(2, 2);
+
+        float det = a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g);
+        if (Math.abs(det) < 1e-12f) return null;
+
+        float c00 = (e * i - f * h);
+        float c01 = -(d * i - f * g);
+        float c02 = (d * h - e * g);
+
+        float c10 = -(b * i - c * h);
+        float c11 = (a * i - c * g);
+        float c12 = -(a * h - b * g);
+
+        float c20 = (b * f - c * e);
+        float c21 = -(a * f - c * d);
+        float c22 = (a * e - b * d);
+
+        float invDet = 1.0f / det;
+
+        return new float[]{
+                c00 * invDet, c01 * invDet, c02 * invDet,
+                c10 * invDet, c11 * invDet, c12 * invDet,
+                c20 * invDet, c21 * invDet, c22 * invDet
+        };
+    }
+
+    // Трансформация нормали: inverse-transpose, без translation
+    private static Vector3f transformNormal(float[] normalMatrix, Matrix4f modelMatrix, Vector3f n) {
+        Vector3f nn = (n == null) ? new Vector3f(0, 1, 0) : n.normalized();
+
+        Vector3f out;
+        if (normalMatrix != null) {
+            float x = normalMatrix[0] * nn.getX() + normalMatrix[1] * nn.getY() + normalMatrix[2] * nn.getZ();
+            float y = normalMatrix[3] * nn.getX() + normalMatrix[4] * nn.getY() + normalMatrix[5] * nn.getZ();
+            float z = normalMatrix[6] * nn.getX() + normalMatrix[7] * nn.getY() + normalMatrix[8] * nn.getZ();
+            out = new Vector3f(x, y, z);
+        } else {
+            out = transformDirection(modelMatrix, nn);
+        }
+
+        if (out.len() < 1e-8f) return new Vector3f(0, 1, 0);
+        return out.normalized();
+    }
+
+    // Умножение направления на верхнюю 3x3 без translation и без деления на w
+    private static Vector3f transformDirection(Matrix4f m, Vector3f v) {
+        float x = v.getX() * m.getValue(0, 0) + v.getY() * m.getValue(0, 1) + v.getZ() * m.getValue(0, 2);
+        float y = v.getX() * m.getValue(1, 0) + v.getY() * m.getValue(1, 1) + v.getZ() * m.getValue(1, 2);
+        float z = v.getX() * m.getValue(2, 0) + v.getY() * m.getValue(2, 1) + v.getZ() * m.getValue(2, 2);
+        return new Vector3f(x, y, z);
     }
 }

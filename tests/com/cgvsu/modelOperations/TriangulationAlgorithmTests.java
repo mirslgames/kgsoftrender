@@ -5,9 +5,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import com.cgvsu.modelOperations.TriangulationAlgorithm;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class TriangulationAlgorithmTests {
     @Test
@@ -40,6 +38,23 @@ public class TriangulationAlgorithmTests {
         assertEquals(n_result, n-2);
         assertEquals(n_result1, n1-2);
 
+    }
+    @Test
+    public void testNoDuplicateTriangles() {
+        List<Integer> numbers = List.of(1,2,3,4,5,6);
+        List<List<Integer>> result = TriangulationAlgorithm.triangulate(numbers);
+
+
+        Set<List<Integer>> uniqueTriangles = new HashSet<>(result);
+        assertEquals(result.size(), uniqueTriangles.size());
+    }
+    @Test
+    public void testTriangleInput() {
+        List<Integer> numbers = List.of(1,2,3);
+        List<List<Integer>> result = TriangulationAlgorithm.triangulate(numbers);
+
+        assertEquals(1, result.size());
+        assertEquals(List.of(1,2,3), result.get(0));
     }
 
 }

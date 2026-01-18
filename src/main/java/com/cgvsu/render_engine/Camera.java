@@ -235,4 +235,12 @@ public class Camera {
     private float radius;
 
     private Vector3f cameraUp = new Vector3f(0f, 1f, 0f);
+
+    public float getFarPlane() {
+        return farPlane;
+    }
+
+    public Vector3f getCameraUp() {
+        return cameraUp;
+    }
 }

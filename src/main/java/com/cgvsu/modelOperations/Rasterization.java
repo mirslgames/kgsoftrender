@@ -17,13 +17,13 @@ public class Rasterization {
     /**
      * Вычисляет барицентрические координаты точки относительно треугольника.
      *
-     * @param x (раньше был point, но я убрал) точка для которой вычисляются координаты (в экранных координатах)
+     * @param point точка для которой вычисляются координаты (в экранных координатах)
      * @param v1, v2, v3 вершины треугольника в экранных координатах (Point2f)
      * @return массив [alpha, beta, gamma] - барицентрические координаты для конкретного треугольника
      */
-    public static void calculateBarycentricCoordinates(float x, float y, Point2f v1, Point2f v2, Point2f v3, float[] out) {
-        /* float x = point.getX();
-        float y = point.getY(); */
+    public static float[] calculateBarycentricCoordinates(Point2f point, Point2f v1, Point2f v2, Point2f v3) {
+        float x = point.getX();
+        float y = point.getY();
 
         float x1 = v1.getX(), y1 = v1.getY();
         float x2 = v2.getX(), y2 = v2.getY();
@@ -38,20 +38,14 @@ public class Rasterization {
 
         if (Math.abs(denom) < 1e-10f) {
             //Вырожденные случай
-            //return new float[]{0, 0, 0};
-            out[0] = 0;
-            out[1] = 0;
-            out[2] = 0;
-            return;
+            return new float[]{0, 0, 0};
         }
 
         float alpha = ((y2 - y3) * (x - x3) + (x3 - x2) * (y - y3)) / denom;
         float beta = ((y3 - y1) * (x - x3) + (x1 - x3) * (y - y3)) / denom;
         float gamma = 1.0f - alpha - beta;
-        out[0] = alpha;
-        out[1] = beta;
-        out[2] = gamma;
-        //return new float[]{alpha, beta, gamma};
+
+        return new float[]{alpha, beta, gamma};
     }
 
     /**
@@ -266,7 +260,10 @@ public class Rasterization {
             float z1, float z2, float z3,
             float[] barycentric) {
 
-        // Тот же код, но работает с мировыми координатами
+        if (barycentric == null || barycentric.length < 3) {
+            return new Vector3f(0, 0, 0);
+        }
+
         float alpha = barycentric[0];
         float beta  = barycentric[1];
         float gamma = barycentric[2];
@@ -275,17 +272,57 @@ public class Rasterization {
         float iz2 = 1.0f / z2;
         float iz3 = 1.0f / z3;
 
-        Vector3f p1_oz = worldPos1.multiply(iz1);
-        Vector3f p2_oz = worldPos2.multiply(iz2);
-        Vector3f p3_oz = worldPos3.multiply(iz3);
+        // НЕ МУТИРУЕМ входные worldPos1/2/3
+        Vector3f p1_oz = worldPos1.multiplied(iz1);
+        Vector3f p2_oz = worldPos2.multiplied(iz2);
+        Vector3f p3_oz = worldPos3.multiplied(iz3);
 
-        Vector3f p_oz = p1_oz.multiply(alpha)
-                .add(p2_oz.multiply(beta))
-                .add(p3_oz.multiply(gamma));
+        Vector3f p_oz = p1_oz.multiplied(alpha)
+                .added(p2_oz.multiplied(beta))
+                .added(p3_oz.multiplied(gamma));
 
         float iz = alpha * iz1 + beta * iz2 + gamma * iz3;
+        return p_oz.multiplied(1.0f / iz);
+    }
 
-        return p_oz.multiply(1.0f / iz);
+
+    /**
+     * Перспективно-корректная интерполяция z-координаты.
+     * Использует интерполяцию через 1/z для правильной работы z-buffer.
+     *
+     * @param zProj1, zProj2, zProj3 z-координаты после проекции (для z-buffer)
+     * @param zView1, zView2, zView3 z-координаты в view space (для перспективной интерполяции)
+     * @param barycentric барицентрические координаты
+     * @return интерполированная z-координата для z-buffer
+     */
+    public static float interpolateZWithPerspective(
+            float zProj1, float zProj2, float zProj3,
+            float zView1, float zView2, float zView3,
+            float[] barycentric) {
+
+        if (barycentric == null || barycentric.length < 3) {
+            return 0.0f;
+        }
+
+        float alpha = barycentric[0];
+        float beta = barycentric[1];
+        float gamma = barycentric[2];
+
+        // Используем 1/zView для перспективно-корректной интерполяции
+        float iz1 = 1.0f / zView1;
+        float iz2 = 1.0f / zView2;
+        float iz3 = 1.0f / zView3;
+
+        // Интерполируем zProj/zView
+        float zProj_over_zView1 = zProj1 * iz1;
+        float zProj_over_zView2 = zProj2 * iz2;
+        float zProj_over_zView3 = zProj3 * iz3;
+
+        float zProj_over_zView = alpha * zProj_over_zView1 + beta * zProj_over_zView2 + gamma * zProj_over_zView3;
+        float iz = alpha * iz1 + beta * iz2 + gamma * iz3;
+
+        // Восстанавливаем zProj
+        return zProj_over_zView / iz;
     }
 
     /**
@@ -304,6 +341,10 @@ public class Rasterization {
             float z1, float z2, float z3,
             float[] barycentric) {
 
+        if (barycentric == null || barycentric.length < 3) {
+            return new Vector3f(0, 0, 0);
+        }
+
         float alpha = barycentric[0];
         float beta  = barycentric[1];
         float gamma = barycentric[2];
@@ -312,18 +353,19 @@ public class Rasterization {
         float iz2 = 1.0f / z2;
         float iz3 = 1.0f / z3;
 
-        Vector3f p1_oz = p1.multiply(iz1);
-        Vector3f p2_oz = p2.multiply(iz2);
-        Vector3f p3_oz = p3.multiply(iz3);
+        // НЕ мутируем входные p1/p2/p3
+        Vector3f p1_oz = p1.multiplied(iz1);
+        Vector3f p2_oz = p2.multiplied(iz2);
+        Vector3f p3_oz = p3.multiplied(iz3);
 
-        Vector3f p_oz = p1_oz.multiply(alpha)
-                .add(p2_oz.multiply(beta))
-                .add(p3_oz.multiply(gamma));
+        Vector3f p_oz = p1_oz.multiplied(alpha)
+                .added(p2_oz.multiplied(beta))
+                .added(p3_oz.multiplied(gamma));
 
         float iz = alpha * iz1 + beta * iz2 + gamma * iz3;
-
-        return p_oz.multiply(1.0f / iz);
+        return p_oz.multiplied(1.0f / iz);
     }
+
 
     /**
      * Находит ограничивающий прямоугольник (bounding box) для треугольника.
@@ -353,26 +395,22 @@ public class Rasterization {
             float z1, float z2, float z3,
             Vertex vertex1, Vertex vertex2, Vertex vertex3,
             Vector2f tex1, Vector2f tex2, Vector2f tex3,
-            PixelCallback pixelCallback, int width, int height) {
+            PixelCallback pixelCallback) {
 
         // Находим границу полигона(треугольника)
-        /* int[] bbox = getBoundingBox(v1, v2, v3);
+        int[] bbox = getBoundingBox(v1, v2, v3);
         int minX = bbox[0];
         int minY = bbox[1];
         int maxX = bbox[2];
-        int maxY = bbox[3]; */
-        int[] bbox = getBoundingBoxClamped(v1, v2, v3, width, height);
-        int minX = bbox[0], minY = bbox[1], maxX = bbox[2], maxY = bbox[3];
+        int maxY = bbox[3];
 
-        if (minX > maxX || minY > maxY) return;
-        float[] barycentric = new float[3];
         // Проходим по всем пикселям в ограничивающем прямоугольнике
         for (int y = minY; y <= maxY; y++) {
             for (int x = minX; x <= maxX; x++) {
-                //Point2f pixel = new Point2f(x, y);
+                Point2f pixel = new Point2f(x, y);
 
                 // Вычисляем барицентрические координаты
-                calculateBarycentricCoordinates(x + 0.5f, y + 0.5f, v1, v2, v3, barycentric);
+                float[] barycentric = calculateBarycentricCoordinates(pixel, v1, v2, v3);
 
                 // Проверяем, находится ли пиксель внутри треугольника
                 if (isInsideTriangle(barycentric)) {
@@ -398,70 +436,71 @@ public class Rasterization {
             }
         }
     }
-
-    public static int[] getBoundingBoxClamped(Point2f v1, Point2f v2, Point2f v3, int width, int height) {
-        int minX = (int) Math.floor(Math.min(Math.min(v1.getX(), v2.getX()), v3.getX()));
-        int maxX = (int) Math.ceil (Math.max(Math.max(v1.getX(), v2.getX()), v3.getX()));
-        int minY = (int) Math.floor(Math.min(Math.min(v1.getY(), v2.getY()), v3.getY()));
-        int maxY = (int) Math.ceil (Math.max(Math.max(v1.getY(), v2.getY()), v3.getY()));
-
-        // clamp к экрану
-        minX = Math.max(minX, 0);
-        minY = Math.max(minY, 0);
-        maxX = Math.min(maxX, width  - 1);
-        maxY = Math.min(maxY, height - 1);
-
-        return new int[]{minX, minY, maxX, maxY};
-    }
-
-
     public static void rasterizeTriangleWithWorldPos(
             Point2f v1, Point2f v2, Point2f v3,
             float z1, float z2, float z3,
             Vertex vertex1, Vertex vertex2, Vertex vertex3,
             Vector2f tex1, Vector2f tex2, Vector2f tex3,
             Vector3f worldPos1, Vector3f worldPos2, Vector3f worldPos3,
-            PixelCallback pixelCallback, Matrix4f modelMatrix, int width, int height) {
+            PixelCallback pixelCallback, Matrix4f modelMatrix) {
+        
+        // Для обратной совместимости - используем z как zView (если не переданы отдельно zView)
+        rasterizeTriangleWithWorldPos(v1, v2, v3, z1, z2, z3, z1, z2, z3, 
+                vertex1, vertex2, vertex3, tex1, tex2, tex3, 
+                worldPos1, worldPos2, worldPos3, pixelCallback, modelMatrix);
+    }
 
-        /* int[] bbox = getBoundingBox(v1, v2, v3);
+    public static void rasterizeTriangleWithWorldPos(
+            Point2f v1, Point2f v2, Point2f v3,
+            float zProj1, float zProj2, float zProj3,
+            float zView1, float zView2, float zView3,
+            Vertex vertex1, Vertex vertex2, Vertex vertex3,
+            Vector2f tex1, Vector2f tex2, Vector2f tex3,
+            Vector3f worldPos1, Vector3f worldPos2, Vector3f worldPos3,
+            PixelCallback pixelCallback, Matrix4f modelMatrix) {
+
+        int[] bbox = getBoundingBox(v1, v2, v3);
         int minX = bbox[0];
         int minY = bbox[1];
         int maxX = bbox[2];
-        int maxY = bbox[3]; */
+        int maxY = bbox[3];
 
-        int[] bbox = getBoundingBoxClamped(v1, v2, v3, width, height);
-        int minX = bbox[0], minY = bbox[1], maxX = bbox[2], maxY = bbox[3];
-
-        if (minX > maxX || minY > maxY) return;
-
-        float[] barycentric = new float[3];
         for (int y = minY; y <= maxY; y++) {
             for (int x = minX; x <= maxX; x++) {
-                //Point2f pixel = new Point2f(x, y);
-                calculateBarycentricCoordinates(x + 0.5f, y + 0.5f, v1, v2, v3, barycentric);
+                Point2f pixel = new Point2f(x, y);
+                float[] barycentric = calculateBarycentricCoordinates(pixel, v1, v2, v3);
 
                 if (isInsideTriangle(barycentric)) {
-                    float z = interpolate(z1, z2, z3, barycentric);
+                    // Перспективно-корректная интерполяция zProj (в NDC [-1, 1])
+                    float zProj = interpolateZWithPerspective(zProj1, zProj2, zProj3, zView1, zView2, zView3, barycentric);
+
+                    float z = interpolateZWithPerspective(
+                            zProj1, zProj2, zProj3,
+                            zView1, zView2, zView3,
+                            barycentric
+                    );
+
 
                     // Интерполируем мировую позицию
                     Vector3f worldPosition = interpolateWorldPositionWithPerspective(
                             worldPos1, worldPos2, worldPos3,
-                            z1, z2, z3,
+                            zView1, zView2, zView3,
                             barycentric
                     );
                     // Интерполируем текстурные координаты (передаются отдельно от Vertex)
                     Vector2f texCoord = null;
                     if (tex1 != null && tex2 != null && tex3 != null) {
-                        texCoord = interpolateWithPerspective(tex1, tex2, tex3, z1, z2, z3, barycentric);
+                        texCoord = interpolateWithPerspective(tex1, tex2, tex3, zView1, zView2, zView3, barycentric);
                     } else if (!(tex1 == null && tex2 == null && tex3 == null)) {
                         texCoord = new Vector2f(0, 0);
                     }
                     // Интерполируем нормаль
                     Vector3f normal = interpolateNormalWithPerspective(
                             vertex1, vertex2, vertex3,
-                            z1, z2, z3,
+                            zView1, zView2, zView3,
                             barycentric
                     );
+
                     Vector3f worldNormal = modelMatrix.multiplyOnVector(normal);
                     worldNormal.normalize();
 
@@ -696,5 +735,6 @@ public class Rasterization {
     }
 
 }
+
 
 
