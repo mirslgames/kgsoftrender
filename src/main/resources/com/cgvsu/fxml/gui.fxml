@@ -64,7 +64,7 @@
                </AnchorPane>
              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
                   <children>
-                     <SplitPane dividerPositions="0.22827496757457846" layoutX="32.0" layoutY="40.0" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                     <SplitPane dividerPositions="0.20881971465629054" layoutX="32.0" layoutY="40.0" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                        <items>
                          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="150.0" prefWidth="292.0">
                               <children>
@@ -89,7 +89,7 @@
                               </children></AnchorPane>
                          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="100.0" prefWidth="160.0">
                               <children>
-                                 <SplitPane dividerPositions="0.5067698259187621" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                 <SplitPane dividerPositions="0.40826446280991735" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                    <items>
                                      <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="100.0" prefWidth="160.0">
                                           <children>
@@ -101,14 +101,9 @@
                                                            <content>
                                                              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                                                                   <children>
-                                                                      <ScrollPane fx:id="modelsScrollPane"
-                                                                                  fitToWidth="true"
-                                                                                  AnchorPane.topAnchor="0.0"
-                                                                                  AnchorPane.rightAnchor="0.0"
-                                                                                  AnchorPane.bottomAnchor="0.0"
-                                                                                  AnchorPane.leftAnchor="0.0">
+                                                                      <ScrollPane fx:id="modelsScrollPane" fitToWidth="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                                                           <content>
-                                                                              <VBox fx:id="modelsBox" spacing="4.0" fillWidth="true"/>
+                                                                              <VBox fx:id="modelsBox" fillWidth="true" spacing="4.0" />
                                                                           </content>
                                                                       </ScrollPane>
                                                                   </children>
@@ -119,15 +114,10 @@
                                                             <content>
                                                                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                                                                   <children>
-                                                                      <ScrollPane fx:id="camersScrollPane"
-                                                                                  fitToWidth="true"
-                                                                                  AnchorPane.topAnchor="0.0"
-                                                                                  AnchorPane.rightAnchor="0.0"
-                                                                                  AnchorPane.bottomAnchor="0.0"
-                                                                                  AnchorPane.leftAnchor="0.0">
+                                                                      <ScrollPane fx:id="camersScrollPane" fitToWidth="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
 
                                                                           <content>
-                                                                              <VBox fx:id="camersBox" spacing="4.0" fillWidth="true"/>
+                                                                              <VBox fx:id="camersBox" fillWidth="true" spacing="4.0" />
                                                                           </content>
                                                                       </ScrollPane>
                                                                   </children>
@@ -142,15 +132,10 @@
                                                             <content>
                                                                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                                                                   <children>
-                                                                      <ScrollPane fx:id="vertexScrollPane"
-                                                                                  fitToWidth="true"
-                                                                                  AnchorPane.topAnchor="0.0"
-                                                                                  AnchorPane.rightAnchor="0.0"
-                                                                                  AnchorPane.bottomAnchor="0.0"
-                                                                                  AnchorPane.leftAnchor="0.0">
+                                                                      <ScrollPane fx:id="vertexScrollPane" fitToWidth="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
 
                                                                           <content>
-                                                                              <VBox fx:id="vertexBox" spacing="4.0" fillWidth="true"/>
+                                                                              <VBox fx:id="vertexBox" fillWidth="true" spacing="4.0" />
                                                                           </content>
                                                                       </ScrollPane>
 
@@ -162,15 +147,10 @@
                                                             <content>
                                                                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                                                                   <children>
-                                                                      <ScrollPane fx:id="polygonScrollPane"
-                                                                                  fitToWidth="true"
-                                                                                  AnchorPane.topAnchor="0.0"
-                                                                                  AnchorPane.rightAnchor="0.0"
-                                                                                  AnchorPane.bottomAnchor="0.0"
-                                                                                  AnchorPane.leftAnchor="0.0">
+                                                                      <ScrollPane fx:id="polygonScrollPane" fitToWidth="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
 
                                                                           <content>
-                                                                              <VBox fx:id="polygonsBox" spacing="4.0" fillWidth="true"/>
+                                                                              <VBox fx:id="polygonsBox" fillWidth="true" spacing="4.0" />
                                                                           </content>
                                                                       </ScrollPane>
                                                                   </children>
@@ -293,7 +273,20 @@
                                                    </TitledPane>
                                                    <Button fx:id="deleteActiveEntityButton" mnemonicParsing="false" onAction="#onDeleteActiveEntityButtonClick" text="Удалить со сцены" />
                                                    <Button fx:id="deleteVertex" mnemonicParsing="false" onAction="#deleteVertexClick" text="Удалить вершину" />
-                                                   <Button fx:id="deletePolygon" mnemonicParsing="false" onAction="#deletePolygonClick" text="Удалить полигон" />
+                                                   <HBox prefHeight="100.0" prefWidth="200.0">
+                                                      <children>
+                                                         <Button fx:id="deletePolygon" mnemonicParsing="false" onAction="#deletePolygonClick" text="Удалить полигон">
+                                                            <HBox.margin>
+                                                               <Insets top="5.0" />
+                                                            </HBox.margin>
+                                                         </Button>
+                                                         <CheckBox fx:id="deleteFreeVertexCheckbox" mnemonicParsing="false" text="Удалять свободные вершины">
+                                                            <HBox.margin>
+                                                               <Insets left="5.0" top="10.0" />
+                                                            </HBox.margin>
+                                                         </CheckBox>
+                                                      </children>
+                                                   </HBox>
                                                 </children>
                                              </VBox>
                                           </children></AnchorPane>

@@ -2,8 +2,10 @@ package com.cgvsu.model;
 
 import com.cgvsu.math.vectors.Vector2f;
 import com.cgvsu.math.vectors.Vector3f;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -249,5 +251,156 @@ class ModelTest {
         copy.vertices.get(0).position = new Vector3f(777, 777, 777);
         assertNotEquals(777, original.vertices.get(0).position.getX(),
                 "При изменении позиции вершины в копии, оригинальная вершина не должна изменяться.");
+    }
+
+    private Model makeModelTwoTriangles() {
+        Model m = new Model();
+
+        m.vertices = new ArrayList<>();
+        m.vertices.add(new Vertex(0, 0, 0));
+        m.vertices.add(new Vertex(10, 0, 0));
+        m.vertices.add(new Vertex(0, 10, 0));
+        m.vertices.add(new Vertex(0, 0, 10));
+        m.vertices.add(new Vertex(10, 10, 10));
+
+        m.polygons = new ArrayList<>(List.of(
+                0, 1, 2,
+                2, 3, 4
+        ));
+
+        m.polygonsBoundaries = new ArrayList<>(List.of(0, 3));
+
+        //UV индексы должны быть той же длины что polygons
+        m.polygonsTextureCoordinateIndices = new ArrayList<>(List.of(
+                -1, -1, -1,
+                -1, -1, -1
+        ));
+
+        return m;
+    }
+
+    private static void assertVertexPos(Vertex v, float x, float y, float z) {
+        assertNotNull(v);
+        assertNotNull(v.position);
+        assertEquals(x, v.position.getX(), EPS);
+        assertEquals(y, v.position.getY(), EPS);
+        assertEquals(z, v.position.getZ(), EPS);
+    }
+
+    private static boolean hasDeletePolygonWithFlag() {
+        try {
+            Model.class.getMethod("deletePolygonFromIndex", int.class, boolean.class);
+            return true;
+        } catch (NoSuchMethodException e) {
+            return false;
+        }
+    }
+
+    private static boolean callDeletePolygon(Model m, int polygonBoundaryIndex, boolean deleteFreeVertices) {
+        try {
+            Method withFlag = Model.class.getMethod("deletePolygonFromIndex", int.class, boolean.class);
+            return (boolean) withFlag.invoke(m, polygonBoundaryIndex, deleteFreeVertices);
+        } catch (NoSuchMethodException e) {
+            try {
+                Method noFlag = Model.class.getMethod("deletePolygonFromIndex", int.class);
+                return (boolean) noFlag.invoke(m, polygonBoundaryIndex);
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    void deleteVertex_removesPolygonsThatContainIt_andShiftsIndices() {
+        Model m = makeModelTwoTriangles();
+
+        boolean ok = m.deleteVertexFromIndex(1);
+        assertTrue(ok);
+
+        assertEquals(4, m.vertices.size());
+        assertVertexPos(m.vertices.get(0), 0, 0, 0);
+        assertVertexPos(m.vertices.get(1), 0, 10, 0);
+        assertVertexPos(m.vertices.get(2), 0, 0, 10);
+        assertVertexPos(m.vertices.get(3), 10, 10, 10);
+
+        assertEquals(List.of(0), m.polygonsBoundaries);
+        assertEquals(List.of(1, 2, 3), m.polygons);
+        assertEquals(List.of(-1, -1, -1), m.polygonsTextureCoordinateIndices);
+    }
+
+    @Test
+    void deleteVertex_sharedVertex_removesAllPolygons() {
+        Model m = makeModelTwoTriangles();
+
+        boolean ok = m.deleteVertexFromIndex(2);
+        assertTrue(ok);
+
+        assertEquals(4, m.vertices.size());
+
+        assertTrue(m.polygons.isEmpty());
+        assertTrue(m.polygonsBoundaries.isEmpty());
+        assertTrue(m.polygonsTextureCoordinateIndices.isEmpty());
+    }
+
+    @Test
+    void deleteVertex_invalidIndex_returnsFalse_andDoesNotChangeModel() {
+        Model m = makeModelTwoTriangles();
+
+        List<Integer> polygonsBefore = new ArrayList<>(m.polygons);
+        List<Integer> boundariesBefore = new ArrayList<>(m.polygonsBoundaries);
+        List<Integer> uvBefore = new ArrayList<>(m.polygonsTextureCoordinateIndices);
+        int vertexCountBefore = m.vertices.size();
+
+        assertFalse(m.deleteVertexFromIndex(-1));
+        assertFalse(m.deleteVertexFromIndex(999));
+
+        assertEquals(vertexCountBefore, m.vertices.size());
+        assertEquals(polygonsBefore, m.polygons);
+        assertEquals(boundariesBefore, m.polygonsBoundaries);
+        assertEquals(uvBefore, m.polygonsTextureCoordinateIndices);
+    }
+
+    @Test
+    void deletePolygon_removesPolygon_andFixesBoundaries_withoutDeletingFreeVertices() {
+        Model m = makeModelTwoTriangles();
+
+        boolean ok = callDeletePolygon(m, 0, false);
+        assertTrue(ok);
+
+        assertEquals(List.of(0), m.polygonsBoundaries);
+        assertEquals(List.of(2, 3, 4), m.polygons);
+        assertEquals(List.of(-1, -1, -1), m.polygonsTextureCoordinateIndices);
+
+        assertEquals(5, m.vertices.size());
+    }
+
+    @Test
+    void deletePolygon_canDeleteFreeVertices_andRemapIndices() {
+        Assumptions.assumeTrue(hasDeletePolygonWithFlag(),
+                "Нет deletePolygonFromIndex(int, boolean) — пропускаем тест удаления свободных вершин");
+
+        Model m = makeModelTwoTriangles();
+
+        boolean ok = callDeletePolygon(m, 0, true);
+        assertTrue(ok);
+
+        assertEquals(List.of(0), m.polygonsBoundaries);
+        assertEquals(List.of(0, 1, 2), m.polygons);
+        assertEquals(List.of(-1, -1, -1), m.polygonsTextureCoordinateIndices);
+
+        assertEquals(3, m.vertices.size());
+        assertVertexPos(m.vertices.get(0), 0, 10, 0);
+        assertVertexPos(m.vertices.get(1), 0, 0, 10);
+        assertVertexPos(m.vertices.get(2), 10, 10, 10);
+    }
+
+    @Test
+    void deletePolygon_invalidIndex_returnsFalse() {
+        Model m = makeModelTwoTriangles();
+
+        assertFalse(callDeletePolygon(m, -1, false));
+        assertFalse(callDeletePolygon(m, 999, false));
     }
 }

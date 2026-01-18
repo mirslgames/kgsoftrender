@@ -112,12 +112,14 @@ public static Color getModifiedColorWithLighting(
     // 1. Нормаль в точке
     Vector3f n = worldNormal.normalize();
 
-    // 2. Луч света (от камеры к точке)
+    // 2. Луч света (от точки к камере = направление К источнику света в камере)
     Vector3f cameraPos = SceneManager.activeCamera.getPosition();
-    Vector3f ray = worldPosition.subbed(cameraPos).normalize();
+    Vector3f ray = cameraPos.subbed(worldPosition).normalize();
 
-    // 3. Коэффициент освещения
-    float l = -n.dot(ray);
+    // 3. Коэффициент освещения (Lambertian diffuse)
+    // ray направлен от точки к камере (к источнику света)
+    // Если нормаль направлена к камере, n.dot(ray) положительный = ярко
+    float l = n.dot(ray);
     if (l < 0f) l = 0f;
 
     // 4. Итоговый коэффициент яркости
@@ -130,6 +132,7 @@ public static Color getModifiedColorWithLighting(
             baseColor.getOpacity()
     );
 }
+
 
 
 }

@@ -161,7 +161,8 @@ public class GuiController {
     private Button deleteVertex;
     @FXML
     private Button deletePolygon;
-
+    @FXML
+    private CheckBox deleteFreeVertexCheckbox;
 
     private RenderMode currentRenderMode;
 
@@ -195,6 +196,7 @@ public class GuiController {
 
             deleteVertex.setVisible(false);
             deletePolygon.setVisible(false);
+            deleteFreeVertexCheckbox.setVisible(false);
             vertexPane.setVisible(false);
             polygonPane.setVisible(false);
 
@@ -679,7 +681,14 @@ public class GuiController {
 
     @FXML
     private void shortcutsInfoMenuItemClick(){
-        showInfo(ShortcutsSettings.getInfo());
+        StringBuilder sb = new StringBuilder();
+        sb.append(ShortcutsSettings.getInfo());
+        sb.append("\n===Управление камерой===\n");
+        sb.append("ЛКМ - поворот камеры\n");
+        sb.append("ПКМ - перемещение камеры\n");
+        sb.append("Колесико мыши - зум\n");
+        sb.append("Двойной клик - вернуться обратно\n");
+        showInfo(sb.toString());
     }
 
     @FXML
@@ -725,7 +734,8 @@ public class GuiController {
 
     @FXML
     private void onLoadTextureButtonClick(){
-        FileChooser fc = new FileChooser();
+        try {
+            FileChooser fc = new FileChooser();
             fc.setTitle("Choose texture");
             fc.getExtensionFilters().add(
                     new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg", "*.bmp")
@@ -744,7 +754,10 @@ public class GuiController {
                 SceneManager.activeModel.hasTexture = false;
             }
 
-
+        } catch (Exception e) {
+            logError("Ошибка при загрузке текстуры");
+            showError("Ошибка при загрузке текстуры");;
+        }
     }
 
 
@@ -865,11 +878,16 @@ public class GuiController {
         alert.showAndWait();
     }
     @FXML private void onDeleteTextureButtonClick(ActionEvent event){
-        SceneManager.activeModel.hasTexture = false;
-        SceneManager.activeModel.texture = Model.defaultTexture;
-        SceneManager.activeModel.textureName = "По умолчанию";
-        currentTextureLabel.setText("Текущая текстура: По умолчанию");
-        deleteTextureButton.setVisible(false);
+        try {
+            SceneManager.activeModel.hasTexture = false;
+            SceneManager.activeModel.texture = Model.defaultTexture;
+            SceneManager.activeModel.textureName = "По умолчанию";
+            currentTextureLabel.setText("Текущая текстура: По умолчанию");
+            deleteTextureButton.setVisible(false);
+        } catch (Exception exception){
+            logError("Ошибка при удалении текстуры");
+            showError("Ошибка при удалении текстуры");
+        }
 
     }
 
@@ -893,6 +911,7 @@ public class GuiController {
             vertexPane.setVisible(false);
             deleteVertex.setVisible(false);
             deletePolygon.setVisible(false);
+            deleteFreeVertexCheckbox.setVisible(false);
             activeVertexButton = null;
             activePolygonButton = null;
             vertexButtons.clear();
@@ -948,28 +967,35 @@ public class GuiController {
         deleteActiveEntityButton.setVisible(true);
         transformationTitledPane.setVisible(true);
 
-        polygonPane.setVisible(true);
-        vertexPane.setVisible(true);
-        vertexButtons.clear();
-        polygonButtons.clear();
-        vertexBox.getChildren().clear();
-        polygonsBox.getChildren().clear();
+        try {
+            polygonPane.setVisible(true);
+            vertexPane.setVisible(true);
+            vertexButtons.clear();
+            polygonButtons.clear();
+            vertexBox.getChildren().clear();
+            polygonsBox.getChildren().clear();
 
-        if(activeVertexButton != null){
-            activeVertexButton.setStyle(ThemeSettings.buttonStyle);
+            if (activeVertexButton != null) {
+                activeVertexButton.setStyle(ThemeSettings.buttonStyle);
+            }
+            activeVertexButton = null;
+
+            if (activePolygonButton != null) {
+                activePolygonButton.setStyle(ThemeSettings.buttonStyle);
+            }
+            activePolygonButton = null;
+
+            deleteVertex.setVisible(false);
+            deletePolygon.setVisible(false);
+            deleteFreeVertexCheckbox.setVisible(false);
+
+            generateVertexButtonsFromModel(model.vertices);
+            generatePolygonButtonsFromModel(model.polygonsBoundaries);
         }
-        activeVertexButton = null;
-
-        if(activePolygonButton != null){
-            activePolygonButton.setStyle(ThemeSettings.buttonStyle);
+        catch(Exception exception){
+            logError("Ошибка при извлечении вершин и полигонов из модели");
+            showError("Ошибка при извлечении вершин и полигонов из модели");
         }
-        activePolygonButton = null;
-
-        deleteVertex.setVisible(false);
-        deletePolygon.setVisible(false);
-
-        generateVertexButtonsFromModel(model.vertices);
-        generatePolygonButtonsFromModel(model.polygonsBoundaries);
     }
 
     private void generateVertexButtonsFromModel(ArrayList<Vertex> vertices){
@@ -1004,69 +1030,132 @@ public class GuiController {
 
     private void onPolygonButtonClick(ActionEvent event){
         //В этот момент надо подсвечивать на рендере полигон
-        Button button = (Button) event.getSource();
-        String btnText = button.getText();
-        if (activePolygonButton != null) {
-            activePolygonButton.setStyle(ThemeSettings.buttonStyle);
-        }
-        activePolygonButton = button;
-        activePolygonButton.setStyle(ThemeSettings.activeButtonStyle);
-        deleteVertex.setVisible(false);
-        deletePolygon.setVisible(true);
-        deleteActiveEntityButton.setVisible(false);
+        try {
+            Button button = (Button) event.getSource();
+            String btnText = button.getText();
+            if (activePolygonButton != null) {
+                activePolygonButton.setStyle(ThemeSettings.buttonStyle);
+            }
+            activePolygonButton = button;
+            activePolygonButton.setStyle(ThemeSettings.activeButtonStyle);
+            deleteVertex.setVisible(false);
+            deletePolygon.setVisible(true);
+            deleteFreeVertexCheckbox.setVisible(true);
+            deleteActiveEntityButton.setVisible(false);
 
-        if(activeVertexButton != null){
-            activeVertexButton.setStyle(ThemeSettings.buttonStyle);
+            if (activeVertexButton != null) {
+                activeVertexButton.setStyle(ThemeSettings.buttonStyle);
+            }
+            activeVertexButton = null;
+        } catch(Exception exception){
+            logError("Ошибка при выборе полигона");
+            showError("Ошибка при выборе полигона");
         }
-        activeVertexButton = null;
 
     }
 
     private void onVertexButtonClick(ActionEvent event){
         //В этот момент надо подсвечивать на рендере вершину
-        Button button = (Button) event.getSource();
-        String btnText = button.getText();
-        if (activeVertexButton != null) {
-            activeVertexButton.setStyle(ThemeSettings.buttonStyle);
-        }
-        activeVertexButton = button;
-        activeVertexButton.setStyle(ThemeSettings.activeButtonStyle);
-        deleteVertex.setVisible(true);
-        deletePolygon.setVisible(false);
-        deleteActiveEntityButton.setVisible(false);
+        try {
+            Button button = (Button) event.getSource();
+            String btnText = button.getText();
+            if (activeVertexButton != null) {
+                activeVertexButton.setStyle(ThemeSettings.buttonStyle);
+            }
+            activeVertexButton = button;
+            activeVertexButton.setStyle(ThemeSettings.activeButtonStyle);
+            deleteVertex.setVisible(true);
+            deletePolygon.setVisible(false);
+            deleteFreeVertexCheckbox.setVisible(false);
+            deleteActiveEntityButton.setVisible(false);
 
-        if(activePolygonButton != null){
-            activePolygonButton.setStyle(ThemeSettings.buttonStyle);
+            if (activePolygonButton != null) {
+                activePolygonButton.setStyle(ThemeSettings.buttonStyle);
+            }
+            activePolygonButton = null;
+        } catch (Exception exception){
+            logError("Ошибка при выборе вершины");
+            showError("Ошибка при выборе вершины");
         }
-        activePolygonButton = null;
     }
 
     @FXML
     private void deleteVertexClick(ActionEvent event){
         //Удаление вершины у модели
-        deleteVertex.setVisible(false);
-        if(activeVertexButton != null){
-            activeVertexButton.setStyle(ThemeSettings.buttonStyle);
+        try {
+            int index = Integer.parseInt(activeVertexButton.getText().replaceAll("\\D+", ""));
+            boolean result = SceneManager.activeModel.deleteVertexFromIndex(index);
+
+            if (!result) {
+                logError("Ошибка при удалении вершины: " + index);
+                showError("Ошибка при удалении вершины: " + index);
+                return;
+            }
+
+            deleteVertex.setVisible(false);
+            if (activeVertexButton != null) {
+                activeVertexButton.setStyle(ThemeSettings.buttonStyle);
+            }
+            activeVertexButton = null;
+            vertexButtons.clear();
+            vertexBox.getChildren().clear();
+            generateVertexButtonsFromModel(SceneManager.activeModel.vertices);
+
+            deletePolygon.setVisible(false);
+            deleteFreeVertexCheckbox.setVisible(false);
+            if (activePolygonButton != null) {
+                activePolygonButton.setStyle(ThemeSettings.buttonStyle);
+            }
+            activePolygonButton = null;
+            polygonButtons.clear();
+            polygonsBox.getChildren().clear();
+            generatePolygonButtonsFromModel(SceneManager.activeModel.polygonsBoundaries);
+
+            logInfo(String.format("Вершина %d была успешно удалена", index));
+        } catch(Exception exception){
+            logError("Ошибка при удалении вершин");
+            showError("Ошибка при удалении вершин");
         }
-        activeVertexButton = null;
-        vertexButtons.clear();
-        vertexBox.getChildren().clear();
-        generateVertexButtonsFromModel(SceneManager.activeModel.vertices);
     }
 
     @FXML
     private void deletePolygonClick(ActionEvent event){
         //Удаление полигона у модели
-        //int index = activePolygonButton.getText();
-        //SceneManager.activeModel.deletePolygonFromIndex();
-        deletePolygon.setVisible(false);
-        if(activePolygonButton != null){
-            activePolygonButton.setStyle(ThemeSettings.buttonStyle);
+        try {
+            boolean removeFreeVertex = deleteFreeVertexCheckbox.isSelected();
+            int index = Integer.parseInt(activePolygonButton.getText().replaceAll("\\D+", ""));
+            boolean result = SceneManager.activeModel.deletePolygonFromIndex(index, removeFreeVertex);
+
+            if (!result) {
+                logError("Ошибка при удалении полигона: " + index);
+                showError("Ошибка при удалении полигона: " + index);
+                return;
+            }
+
+            deletePolygon.setVisible(false);
+            deleteFreeVertexCheckbox.setVisible(false);
+            if (activePolygonButton != null) {
+                activePolygonButton.setStyle(ThemeSettings.buttonStyle);
+            }
+            activePolygonButton = null;
+            polygonButtons.clear();
+            polygonsBox.getChildren().clear();
+            generatePolygonButtonsFromModel(SceneManager.activeModel.polygonsBoundaries);
+
+            deleteVertex.setVisible(false);
+            if (activeVertexButton != null) {
+                activeVertexButton.setStyle(ThemeSettings.buttonStyle);
+            }
+            activeVertexButton = null;
+            vertexButtons.clear();
+            vertexBox.getChildren().clear();
+            generateVertexButtonsFromModel(SceneManager.activeModel.vertices);
+
+            logInfo(String.format("Полигон %d был успешно удален", index));
+        } catch (Exception exception){
+            logError("Ошибка при удалении полигона");
+            showError("Ошибка при удалении полигона");
         }
-        activePolygonButton = null;
-        polygonButtons.clear();
-        polygonsBox.getChildren().clear();
-        generatePolygonButtonsFromModel(SceneManager.activeModel.polygonsBoundaries);
     }
 
 
