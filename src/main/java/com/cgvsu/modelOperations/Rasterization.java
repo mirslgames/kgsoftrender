@@ -429,6 +429,7 @@ public class Rasterization {
                             z1, z2, z3,
                             barycentric
                     );
+
                     Vector3f worldNormal = modelMatrix.multiplyOnVector(normal);
                     worldNormal.normalize();
 

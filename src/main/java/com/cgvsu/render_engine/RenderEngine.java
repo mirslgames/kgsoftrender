@@ -85,7 +85,7 @@ public class RenderEngine {
                 if (Float.isNaN(pa.getX()) || Float.isNaN(pa.getY()) || Float.isNaN(pb.getX()) || Float.isNaN(pb.getY()))
                     continue;
 
-
+                graphicsContext.strokeLine(pa.getX(), pa.getY(), pb.getX(), pb.getY());
             }
         }
     }
@@ -243,7 +243,6 @@ public class RenderEngine {
                     };
 
                     Rasterization.rasterizeTriangleWithWorldPos(p1, p2, p3, z1, z2, z3, v1, v2, v3, t1, t2, t3, w1,
-
                             w2, w3, callback, modelMatrix);
                 } else {
                     Rasterization.PixelCallback callback = (x, y, z, barycentric, texCoord, normal, worldNormal, worldPosition) -> {
@@ -260,7 +259,6 @@ public class RenderEngine {
                             graphicsContext.getPixelWriter().setColor(x, y, color);
                         }
                     };
-
 
                     Rasterization.rasterizeTriangleWithWorldPos(p1, p2, p3, z1, z2, z3, v1, v2, v3, t1, t2, t3, w1,
                             w2, w3, callback, modelMatrix);

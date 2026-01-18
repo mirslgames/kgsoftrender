@@ -120,6 +120,7 @@ public class GraphicConveyor {
     }
 
 
+
     public static Point2f vertexToPoint(final Vector3f vertex, final int width, final int height) {
         return new Point2f(
                 (width - 1) * vertex.getX() / 2 + (width - 1) / 2,

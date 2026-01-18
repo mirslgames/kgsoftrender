@@ -18,7 +18,7 @@ public class NormalCalculation {
 //        return sum.divide(vertices.size());
 //    }
     public static Vector3f calculatePolygonNormal(List<Vertex> vertices, List<Integer> polygon, int start, int end) {
-        if (start - end + 1 < 3) return new Vector3f(0, 0, 0);
+        if (end - start + 1 < 3) return new Vector3f(0, 0, 0);
 
         int i1 = polygon.get(start);
         int i2 = polygon.get(start + 1);

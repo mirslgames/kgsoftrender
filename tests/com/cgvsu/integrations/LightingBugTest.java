@@ -329,7 +329,7 @@ public class LightingBugTest {
         System.out.println("\nПараметры камеры:");
         System.out.println("Позиция: " + camera.getPosition());
         System.out.println("Target: " + camera.getTarget());
-        System.out.println("Up вектор: " + camera.getUpVector());
+        System.out.println("Up вектор: " + camera.getCameraUp());
 
         // Вычислите направление вручную
         Vector3f direction = camera.getTarget().subbed(camera.getPosition()).normalized();

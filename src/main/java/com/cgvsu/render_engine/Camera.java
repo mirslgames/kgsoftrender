@@ -122,11 +122,11 @@ public class Camera {
         cameraUp = right.crossed(forward).normalized();
     }
 
-    Matrix4f getViewMatrix() {
+    public Matrix4f getViewMatrix() {
         return GraphicConveyor.lookAt(position, target, cameraUp);
     }
 
-    Matrix4f getProjectionMatrix() {
+    public Matrix4f getProjectionMatrix() {
         return GraphicConveyor.perspective(fov, aspectRatio, nearPlane, farPlane);
     }
     public Vector3f getRayToPoint(Vector3f worldPosition) {
@@ -165,4 +165,12 @@ public class Camera {
     private float radius;
 
     private Vector3f cameraUp = new Vector3f(0f, 1f, 0f);
+
+    public float getFarPlane() {
+        return farPlane;
+    }
+
+    public Vector3f getCameraUp() {
+        return cameraUp;
+    }
 }

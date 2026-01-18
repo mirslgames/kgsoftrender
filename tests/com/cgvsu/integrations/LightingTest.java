@@ -78,7 +78,7 @@ public class LightingTest {
         float z1 = 1.0f, z2 = 1.0f, z3 = 1.0f;
 
         // Растеризуем треугольник
-        Rasterization.PixelCallback callback = (x, y, z, barycentric, texCoord, worldNormal, worldPosition) -> {
+        Rasterization.PixelCallback callback = (x, y, z, barycentric, texCoord,normal, worldNormal, worldPosition) -> {
             if (zBuffer.testAndSet(x, y, z)) {
                 // Получаем цвет из текстуры
                 Color texColor = TextureMapping.getTextureColor(texture, texCoord);
