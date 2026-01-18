@@ -1,5 +1,6 @@
 package com.cgvsu.sceneview;
 
+import com.cgvsu.model.Vertex;
 import com.cgvsu.modelOperations.ZBuffer;
 import com.cgvsu.objwriter.ObjWriter;
 import com.cgvsu.math.vectors.Vector3f;
@@ -84,6 +85,12 @@ public class GuiController {
     public static Dictionary<String, Button> cacheNameSceneModelButtons = new Hashtable<>();
     private Button activeButton;
 
+    private final ArrayList<Button> vertexButtons = new ArrayList<>();
+    private Button activeVertexButton;
+
+    private final ArrayList<Button> polygonButtons = new ArrayList<>();
+    private Button activePolygonButton;
+
     @FXML
     private TextField positionXTextField;
     @FXML
@@ -136,6 +143,26 @@ public class GuiController {
     private RadioMenuItem everyFrameMenuItem;
     @FXML
     private AnchorPane logAnchorPane;
+    @FXML
+    private SplitPane canvasSplitPane;
+    @FXML
+    private TitledPane camersPane;
+    @FXML
+    private VBox camersBox;
+    @FXML
+    private VBox polygonsBox;
+    @FXML
+    private VBox vertexBox;
+    @FXML
+    private TitledPane polygonPane;
+    @FXML
+    private TitledPane vertexPane;
+    @FXML
+    private Button deleteVertex;
+    @FXML
+    private Button deletePolygon;
+    @FXML
+    private CheckBox deleteFreeVertexCheckbox;
 
     private RenderMode currentRenderMode;
 
@@ -153,7 +180,6 @@ public class GuiController {
 
     @FXML
     private void initialize() {
-
         try {
             Image img = new Image(
                     Objects.requireNonNull(getClass().getResourceAsStream("/default_texture.png"))
@@ -168,6 +194,11 @@ public class GuiController {
                 SceneManager.lightIntensity = newV.floatValue();
             });
 
+            deleteVertex.setVisible(false);
+            deletePolygon.setVisible(false);
+            deleteFreeVertexCheckbox.setVisible(false);
+            vertexPane.setVisible(false);
+            polygonPane.setVisible(false);
 
             positionXTextField.setOnKeyReleased(e -> onPositionXChanged());
             positionYTextField.setOnKeyReleased(e -> onPositionYChanged());
@@ -199,6 +230,7 @@ public class GuiController {
 
             canvasParentAnchorPane.setOnMouseDragged(this::changeCameraPosition);
             canvasParentAnchorPane.setOnMousePressed(this::setPastXY);
+            canvasParentAnchorPane.setOnMouseClicked(this::setDefaultPosition);
             canvasParentAnchorPane.setOnScroll(this::setZoom);
 
             Platform.runLater(() -> {
@@ -209,6 +241,7 @@ public class GuiController {
                 if (scene != null) {
                     installHoverForAllButtons(scene.getRoot());
                 }
+
             });
             SceneManager.initialize();
 
@@ -224,19 +257,22 @@ public class GuiController {
             useLightCheckBox.setSelected(SceneManager.useLight);
             drawMeshCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
                 SceneManager.drawMesh = newVal;
+                renderFrame();
             });
 
             useTextureCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
                 SceneManager.useTexture = newVal;
+                renderFrame();
             });
 
             useLightCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
                 SceneManager.useLight = newVal;
+                renderFrame();
             });
             timeline = new Timeline();
             timeline.setCycleCount(Animation.INDEFINITE);
 
-            KeyFrame frame = new KeyFrame(Duration.millis(15), e -> {
+            KeyFrame frame = new KeyFrame(Duration.millis(30), e -> {
                 if (currentRenderMode == RenderMode.EVERY_FRAME) {
                     renderFrame();
                 }
@@ -270,10 +306,12 @@ public class GuiController {
 
         }
         //ВАРИАНТ рендерить только активную модель
-        /*if (SceneManager.activeModel != null) {
+        /*if (SceneManager.acti
+        veModel != null) {
             RenderEngine.render(sceneCanvas.getGraphicsContext2D(), SceneManager.activeCamera, SceneManager.activeModel, (int) width, (int) height);
         }*/
     }
+
 
     private void installNumericFloatFilter(TextField tf, boolean allowNegative) {
         if (tf == null) return;
@@ -556,6 +594,46 @@ public class GuiController {
         });
     }
 
+    private void installHoverForVertexButton(ButtonBase button) {
+        if (button == null) return;
+
+        button.setOnMouseEntered(e -> {
+            if (button == activeVertexButton) {
+                button.setStyle(ThemeSettings.activeButtonStyle);
+            } else {
+                button.setStyle(ThemeSettings.buttonHoverStyle);
+            }
+        });
+
+        button.setOnMouseExited(e -> {
+            if (button == activeVertexButton) {
+                button.setStyle(ThemeSettings.activeButtonStyle);
+            } else {
+                button.setStyle(ThemeSettings.buttonStyle);
+            }
+        });
+    }
+
+    private void installHoverForPolygonButton(ButtonBase button) {
+        if (button == null) return;
+
+        button.setOnMouseEntered(e -> {
+            if (button == activePolygonButton) {
+                button.setStyle(ThemeSettings.activeButtonStyle);
+            } else {
+                button.setStyle(ThemeSettings.buttonHoverStyle);
+            }
+        });
+
+        button.setOnMouseExited(e -> {
+            if (button == activePolygonButton) {
+                button.setStyle(ThemeSettings.activeButtonStyle);
+            } else {
+                button.setStyle(ThemeSettings.buttonStyle);
+            }
+        });
+    }
+
     private void installHoverForAllButtons(Parent root) {
         if (root == null) return;
 
@@ -607,7 +685,14 @@ public class GuiController {
 
     @FXML
     private void shortcutsInfoMenuItemClick(){
-        showInfo(ShortcutsSettings.getInfo());
+        StringBuilder sb = new StringBuilder();
+        sb.append(ShortcutsSettings.getInfo());
+        sb.append("\n===Управление камерой===\n");
+        sb.append("ЛКМ - поворот камеры\n");
+        sb.append("ПКМ - перемещение камеры\n");
+        sb.append("Колесико мыши - зум\n");
+        sb.append("Двойной клик - вернуться обратно\n");
+        showInfo(sb.toString());
     }
 
     @FXML
@@ -653,7 +738,8 @@ public class GuiController {
 
     @FXML
     private void onLoadTextureButtonClick(){
-        FileChooser fc = new FileChooser();
+        try {
+            FileChooser fc = new FileChooser();
             fc.setTitle("Choose texture");
             fc.getExtensionFilters().add(
                     new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg", "*.bmp")
@@ -672,7 +758,10 @@ public class GuiController {
                 SceneManager.activeModel.hasTexture = false;
             }
 
-
+        } catch (Exception e) {
+            logError("Ошибка при загрузке текстуры");
+            showError("Ошибка при загрузке текстуры");;
+        }
     }
 
 
@@ -700,7 +789,9 @@ public class GuiController {
 
             //Добавление кнопки
             addModelButton(mesh, meshClone);
+            renderFrame(); //рендерим кадр сразу после загрузки модели
             logInfo(String.format("Модель %s была успешно загружена", mesh.modelName));
+
         } catch (Exception exception) {
             logError(exception.getMessage());
             showError(exception.getMessage());
@@ -791,11 +882,16 @@ public class GuiController {
         alert.showAndWait();
     }
     @FXML private void onDeleteTextureButtonClick(ActionEvent event){
-        SceneManager.activeModel.hasTexture = false;
-        SceneManager.activeModel.texture = Model.defaultTexture;
-        SceneManager.activeModel.textureName = "По умолчанию";
-        currentTextureLabel.setText("Текущая текстура: По умолчанию");
-        deleteTextureButton.setVisible(false);
+        try {
+            SceneManager.activeModel.hasTexture = false;
+            SceneManager.activeModel.texture = Model.defaultTexture;
+            SceneManager.activeModel.textureName = "По умолчанию";
+            currentTextureLabel.setText("Текущая текстура: По умолчанию");
+            deleteTextureButton.setVisible(false);
+        } catch (Exception exception){
+            logError("Ошибка при удалении текстуры");
+            showError("Ошибка при удалении текстуры");
+        }
 
     }
 
@@ -815,7 +911,20 @@ public class GuiController {
 
             deleteActiveEntityButton.setVisible(false);
             transformationTitledPane.setVisible(false);
+            polygonPane.setVisible(false);
+            vertexPane.setVisible(false);
+            deleteVertex.setVisible(false);
+            deletePolygon.setVisible(false);
+            deleteFreeVertexCheckbox.setVisible(false);
+            activeVertexButton = null;
+            activePolygonButton = null;
+            vertexButtons.clear();
+            polygonButtons.clear();
+            vertexBox.getChildren().clear();
+            polygonsBox.getChildren().clear();
+
         }
+
 
 
     }
@@ -861,7 +970,198 @@ public class GuiController {
 
         deleteActiveEntityButton.setVisible(true);
         transformationTitledPane.setVisible(true);
+
+        try {
+            polygonPane.setVisible(true);
+            vertexPane.setVisible(true);
+            vertexButtons.clear();
+            polygonButtons.clear();
+            vertexBox.getChildren().clear();
+            polygonsBox.getChildren().clear();
+
+            if (activeVertexButton != null) {
+                activeVertexButton.setStyle(ThemeSettings.buttonStyle);
+            }
+            activeVertexButton = null;
+
+            if (activePolygonButton != null) {
+                activePolygonButton.setStyle(ThemeSettings.buttonStyle);
+            }
+            activePolygonButton = null;
+
+            deleteVertex.setVisible(false);
+            deletePolygon.setVisible(false);
+            deleteFreeVertexCheckbox.setVisible(false);
+
+            generateVertexButtonsFromModel(model.vertices);
+            generatePolygonButtonsFromModel(model.polygonsBoundaries);
+        }
+        catch(Exception exception){
+            logError("Ошибка при извлечении вершин и полигонов из модели");
+            showError("Ошибка при извлечении вершин и полигонов из модели");
+        }
     }
+
+    private void generateVertexButtonsFromModel(ArrayList<Vertex> vertices){
+        for(int i = 0; i < vertices.size(); i++){
+            String btnName = String.format("Вершина %d", i);
+            Button btn = new Button(btnName);
+            btn.setMaxWidth(Double.MAX_VALUE);
+            btn.setOnAction(this::onVertexButtonClick);
+
+            installHoverForVertexButton(btn);
+            vertexButtons.add(btn);
+            btn.setStyle(ThemeSettings.buttonStyle);
+            vertexBox.getChildren().add(btn);
+        }
+
+    }
+
+    private void generatePolygonButtonsFromModel(ArrayList<Integer> polygons){
+        for(int i = 0; i < polygons.size(); i++){
+            String btnName = String.format("Полигон %d", i);
+            Button btn = new Button(btnName);
+            btn.setMaxWidth(Double.MAX_VALUE);
+            btn.setOnAction(this::onPolygonButtonClick);
+
+            installHoverForPolygonButton(btn);
+            polygonButtons.add(btn);
+            btn.setStyle(ThemeSettings.buttonStyle);
+            polygonsBox.getChildren().add(btn);
+        }
+
+    }
+
+    private void onPolygonButtonClick(ActionEvent event){
+        //В этот момент надо подсвечивать на рендере полигон
+        try {
+            Button button = (Button) event.getSource();
+            String btnText = button.getText();
+            if (activePolygonButton != null) {
+                activePolygonButton.setStyle(ThemeSettings.buttonStyle);
+            }
+            activePolygonButton = button;
+            activePolygonButton.setStyle(ThemeSettings.activeButtonStyle);
+            deleteVertex.setVisible(false);
+            deletePolygon.setVisible(true);
+            deleteFreeVertexCheckbox.setVisible(true);
+            deleteActiveEntityButton.setVisible(false);
+
+            if (activeVertexButton != null) {
+                activeVertexButton.setStyle(ThemeSettings.buttonStyle);
+            }
+            activeVertexButton = null;
+        } catch(Exception exception){
+            logError("Ошибка при выборе полигона");
+            showError("Ошибка при выборе полигона");
+        }
+
+    }
+
+    private void onVertexButtonClick(ActionEvent event){
+        //В этот момент надо подсвечивать на рендере вершину
+        try {
+            Button button = (Button) event.getSource();
+            String btnText = button.getText();
+            if (activeVertexButton != null) {
+                activeVertexButton.setStyle(ThemeSettings.buttonStyle);
+            }
+            activeVertexButton = button;
+            activeVertexButton.setStyle(ThemeSettings.activeButtonStyle);
+            deleteVertex.setVisible(true);
+            deletePolygon.setVisible(false);
+            deleteFreeVertexCheckbox.setVisible(false);
+            deleteActiveEntityButton.setVisible(false);
+
+            if (activePolygonButton != null) {
+                activePolygonButton.setStyle(ThemeSettings.buttonStyle);
+            }
+            activePolygonButton = null;
+        } catch (Exception exception){
+            logError("Ошибка при выборе вершины");
+            showError("Ошибка при выборе вершины");
+        }
+    }
+
+    @FXML
+    private void deleteVertexClick(ActionEvent event){
+        //Удаление вершины у модели
+        try {
+            int index = Integer.parseInt(activeVertexButton.getText().replaceAll("\\D+", ""));
+            boolean result = SceneManager.activeModel.deleteVertexFromIndex(index);
+
+            if (!result) {
+                logError("Ошибка при удалении вершины: " + index);
+                showError("Ошибка при удалении вершины: " + index);
+                return;
+            }
+
+            deleteVertex.setVisible(false);
+            if (activeVertexButton != null) {
+                activeVertexButton.setStyle(ThemeSettings.buttonStyle);
+            }
+            activeVertexButton = null;
+            vertexButtons.clear();
+            vertexBox.getChildren().clear();
+            generateVertexButtonsFromModel(SceneManager.activeModel.vertices);
+
+            deletePolygon.setVisible(false);
+            deleteFreeVertexCheckbox.setVisible(false);
+            if (activePolygonButton != null) {
+                activePolygonButton.setStyle(ThemeSettings.buttonStyle);
+            }
+            activePolygonButton = null;
+            polygonButtons.clear();
+            polygonsBox.getChildren().clear();
+            generatePolygonButtonsFromModel(SceneManager.activeModel.polygonsBoundaries);
+
+            logInfo(String.format("Вершина %d была успешно удалена", index));
+        } catch(Exception exception){
+            logError("Ошибка при удалении вершин");
+            showError("Ошибка при удалении вершин");
+        }
+    }
+
+    @FXML
+    private void deletePolygonClick(ActionEvent event){
+        //Удаление полигона у модели
+        try {
+            boolean removeFreeVertex = deleteFreeVertexCheckbox.isSelected();
+            int index = Integer.parseInt(activePolygonButton.getText().replaceAll("\\D+", ""));
+            boolean result = SceneManager.activeModel.deletePolygonFromIndex(index, removeFreeVertex);
+
+            if (!result) {
+                logError("Ошибка при удалении полигона: " + index);
+                showError("Ошибка при удалении полигона: " + index);
+                return;
+            }
+
+            deletePolygon.setVisible(false);
+            deleteFreeVertexCheckbox.setVisible(false);
+            if (activePolygonButton != null) {
+                activePolygonButton.setStyle(ThemeSettings.buttonStyle);
+            }
+            activePolygonButton = null;
+            polygonButtons.clear();
+            polygonsBox.getChildren().clear();
+            generatePolygonButtonsFromModel(SceneManager.activeModel.polygonsBoundaries);
+
+            deleteVertex.setVisible(false);
+            if (activeVertexButton != null) {
+                activeVertexButton.setStyle(ThemeSettings.buttonStyle);
+            }
+            activeVertexButton = null;
+            vertexButtons.clear();
+            vertexBox.getChildren().clear();
+            generateVertexButtonsFromModel(SceneManager.activeModel.vertices);
+
+            logInfo(String.format("Полигон %d был успешно удален", index));
+        } catch (Exception exception){
+            logError("Ошибка при удалении полигона");
+            showError("Ошибка при удалении полигона");
+        }
+    }
+
 
     private void setTextFieldModelTransform(Model model){
         positionXTextField.setText(""+model.currentTransform.positionX);
@@ -883,6 +1183,7 @@ public class GuiController {
         Button btn = new Button(model.modelName);
         btn.setMaxWidth(Double.MAX_VALUE);
         btn.setOnAction(this::onModelButtonClick);
+        installHoverForButton(btn);
 
         modelButtons.add(btn);
         cacheNameSceneModelButtons.put(model.modelName, btn);
@@ -907,7 +1208,8 @@ public class GuiController {
         pastMoveX = (float) mouseEvent.getX();
         pastMoveY = (float) mouseEvent.getY();
 
-        SceneManager.activeCamera.moveCamera(deltaX * ROT, deltaY * ROT);
+        SceneManager.activeCamera.moveCamera(-deltaX, deltaY,
+                (int) sceneCanvas.getWidth(), (int) sceneCanvas.getHeight());
         if(currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
                 currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
             renderFrame();
@@ -920,7 +1222,7 @@ public class GuiController {
         pastRotateX = (float) mouseEvent.getX();
         pastRotateY = (float) mouseEvent.getY();
 
-        SceneManager.activeCamera.rotateCamera(-deltaX * ROT, -deltaY * ROT);
+        SceneManager.activeCamera.rotateCamera(deltaX * ROT, -deltaY * ROT);
         if(currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
                 currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
             renderFrame();
@@ -946,10 +1248,20 @@ public class GuiController {
     }
 
     public void setZoom(ScrollEvent scrollEvent) {
-        SceneManager.activeCamera.zoomCamera((float) scrollEvent.getDeltaY() / 20);
+        SceneManager.activeCamera.zoomCamera((float) scrollEvent.getDeltaY() / 10);
         if(currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
                 currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
             renderFrame();
+        }
+    }
+
+    public void setDefaultPosition(MouseEvent mouseEvent) {
+        if (mouseEvent.getClickCount() == 2) {
+            SceneManager.activeCamera.returnToDefaultCamera();
+            if(currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
+                    currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
+                renderFrame();
+            }
         }
     }
 }

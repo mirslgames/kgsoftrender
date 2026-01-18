@@ -196,5 +196,157 @@ public class Model {
 
         return copy;
     }
+
+    public boolean deleteVertexFromIndex(int vertexIndex) {
+
+        if (vertices == null || polygons == null || polygonsBoundaries == null ||
+                polygonsTextureCoordinateIndices == null || vertexIndex < 0 || vertexIndex >= vertices.size() ||
+                polygonsTextureCoordinateIndices.size() != polygons.size()) {
+            return false;
+        }
+
+        ArrayList<Integer> newPolygons = new ArrayList<>();
+        ArrayList<Integer> newTextureLocalIndices = new ArrayList<>();
+        ArrayList<Integer> newBoundaries = new ArrayList<>();
+
+        int polygonCount = polygonsBoundaries.size();
+
+        for (int polyIdx = 0; polyIdx < polygonCount; polyIdx++) {
+
+            int start = polygonsBoundaries.get(polyIdx);
+            int end = (polyIdx + 1 < polygonCount)
+                    ? polygonsBoundaries.get(polyIdx + 1)
+                    : polygons.size();
+
+            if (start < 0 || start > end || end > polygons.size()) {
+                return false;
+            }
+
+            //Использует ли этот полигон вершину vertexIndex
+            boolean polygonUsesDeletedVertex = false;
+            for (int i = start; i < end; i++) {
+                if (polygons.get(i) == vertexIndex) {
+                    polygonUsesDeletedVertex = true;
+                    break;
+                }
+            }
+
+            //Если полигон использует вершину то просто удаляем его
+            if (polygonUsesDeletedVertex) {
+                continue;
+            }
+
+            newBoundaries.add(newPolygons.size());
+
+
+            for (int i = start; i < end; i++) { //Копируем все углы полигона
+
+                int v = polygons.get(i);
+                int uvLocal = polygonsTextureCoordinateIndices.get(i);
+
+                //После удаления вершины все индексы > vertexIndex должны сдвинуться на -1
+                if (v > vertexIndex) {
+                    v--;
+                }
+
+                newPolygons.add(v);
+                newTextureLocalIndices.add(uvLocal);
+            }
+        }
+
+        vertices.remove(vertexIndex);
+
+        polygons = newPolygons;
+        polygonsTextureCoordinateIndices = newTextureLocalIndices;
+        polygonsBoundaries = newBoundaries;
+
+        try {
+            new com.cgvsu.modelOperations.MyVertexNormalCalc().calculateVertexNormals(this);
+        } catch (Exception ignored) {
+            //Если пересчёт не удался, удаление не откатываем
+        }
+
+        return true;
+    }
+
+    public boolean deletePolygonFromIndex(int polygonBoundaryIndex, boolean deleteFreeVertices) {
+
+        if (vertices == null || polygons == null || polygonsBoundaries == null || polygonsTextureCoordinateIndices == null ||
+                polygonsTextureCoordinateIndices.size() != polygons.size() || polygonBoundaryIndex < 0 ||
+                polygonBoundaryIndex >= polygonsBoundaries.size()) {
+            return false;
+        }
+
+        int start = polygonsBoundaries.get(polygonBoundaryIndex);
+        int end = (polygonBoundaryIndex + 1 < polygonsBoundaries.size())
+                ? polygonsBoundaries.get(polygonBoundaryIndex + 1)
+                : polygons.size();
+
+        if (start < 0 || start > end || end > polygons.size()) {
+            return false;
+        }
+
+        int removedCornerCount = end - start;
+
+        //Удаляем диапазон углов из polygons и из UV-индексов
+        polygons.subList(start, end).clear();
+        polygonsTextureCoordinateIndices.subList(start, end).clear();
+
+        polygonsBoundaries.remove(polygonBoundaryIndex);
+
+        //Сдвигаем все boundary на removedCornerCount
+        for (int i = polygonBoundaryIndex; i < polygonsBoundaries.size(); i++) {
+            polygonsBoundaries.set(i, polygonsBoundaries.get(i) - removedCornerCount);
+        }
+
+        if (deleteFreeVertices) {
+            removeUnusedVerticesAndFixIndices();
+        }
+
+        try {
+            new com.cgvsu.modelOperations.MyVertexNormalCalc().calculateVertexNormals(this);
+        } catch (Exception ignored) {
+        }
+
+        return true;
+    }
+
+    private void removeUnusedVerticesAndFixIndices() {
+
+        if (vertices.isEmpty()) {
+            return;
+        }
+
+        boolean[] used = new boolean[vertices.size()];
+        for (int i = 0; i < polygons.size(); i++) {
+            int v = polygons.get(i);
+            if (v >= 0 && v < used.length) {
+                used[v] = true;
+            }
+        }
+
+        //Строим соответствие oldIndex на newIndex только для использованных
+        int[] map = new int[vertices.size()];
+        Arrays.fill(map, -1);
+
+        ArrayList<Vertex> newVertices = new ArrayList<>();
+        for (int oldIndex = 0; oldIndex < vertices.size(); oldIndex++) {
+            if (used[oldIndex]) {
+                map[oldIndex] = newVertices.size();
+                newVertices.add(vertices.get(oldIndex));
+            }
+        }
+
+        //Переписываем polygons на новые индексы
+        for (int i = 0; i < polygons.size(); i++) {
+            int oldV = polygons.get(i);
+            if (oldV >= 0 && oldV < map.length) {
+                polygons.set(i, map[oldV]);
+            }
+        }
+
+        vertices = newVertices;
+    }
+
 }
 
