@@ -25,7 +25,6 @@ public class SceneManager {
     public static Dictionary<String, Model> originalCacheNameSceneModels = new Hashtable<>();
     //todo: Подумать как организовать источник света
 
-
     public static boolean drawMesh;
     public static boolean useTexture;
     public static boolean useLight;

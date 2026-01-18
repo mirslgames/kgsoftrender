@@ -32,9 +32,17 @@ public class ObjReader {
 		Scanner scanner = new Scanner(fileContent);
 		while (scanner.hasNextLine()) {
 			++lineInd;
-			final String line = scanner.nextLine().replace("\uFEFF", "").trim();
 
-			if (line.isBlank() || line.startsWith("#")) continue;
+			String rawLine = scanner.nextLine().replace("\uFEFF", "");
+
+			int commentPos = rawLine.indexOf('#');
+			if (commentPos >= 0) {
+				rawLine = rawLine.substring(0, commentPos); //Чтобы комментарии справа не ломали ридер
+			}
+
+			final String line = rawLine.trim();
+
+			if (line.isBlank()) continue;
 
 			ArrayList<String> wordsInLine = new ArrayList<String>(Arrays.asList(line.split("\\s+")));
 			if (wordsInLine.isEmpty()) {

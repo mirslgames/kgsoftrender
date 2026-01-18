@@ -2,6 +2,7 @@ package com.cgvsu.sceneview;
 
 import com.cgvsu.model.Vertex;
 import com.cgvsu.modelOperations.ZBuffer;
+import com.cgvsu.objreader.ObjReaderException;
 import com.cgvsu.objwriter.ObjWriter;
 import com.cgvsu.math.vectors.Vector3f;
 import com.cgvsu.render_engine.Camera;
@@ -408,6 +409,11 @@ public class GuiController {
             activeCameraButton = button;
             activeCameraButton.setStyle(ThemeSettings.activeButtonStyle);
             deleteCameraButton.setVisible(true);
+            if(currentRenderMode == RenderMode.EVERY_TRANSFORM_FRAME ||
+                    currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
+                    currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
+                renderFrame();
+            }
         } catch (Exception exception){
             logError("Ошибка при выборе камеры");
             showError("Ошибка при выборе камеры");
@@ -477,12 +483,18 @@ public class GuiController {
     private void onLightThemeMenuItemClick() {
         ThemeSettings.setLightTheme();
         applyTheme();
+        if(currentRenderMode != RenderMode.EVERY_FRAME){
+            renderFrame();
+        }
     }
 
     @FXML
     private void onDarkThemeMenuItemClick() {
         ThemeSettings.setDarkTheme();
         applyTheme();
+        if(currentRenderMode != RenderMode.EVERY_FRAME){
+            renderFrame();
+        }
     }
 
     private void applyTheme() {
@@ -562,14 +574,17 @@ public class GuiController {
     }
     @FXML private void transformFrameMenuItemClick(ActionEvent event){
         currentRenderMode = RenderMode.EVERY_TRANSFORM_FRAME;
+        renderFrame();
         renderButton.setDisable(true);
     }
     @FXML private void cameraFrameMenuItemClick(ActionEvent event){
         currentRenderMode = RenderMode.EVERY_CAMERA_MOTION_FRAME;
+        renderFrame();
         renderButton.setDisable(true);
     }
     @FXML private void cameraTransformFrameMenuItemClick(ActionEvent event){
         currentRenderMode = RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME;
+        renderFrame();
         renderButton.setDisable(true);
     }
     @FXML private void everyFrameMenuItemClick(ActionEvent event){
@@ -860,6 +875,8 @@ public class GuiController {
                 fileChooser.setTitle("Save Model");
 
                 File file = fileChooser.showSaveDialog((Stage) sceneCanvas.getScene().getWindow());
+                if (file == null) return;
+
                 Path fileName = Path.of(file.getAbsolutePath());
                 ObjWriter.writeModelToFile(toSaveModel, fileName.toString());
                 logInfo(String.format("Модель %s (%s) была успешно сохранена", SceneManager.activeModel.modelName, varik));
@@ -874,23 +891,34 @@ public class GuiController {
     @FXML
     private void onLoadTextureButtonClick(){
         try {
-            FileChooser fc = new FileChooser();
-            fc.setTitle("Choose texture");
-            fc.getExtensionFilters().add(
-                    new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg", "*.bmp")
-            );
+            if(SceneManager.activeModel != null) {
+                FileChooser fc = new FileChooser();
+                fc.setTitle("Choose texture");
+                fc.getExtensionFilters().add(
+                        new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg", "*.bmp")
+                );
 
-            File texFile = fc.showOpenDialog((Stage) sceneCanvas.getScene().getWindow());
-            if (texFile != null) {
-                Image tex = new Image(texFile.toURI().toString());
-                SceneManager.activeModel.texture = tex;
-                SceneManager.activeModel.hasTexture = true;
-                SceneManager.activeModel.textureName = texFile.getName();
-                currentTextureLabel.setText(String.format("Текущая текстура: %s", SceneManager.activeModel.textureName));
-                deleteTextureButton.setVisible(true);
-            } else {
-                SceneManager.activeModel.texture = null;
-                SceneManager.activeModel.hasTexture = false;
+                File texFile = fc.showOpenDialog((Stage) sceneCanvas.getScene().getWindow());
+                if (texFile != null) {
+                    Image tex = new Image(texFile.toURI().toString());
+                    SceneManager.activeModel.texture = tex;
+                    SceneManager.activeModel.hasTexture = true;
+                    SceneManager.activeModel.textureName = texFile.getName();
+                    currentTextureLabel.setText(String.format("Текущая текстура: %s", SceneManager.activeModel.textureName));
+                    deleteTextureButton.setVisible(true);
+                    logInfo(String.format("Текстура %s была успешно загружена", SceneManager.activeModel.textureName));
+                    if(currentRenderMode == RenderMode.EVERY_TRANSFORM_FRAME ||
+                            currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
+                            currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
+                        renderFrame();
+                    }
+
+                } else {
+                    SceneManager.activeModel.texture = null;
+                    SceneManager.activeModel.hasTexture = false;
+                }
+            } else{
+                showError("Не выбрана модель для загрузки текстуры");
             }
 
         } catch (Exception e) {
@@ -935,6 +963,8 @@ public class GuiController {
             renderFrame(); //рендерим кадр сразу после загрузки модели
             logInfo(String.format("Модель %s была успешно загружена", mesh.modelName));
 
+        } catch (ObjReaderException exception) {
+            showError(exception.getMessage());
         } catch (Exception exception) {
             logError("Ошибка при загрузке модели" + exception.getMessage());
             showError("Ошибка при загрузке модели" + exception.getMessage());
@@ -1026,11 +1056,18 @@ public class GuiController {
     }
     @FXML private void onDeleteTextureButtonClick(ActionEvent event){
         try {
+            String copyName = SceneManager.activeModel.textureName;
             SceneManager.activeModel.hasTexture = false;
             SceneManager.activeModel.texture = Model.defaultTexture;
             SceneManager.activeModel.textureName = "По умолчанию";
             currentTextureLabel.setText("Текущая текстура: По умолчанию");
             deleteTextureButton.setVisible(false);
+            logInfo(String.format("Текстура %s была успешно удалена", copyName));
+            if(currentRenderMode == RenderMode.EVERY_TRANSFORM_FRAME ||
+                    currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
+                    currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
+                renderFrame();
+            }
         } catch (Exception exception){
             logError("Ошибка при удалении текстуры");
             showError("Ошибка при удалении текстуры");
@@ -1074,9 +1111,10 @@ public class GuiController {
 
         }
 
-
-
     }
+
+
+
 
     @FXML
     private void renderButtonClick(ActionEvent event){
@@ -1232,9 +1270,19 @@ public class GuiController {
         }
     }
 
+    private boolean ensureActiveModel() {
+        if (SceneManager.activeModel == null) {
+            showError("Сначала выберите модель");
+            return false;
+        }
+        return true;
+    }
+
+
     @FXML
     private void deleteVertexClick(ActionEvent event){
         //Удаление вершины у модели
+        if (!ensureActiveModel()) return;
         try {
             int index = Integer.parseInt(activeVertexButton.getText().replaceAll("\\D+", ""));
             boolean result = SceneManager.activeModel.deleteVertexFromIndex(index);
@@ -1265,6 +1313,12 @@ public class GuiController {
             generatePolygonButtonsFromModel(SceneManager.activeModel.polygonsBoundaries);
 
             logInfo(String.format("Вершина %d была успешно удалена", index));
+            if(currentRenderMode == RenderMode.EVERY_TRANSFORM_FRAME ||
+                    currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
+                    currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
+                renderFrame();
+            }
+
         } catch(Exception exception){
             logError("Ошибка при удалении вершин");
             showError("Ошибка при удалении вершин");
@@ -1274,6 +1328,8 @@ public class GuiController {
     @FXML
     private void deletePolygonClick(ActionEvent event){
         //Удаление полигона у модели
+        if (!ensureActiveModel()) return;
+
         try {
             boolean removeFreeVertex = deleteFreeVertexCheckbox.isSelected();
             int index = Integer.parseInt(activePolygonButton.getText().replaceAll("\\D+", ""));
@@ -1305,6 +1361,12 @@ public class GuiController {
             generateVertexButtonsFromModel(SceneManager.activeModel.vertices);
 
             logInfo(String.format("Полигон %d был успешно удален", index));
+            if(currentRenderMode == RenderMode.EVERY_TRANSFORM_FRAME ||
+                    currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
+                    currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
+                renderFrame();
+            }
+
         } catch (Exception exception){
             logError("Ошибка при удалении полигона");
             showError("Ошибка при удалении полигона");
