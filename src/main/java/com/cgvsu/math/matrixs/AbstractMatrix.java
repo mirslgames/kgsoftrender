@@ -44,7 +44,7 @@ public abstract class AbstractMatrix<T extends AbstractMatrix<T>> {
         }
         this.size = (int) Math.sqrt(array.length);
         if (size * size != array.length) {
-            throw new IllegalArgumentException("Неправильно заданный массив");
+            throw new IllegalArgumentException(String.format("Length of current array is not %d", size * size));
         }
         float[][] m = new float[size][size];
         for (int i = 0; i < size; i++) {
@@ -83,7 +83,9 @@ public abstract class AbstractMatrix<T extends AbstractMatrix<T>> {
     public final boolean equalsEps(AbstractMatrix<?> other, float eps) {
         if (other == null) return false;
         if (this.size != other.size) return false;
-        if (!this.getClass().equals(other.getClass())) return false; // по желанию
+        if (!this.getClass().equals(other.getClass())) {
+            return false;
+        }
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
                 if (Math.abs(this.matrix[i][j] - other.matrix[i][j]) > eps) {
@@ -122,7 +124,6 @@ public abstract class AbstractMatrix<T extends AbstractMatrix<T>> {
 
     public T add(T elem) {
         return add((T) this, elem);
-
     }
 
     public T sub(T elem) {

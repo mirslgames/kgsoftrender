@@ -1,8 +1,9 @@
 package com.cgvsu.math;
 
+import com.cgvsu.math.vectors.Vector3f;
 import org.junit.Before;
 import org.junit.Test;
-import vsu.cs.isit24.math.vectors.Vector3f;
+
 
 import static org.junit.Assert.assertEquals;
 
@@ -44,14 +45,14 @@ public class Vector3fTests {
     @Test
     public void testMultiplyByScalar() {
         Vector3f testVector3f = new Vector3f(10, 20, 20);
-        vector3f.multiplyByScalar(10);
+        vector3f.multiply(10);
         assertEquals(testVector3f, vector3f);
     }
 
     @Test
     public void testDivideByScalar() {
         Vector3f testVector3f = new Vector3f(0.5F, 1, 1);
-        vector3f.divideByScalar(2);
+        vector3f.divide(2);
         assertEquals(testVector3f, vector3f);
     }
 
@@ -68,5 +69,4 @@ public class Vector3fTests {
         Vector3f mult = vector3f.cross(secondVector);
         assertEquals(resultVector, mult);
     }
-
 }
