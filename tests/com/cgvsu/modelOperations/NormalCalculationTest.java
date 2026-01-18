@@ -164,4 +164,5 @@ public class NormalCalculationTest {
             assertEquals(expected.getZ(), vertex.normal.getZ(), 0.001f);
         }
     }
+
 }

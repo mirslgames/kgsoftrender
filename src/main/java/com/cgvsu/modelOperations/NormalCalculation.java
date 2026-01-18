@@ -49,6 +49,7 @@ public class NormalCalculation {
         return normal;
     }
 
+
 //    public static Vector3f ensureRightHanded(Vector3f v1, Vector3f v2, Vector3f v3, Vector3f normal) {
 //
 //        if (!isRightHanded(v1, v2, v3)) {

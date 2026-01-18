@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class LightingTest {
@@ -115,4 +116,5 @@ public class LightingTest {
         }
         assertTrue(foundCenter, "Центр треугольника должен быть нарисован");
     }
+
 }

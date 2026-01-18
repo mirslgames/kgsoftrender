@@ -283,6 +283,45 @@ public class Rasterization {
     }
 
     /**
+     * Перспективно-корректная интерполяция z-координаты.
+     * Использует интерполяцию через 1/z для правильной работы z-buffer.
+     *
+     * @param zProj1, zProj2, zProj3 z-координаты после проекции (для z-buffer)
+     * @param zView1, zView2, zView3 z-координаты в view space (для перспективной интерполяции)
+     * @param barycentric барицентрические координаты
+     * @return интерполированная z-координата для z-buffer
+     */
+    public static float interpolateZWithPerspective(
+            float zProj1, float zProj2, float zProj3,
+            float zView1, float zView2, float zView3,
+            float[] barycentric) {
+
+        if (barycentric == null || barycentric.length < 3) {
+            return 0.0f;
+        }
+
+        float alpha = barycentric[0];
+        float beta = barycentric[1];
+        float gamma = barycentric[2];
+
+        // Используем 1/zView для перспективно-корректной интерполяции
+        float iz1 = 1.0f / zView1;
+        float iz2 = 1.0f / zView2;
+        float iz3 = 1.0f / zView3;
+
+        // Интерполируем zProj/zView
+        float zProj_over_zView1 = zProj1 * iz1;
+        float zProj_over_zView2 = zProj2 * iz2;
+        float zProj_over_zView3 = zProj3 * iz3;
+
+        float zProj_over_zView = alpha * zProj_over_zView1 + beta * zProj_over_zView2 + gamma * zProj_over_zView3;
+        float iz = alpha * iz1 + beta * iz2 + gamma * iz3;
+
+        // Восстанавливаем zProj
+        return zProj_over_zView / iz;
+    }
+
+    /**
      *  Метод интерполирует координаты всех вершин с учётом перспективы, чтобы получить мировую позицию текущей вершины в отрисовке
      * @param p1 координаты первой вершины треугольнгика
      * @param p2 координаты второй вершины треугольнгика
@@ -395,6 +434,21 @@ public class Rasterization {
             Vector2f tex1, Vector2f tex2, Vector2f tex3,
             Vector3f worldPos1, Vector3f worldPos2, Vector3f worldPos3,
             PixelCallback pixelCallback, Matrix4f modelMatrix) {
+        
+        // Для обратной совместимости - используем z как zView (если не переданы отдельно zView)
+        rasterizeTriangleWithWorldPos(v1, v2, v3, z1, z2, z3, z1, z2, z3, 
+                vertex1, vertex2, vertex3, tex1, tex2, tex3, 
+                worldPos1, worldPos2, worldPos3, pixelCallback, modelMatrix);
+    }
+
+    public static void rasterizeTriangleWithWorldPos(
+            Point2f v1, Point2f v2, Point2f v3,
+            float zProj1, float zProj2, float zProj3,
+            float zView1, float zView2, float zView3,
+            Vertex vertex1, Vertex vertex2, Vertex vertex3,
+            Vector2f tex1, Vector2f tex2, Vector2f tex3,
+            Vector3f worldPos1, Vector3f worldPos2, Vector3f worldPos3,
+            PixelCallback pixelCallback, Matrix4f modelMatrix) {
 
         int[] bbox = getBoundingBox(v1, v2, v3);
         int minX = bbox[0];
@@ -408,25 +462,31 @@ public class Rasterization {
                 float[] barycentric = calculateBarycentricCoordinates(pixel, v1, v2, v3);
 
                 if (isInsideTriangle(barycentric)) {
-                    float z = interpolate(z1, z2, z3, barycentric);
+                    // Перспективно-корректная интерполяция zProj (в NDC [-1, 1])
+                    float zProj = interpolateZWithPerspective(zProj1, zProj2, zProj3, zView1, zView2, zView3, barycentric);
+                    
+                    // Преобразуем zProj в диапазон для z-buffer: [0, 1] где меньшее = ближе к камере
+                    // zProj в [-1, 1], где -1 = near (близко), 1 = far (далеко)
+                    // Преобразуем в [0, 1] где 0 = near (близко), 1 = far (далеко), но инвертируем
+                    float z = 1.0f - (zProj + 1.0f) * 0.5f; // Теперь меньшее z = ближе
 
                     // Интерполируем мировую позицию
                     Vector3f worldPosition = interpolateWorldPositionWithPerspective(
                             worldPos1, worldPos2, worldPos3,
-                            z1, z2, z3,
+                            zView1, zView2, zView3,
                             barycentric
                     );
                     // Интерполируем текстурные координаты (передаются отдельно от Vertex)
                     Vector2f texCoord = null;
                     if (tex1 != null && tex2 != null && tex3 != null) {
-                        texCoord = interpolateWithPerspective(tex1, tex2, tex3, z1, z2, z3, barycentric);
+                        texCoord = interpolateWithPerspective(tex1, tex2, tex3, zView1, zView2, zView3, barycentric);
                     } else if (!(tex1 == null && tex2 == null && tex3 == null)) {
                         texCoord = new Vector2f(0, 0);
                     }
                     // Интерполируем нормаль
                     Vector3f normal = interpolateNormalWithPerspective(
                             vertex1, vertex2, vertex3,
-                            z1, z2, z3,
+                            zView1, zView2, zView3,
                             barycentric
                     );
 
@@ -664,5 +724,6 @@ public class Rasterization {
     }
 
 }
+
 
 

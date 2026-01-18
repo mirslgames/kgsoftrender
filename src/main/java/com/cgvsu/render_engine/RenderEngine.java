@@ -125,7 +125,8 @@ public class RenderEngine {
                     : mesh.polygons.size();
 
             Point2f p1 = null, p2 = null, p3 = null;
-            float z1 = 0, z2 = 0, z3 = 0;
+            float zProj1 = 0, zProj2 = 0, zProj3 = 0;
+            float zView1 = 0, zView2 = 0, zView3 = 0;
             Vertex v1 = null, v2 = null, v3 = null;
             Vector3f w1 = null, w2 = null, w3 = null;
             Vector2f t1 = null, t2 = null, t3 = null;
@@ -179,7 +180,17 @@ public class RenderEngine {
 
                 // Получаем экранные координаты
                 Point2f resultPoint = vertexToPoint(projected, width, height);
-                float z = projected.getZ(); // Это z после проекции для z-буфера
+                float zView = viewPos.getZ();  // отрицательное!
+                float distance = Math.abs(zView);  // абсолютное расстояние
+
+
+                float far = camera.getFarPlane();
+                float zScreen = (distance - near) / (far - near);
+                zScreen = 1.0f - zScreen;
+
+// Ограничиваем [0, 1]
+                if (zScreen < 0.0f) zScreen = 0.0f;
+                if (zScreen > 1.0f) zScreen = 1.0f;// z в view space для перспективной интерполяции
 
                 Vector2f texCoord = null;
                 if (SceneManager.useTexture && mesh.texture != null) {
@@ -188,19 +199,22 @@ public class RenderEngine {
 
                 if (local == 0) {
                     p1 = resultPoint;
-                    z1 = z;
+                    zProj1 = zScreen;
+                    zView1 = zView;
                     v1 = vertex;
                     w1 = worldPos;
                     t1 = texCoord;
                 } else if (local == 1) {
                     p2 = resultPoint;
-                    z2 = z;
+                    zProj2 = zScreen;
+                    zView2 = zView;
                     v2 = vertex;
                     w2 = worldPos;
                     t2 = texCoord;
                 } else {
                     p3 = resultPoint;
-                    z3 = z;
+                    zProj3 = zScreen;
+                    zView3 = zView;
                     v3 = vertex;
                     w3 = worldPos;
                     t3 = texCoord;
@@ -242,7 +256,7 @@ public class RenderEngine {
                         }
                     };
 
-                    Rasterization.rasterizeTriangleWithWorldPos(p1, p2, p3, z1, z2, z3, v1, v2, v3, t1, t2, t3, w1,
+                    Rasterization.rasterizeTriangleWithWorldPos(p1, p2, p3, zProj1, zProj2, zProj3, zView1, zView2, zView3, v1, v2, v3, t1, t2, t3, w1,
                             w2, w3, callback, modelMatrix);
                 } else {
                     Rasterization.PixelCallback callback = (x, y, z, barycentric, texCoord, normal, worldNormal, worldPosition) -> {
@@ -260,13 +274,18 @@ public class RenderEngine {
                         }
                     };
 
-                    Rasterization.rasterizeTriangleWithWorldPos(p1, p2, p3, z1, z2, z3, v1, v2, v3, t1, t2, t3, w1,
+                    Rasterization.rasterizeTriangleWithWorldPos(p1, p2, p3, zProj1, zProj2, zProj3, zView1, zView2, zView3, v1, v2, v3, t1, t2, t3, w1,
                             w2, w3, callback, modelMatrix);
                 }
             }
 
             // Рендеринг сетки (wireframe)
             if (SceneManager.drawMesh) {
+                // Преобразуем zProj в z для z-buffer перед использованием в wireframe
+                float z1 = 1.0f - (zProj1 + 1.0f) * 0.5f;
+                float z2 = 1.0f - (zProj2 + 1.0f) * 0.5f;
+                float z3 = 1.0f - (zProj3 + 1.0f) * 0.5f;
+                
                 float bias = 0.0001f;
                 Color lineColor = Color.web(ThemeSettings.wireframeColor);
                 int lineWidth = (int) ThemeSettings.wireframeWidth;
