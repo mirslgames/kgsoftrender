@@ -23,7 +23,6 @@ public class SceneManager {
 
     public static ArrayList<Model> originalModels = new ArrayList<>(); //Клон оригинальных  загруженных моделей
     public static Dictionary<String, Model> originalCacheNameSceneModels = new Hashtable<>();
-    //todo: Подумать как организовать источник света
 
     public static boolean drawMesh;
     public static boolean useTexture;
@@ -42,6 +41,7 @@ public class SceneManager {
         activeCamera.cameraName = "Начальная камера";
         cacheNameCameras.put(activeCamera.cameraName, activeCamera);
         cameras.add(activeCamera);
+        lightIntensity = 1f;
         isSceneEntitySelect = false;
 
     }
