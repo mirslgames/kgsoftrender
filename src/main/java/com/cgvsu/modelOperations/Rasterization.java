@@ -260,7 +260,10 @@ public class Rasterization {
             float z1, float z2, float z3,
             float[] barycentric) {
 
-        // Тот же код, но работает с мировыми координатами
+        if (barycentric == null || barycentric.length < 3) {
+            return new Vector3f(0, 0, 0);
+        }
+
         float alpha = barycentric[0];
         float beta  = barycentric[1];
         float gamma = barycentric[2];
@@ -269,18 +272,19 @@ public class Rasterization {
         float iz2 = 1.0f / z2;
         float iz3 = 1.0f / z3;
 
-        Vector3f p1_oz = worldPos1.multiply(iz1);
-        Vector3f p2_oz = worldPos2.multiply(iz2);
-        Vector3f p3_oz = worldPos3.multiply(iz3);
+        // НЕ МУТИРУЕМ входные worldPos1/2/3
+        Vector3f p1_oz = worldPos1.multiplied(iz1);
+        Vector3f p2_oz = worldPos2.multiplied(iz2);
+        Vector3f p3_oz = worldPos3.multiplied(iz3);
 
-        Vector3f p_oz = p1_oz.multiply(alpha)
-                .add(p2_oz.multiply(beta))
-                .add(p3_oz.multiply(gamma));
+        Vector3f p_oz = p1_oz.multiplied(alpha)
+                .added(p2_oz.multiplied(beta))
+                .added(p3_oz.multiplied(gamma));
 
         float iz = alpha * iz1 + beta * iz2 + gamma * iz3;
-
-        return p_oz.multiply(1.0f / iz);
+        return p_oz.multiplied(1.0f / iz);
     }
+
 
     /**
      * Перспективно-корректная интерполяция z-координаты.
@@ -337,6 +341,10 @@ public class Rasterization {
             float z1, float z2, float z3,
             float[] barycentric) {
 
+        if (barycentric == null || barycentric.length < 3) {
+            return new Vector3f(0, 0, 0);
+        }
+
         float alpha = barycentric[0];
         float beta  = barycentric[1];
         float gamma = barycentric[2];
@@ -345,18 +353,19 @@ public class Rasterization {
         float iz2 = 1.0f / z2;
         float iz3 = 1.0f / z3;
 
-        Vector3f p1_oz = p1.multiply(iz1);
-        Vector3f p2_oz = p2.multiply(iz2);
-        Vector3f p3_oz = p3.multiply(iz3);
+        // НЕ мутируем входные p1/p2/p3
+        Vector3f p1_oz = p1.multiplied(iz1);
+        Vector3f p2_oz = p2.multiplied(iz2);
+        Vector3f p3_oz = p3.multiplied(iz3);
 
-        Vector3f p_oz = p1_oz.multiply(alpha)
-                .add(p2_oz.multiply(beta))
-                .add(p3_oz.multiply(gamma));
+        Vector3f p_oz = p1_oz.multiplied(alpha)
+                .added(p2_oz.multiplied(beta))
+                .added(p3_oz.multiplied(gamma));
 
         float iz = alpha * iz1 + beta * iz2 + gamma * iz3;
-
-        return p_oz.multiply(1.0f / iz);
+        return p_oz.multiplied(1.0f / iz);
     }
+
 
     /**
      * Находит ограничивающий прямоугольник (bounding box) для треугольника.
@@ -464,11 +473,13 @@ public class Rasterization {
                 if (isInsideTriangle(barycentric)) {
                     // Перспективно-корректная интерполяция zProj (в NDC [-1, 1])
                     float zProj = interpolateZWithPerspective(zProj1, zProj2, zProj3, zView1, zView2, zView3, barycentric);
-                    
-                    // Преобразуем zProj в диапазон для z-buffer: [0, 1] где меньшее = ближе к камере
-                    // zProj в [-1, 1], где -1 = near (близко), 1 = far (далеко)
-                    // Преобразуем в [0, 1] где 0 = near (близко), 1 = far (далеко), но инвертируем
-                    float z = 1.0f - (zProj + 1.0f) * 0.5f; // Теперь меньшее z = ближе
+
+                    float z = interpolateZWithPerspective(
+                            zProj1, zProj2, zProj3,
+                            zView1, zView2, zView3,
+                            barycentric
+                    );
+
 
                     // Интерполируем мировую позицию
                     Vector3f worldPosition = interpolateWorldPositionWithPerspective(

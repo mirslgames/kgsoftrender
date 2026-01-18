@@ -15,16 +15,14 @@ public class MyVertexNormalCalc implements VertexNormals<Model> {
     public void calculateVertexNormals(Model model) {
         int vertexCount = model.vertices.size();
 
-        // Инициализация структур для накопления
         List<Vector3f> vertexNormals = new ArrayList<>(vertexCount);
         List<Float> vertexWeights = new ArrayList<>(vertexCount);
 
         for (int i = 0; i < vertexCount; i++) {
-            vertexNormals.add(new Vector3f(0, 0, 0)); // Нулевой вектор
-            vertexWeights.add(0f); // Нулевой вес
+            vertexNormals.add(new Vector3f(0, 0, 0));
+            vertexWeights.add(0f);
         }
 
-        // 2. Обработка каждого полигона
         int polyCount = model.polygonsBoundaries.size();
 
         for (int polyIdx = 0; polyIdx < polyCount; polyIdx++) {
@@ -33,10 +31,7 @@ public class MyVertexNormalCalc implements VertexNormals<Model> {
                     ? model.polygons.size()
                     : model.polygonsBoundaries.get(polyIdx + 1);
 
-
-            if (endOfPolygon - startOfPolygon < 3) {
-                continue;
-            }
+            if (endOfPolygon - startOfPolygon < 3) continue;
 
             Vector3f polygonNormal = calculatePolygonNormal(
                     model.vertices,
@@ -52,34 +47,28 @@ public class MyVertexNormalCalc implements VertexNormals<Model> {
                     endOfPolygon
             );
 
+            // Скипаем мусорные/вырожденные полигоны, чтобы не засорять нормали
+            if (area <= 1e-12f || polygonNormal.len() <= 1e-6f) continue;
+
+            // ВАЖНО: multiply() мутирует, поэтому только multiplied()
+            Vector3f weightedNormal = polygonNormal.multiplied(area);
+
             for (int j = startOfPolygon; j < endOfPolygon; j++) {
                 int idx = model.polygons.get(j);
+                if (idx < 0 || idx >= vertexCount) continue;
 
-
-                if (idx < 0 || idx >= vertexCount) {
-                    continue;
-                }
-
-                Vector3f weighted = polygonNormal.multiply(area);
                 Vector3f currentNormal = vertexNormals.get(idx);
-                vertexNormals.set(idx, currentNormal.added(weighted));
+                vertexNormals.set(idx, currentNormal.added(weightedNormal));
 
-                // Обновляем вес
-                float currentWeight = vertexWeights.get(idx);
-                vertexWeights.set(idx, currentWeight + area);
+                vertexWeights.set(idx, vertexWeights.get(idx) + area);
             }
         }
 
-
         for (int i = 0; i < vertexCount; i++) {
             float weight = vertexWeights.get(i);
-
             if (weight > 0) {
-                Vector3f averaged = vertexNormals.get(i).divided(weight).normalized();
-                // Сохраняем нормаль в вершину модели
-                model.vertices.get(i).normal = averaged;
+                model.vertices.get(i).normal = vertexNormals.get(i).divided(weight).normalized();
             } else {
-                // Если вершина не участвовала ни в одном полигоне
                 model.vertices.get(i).normal = new Vector3f(0, 0, 0);
             }
         }
