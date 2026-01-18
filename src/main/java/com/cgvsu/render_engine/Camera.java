@@ -58,14 +58,16 @@ public class Camera {
         float unitsPerPxY = vSpan / (float) viewportH;
         float unitsPerPxX = (vSpan * aspectRatio) / (float) viewportW;
 
-        Vector3f worldUp = new Vector3f(0, 1, 0);
         Vector3f forward = target.subbed(position).normalized();
+        Vector3f worldUp = new Vector3f(0, 1, 0);
 
-        Vector3f right = forward.crossed(worldUp);
+// как в lookAt: x = up × z
+        Vector3f right = worldUp.crossed(forward);
         if (right.len() < EPS) right = new Vector3f(1, 0, 0);
         else right = right.normalized();
 
-        Vector3f up = right.crossed(forward).normalized(); // фактический up камеры
+// как в lookAt: y = z × x
+        Vector3f up = forward.crossed(right).normalized();
 
         // знак подбери под “как нравится” (обычно X инвертируют)
         Vector3f move =
@@ -89,37 +91,42 @@ public class Camera {
 
         Vector3f worldUp = new Vector3f(0, 1, 0);
 
+        // offset от target к position
         Vector3f offset = position.subbed(target);
 
+        // yaw вокруг worldUp
         offset = rotateAroundAxis(offset, worldUp, (float) Math.toRadians(yawDeg));
 
+        // forward должен соответствовать offset (forward = target - position = -offset)
         Vector3f forward = offset.multiplied(-1).normalized();
-        Vector3f right = forward.crossed(worldUp);
 
-        if (right.len() < EPS) {
-            right = new Vector3f(1, 0, 0);
-        } else {
-            right = right.normalized();
-        }
-
-        Vector3f newOffset = rotateAroundAxis(offset, right, (float) Math.toRadians(pitchDeg));
-
-        Vector3f newForward = newOffset.multiplied(-1).normalized();
-        float dotUp = Math.abs(newForward.dot(worldUp));
-        if (dotUp < 0.9995f) {
-            offset = newOffset;
-        }
-
-        position = target.added(offset);
-        radius = offset.len();
-
-        forward = target.subbed(position).normalized();
-        right = forward.crossed(worldUp);
+        // right = up × forward (как в lookAt)
+        Vector3f right = worldUp.crossed(forward);
         if (right.len() < EPS) right = new Vector3f(1, 0, 0);
         else right = right.normalized();
 
-        cameraUp = right.crossed(forward).normalized();
+        // pitch вокруг right
+        Vector3f newOffset = rotateAroundAxis(offset, right, (float) Math.toRadians(pitchDeg));
 
+        // ограничение pitch (не даём forward стать параллельным worldUp)
+        Vector3f newForward = newOffset.multiplied(-1).normalized();
+        if (Math.abs(newForward.dot(worldUp)) < 0.9995f) {
+            offset = newOffset;
+            forward = newForward;
+        }
+
+        // применяем
+        position = target.added(offset);
+        radius = offset.len();
+
+        // пересчитываем cameraUp согласованно с lookAt
+        right = worldUp.crossed(forward);
+        if (right.len() < EPS) right = new Vector3f(1, 0, 0);
+        else right = right.normalized();
+
+        cameraUp = forward.crossed(right).normalized();
+
+        // обновляем углы (если они тебе нужны для zoom/updatePositionFromAngles)
         yaw = (float) Math.toDegrees(Math.atan2(offset.getX(), offset.getZ()));
         pitch = (float) Math.toDegrees(Math.asin(offset.getY() / radius));
 
@@ -167,15 +174,13 @@ public class Camera {
         position = target.added(offset);
 
         Vector3f forward = target.subbed(position).normalized();
-        Vector3f right = forward.crossed(new Vector3f(0, 1, 0));
+        Vector3f worldUp = new Vector3f(0, 1, 0);
 
-        if (right.len() < EPS) {
-            right = new Vector3f(1, 0, 0);
-        } else {
-            right = right.normalized();
-        }
+        Vector3f right = worldUp.crossed(forward);
+        if (right.len() < EPS) right = new Vector3f(1, 0, 0);
+        else right = right.normalized();
 
-        cameraUp = right.crossed(forward).normalized();
+         cameraUp = forward.crossed(right).normalized();
     }
 
     public Matrix4f getViewMatrix() {

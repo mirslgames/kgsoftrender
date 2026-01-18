@@ -6,6 +6,7 @@ import com.cgvsu.objreader.ObjReaderException;
 import com.cgvsu.objwriter.ObjWriter;
 import com.cgvsu.math.vectors.Vector3f;
 import com.cgvsu.render_engine.Camera;
+import com.cgvsu.render_engine.GraphicConveyor;
 import com.cgvsu.render_engine.RenderEngine;
 import com.cgvsu.service.ShortcutsSettings;
 import com.cgvsu.service.ThemeSettings;
@@ -863,7 +864,7 @@ public class GuiController {
                         varik = "Исходная загруженная версия";
                     }
                     case MODIFIED -> {
-                        toSaveModel = SceneManager.activeModel;
+                        toSaveModel = SceneManager.activeModel.copyWithTransform();
                         varik = "Измененная версия";
                     }
                 }
@@ -1110,9 +1111,6 @@ public class GuiController {
         }
 
     }
-
-
-
 
     @FXML
     private void renderButtonClick(ActionEvent event){
@@ -1431,7 +1429,7 @@ public class GuiController {
         pastRotateX = (float) mouseEvent.getX();
         pastRotateY = (float) mouseEvent.getY();
 
-        SceneManager.activeCamera.rotateCamera(deltaX * ROT, -deltaY * ROT);
+        SceneManager.activeCamera.rotateCamera(-deltaX * ROT, -deltaY * ROT);
         if(currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
                 currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
             renderFrame();

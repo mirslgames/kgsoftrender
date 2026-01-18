@@ -66,9 +66,9 @@ public class GraphicConveyor {
                 0, 0, 0, 1
 
         });
-        Matrix4f result = new Matrix4f(rotateZMatrix.getMatrix());
+        Matrix4f result = new Matrix4f(rotateXMatrix.getMatrix());
         result.multiply(rotateYMatrix);
-        result.multiply(rotateXMatrix);
+        result.multiply(rotateZMatrix);
         return result;
     }
 
@@ -93,7 +93,8 @@ public class GraphicConveyor {
                 resultX.getX(), resultX.getY(), resultX.getZ(), -resultX.dot(eye),
                 resultY.getX(), resultY.getY(), resultY.getZ(), -resultY.dot(eye),
                 resultZ.getX(), resultZ.getY(), resultZ.getZ(), -resultZ.dot(eye),
-                0, 0, 0, 1};
+                0, 0, 0, 1
+        };
         return new Matrix4f(matrix);
     }
 
@@ -113,7 +114,7 @@ public class GraphicConveyor {
         result.setValue(2, 2, (farPlane + nearPlane) / (farPlane - nearPlane));
         result.setValue(2, 3, 2 * (nearPlane * farPlane) / (nearPlane - farPlane));
 
-        result.setValue(3, 2, 1.0F);
+        result.setValue(3, 2, -1.0F);
         result.setValue(3, 3, 0.0F);
 
         return result;
