@@ -32,7 +32,7 @@ public class ObjReader {
 		Scanner scanner = new Scanner(fileContent);
 		while (scanner.hasNextLine()) {
 			++lineInd;
-			final String line = scanner.nextLine().trim();
+			final String line = scanner.nextLine().replace("\uFEFF", "").trim();
 
 			if (line.isBlank() || line.startsWith("#")) continue;
 

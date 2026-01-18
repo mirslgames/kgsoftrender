@@ -21,8 +21,11 @@ public class Camera {
         this.nearPlane = nearPlane;
         this.farPlane = farPlane;
         radius = position.subbed(target).len();
-
+        cameraId++;
     }
+
+    public static int cameraId = 0;
+    public String cameraName;
 
     public void setPosition(final Vector3f position) {
         this.position = position;

@@ -6,6 +6,8 @@ import com.cgvsu.model.Model;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -997,5 +999,86 @@ class ObjReaderTest {
         assertTrue(ex.getMessage().contains("нельзя смешивать face с vt"),
                 "Сообщение должно объяснять запрет смешивания vt и без vt");
     }
+
+    private static String readResourceText(String resourcePath) {
+        try (InputStream is = ObjReaderTest.class.getResourceAsStream(resourcePath)) {
+            assertNotNull(is, "Ресурс не найден: " + resourcePath);
+            String s = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            return s.replace("\uFEFF", "");
+        } catch (Exception e) {
+            throw new RuntimeException("Не удалось прочитать ресурс: " + resourcePath, e);
+        }
+    }
+
+    @Test
+    void testLoadAllObjModelsFromResources_shouldNotThrow() {
+        String base = "/3DModels/SimpleModelsForReaderTests/";
+
+
+        String[] validFiles = {
+                "LoadingTest.obj",
+                "NonManifold.obj",
+                "NonManifold2.obj",
+                "Teapot.obj",
+                "Teapot01.obj",
+                "Teapot02.obj",
+                "TeapotHoudini.obj",
+                "TeapotMaterials.obj",
+                "TeapotNoUV.obj",
+                "TeapotNoUVWithTexVertices.obj",
+                "TeapotPolygroups.obj",
+                "TeapotWithUniqueUVs.obj",
+                "Test02.obj",
+                "Test03.obj",
+                "Test04.obj",
+                "Test05.obj",
+                "Test06.obj",
+                "Test07.obj",
+                "Torus.obj",
+                "Torus01.obj",
+                "Torus02.obj",
+                "Torus03.obj",
+                "Triangle.obj",
+                "ТестНаРусском.obj"
+        };
+
+        for (String file : validFiles) {
+            String content = readResourceText(base + file);
+
+            assertDoesNotThrow(() -> {
+                Model model = ObjReader.readModelFromFile(content, file, new HashMap<>());
+                assertNotNull(model, "Model не должен быть null для " + file);
+                assertNotNull(model.vertices, "vertices не должен быть null для " + file);
+                assertNotNull(model.polygons, "polygons не должен быть null для " + file);
+                assertFalse(model.vertices.isEmpty(), "vertices должен быть не пуст для " + file);
+                assertFalse(model.polygons.isEmpty(), "polygons должен быть не пуст для " + file);
+
+                String expectedName = ObjReader.safeModelNameFromFilename(file);
+                assertEquals(expectedName, model.modelName, "Неверное имя модели для " + file);
+            }, "Не должно падать при чтении: " + file);
+        }
+    }
+
+    @Test
+    void testTeapotInvalidVertexCount_shouldThrow() {
+        String base = "/3DModels/SimpleModelsForReaderTests/";
+        String file = "TeapotInvalidVertexCount.obj";
+        String content = readResourceText(base + file);
+
+        ObjReaderException ex = assertThrows(
+                ObjReaderException.class,
+                () -> ObjReader.readModelFromFile(content, file, new HashMap<>()),
+                "Этот файл должен падать по заданию"
+        );
+
+        String msg = ex.getMessage();
+        assertNotNull(msg);
+
+        assertTrue(msg.contains("3859"), "Ожидаем строку 3859 в сообщении, msg=" + msg);
+        assertTrue(msg.contains("Индекс вершины выходит за границы"), "Ожидаем причину про индекс вершины, msg=" + msg);
+        assertTrue(msg.contains("529"), "Ожидаем индекс 529 в сообщении, msg=" + msg);
+        assertTrue(msg.contains("0..528"), "Ожидаем диапазон 0..528 в сообщении, msg=" + msg);
+    }
+
 
 }

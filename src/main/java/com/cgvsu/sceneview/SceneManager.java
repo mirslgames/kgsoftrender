@@ -4,6 +4,7 @@ import com.cgvsu.math.vectors.Vector3f;
 import com.cgvsu.model.Model;
 import com.cgvsu.render_engine.Camera;
 import javafx.fxml.FXML;
+import javafx.scene.Scene;
 import javafx.scene.control.TextField;
 
 import java.util.ArrayList;
@@ -13,7 +14,8 @@ import java.util.Hashtable;
 
 public class SceneManager {
     public static Camera activeCamera;
-    public static ArrayList<Camera> cameras;
+    public static ArrayList<Camera> cameras = new ArrayList<>();
+    public static Dictionary<String, Camera> cacheNameCameras = new Hashtable<>(); //Чтобы быстро получить ссылку на камеру
     public static Model activeModel;
     public static ArrayList<Model> models = new ArrayList<>();
     public static Dictionary<String, Model> cacheNameSceneModels = new Hashtable<>(); // чтобы быстро найти по имени модель а не перебирать все загруженные
@@ -28,18 +30,37 @@ public class SceneManager {
     public static boolean useTexture;
     public static boolean useLight;
 
-    public static boolean isSceneEntitySelect;
+    public static boolean isSceneEntitySelect; //По сути отвечает только за модель
 
     public static float lightIntensity;
 
 
     public static void initialize(){
         activeCamera = new Camera(
-                new Vector3f(0, 0, 50),
+                new Vector3f(0, 0, 40),
                 new Vector3f(0, 0, 0),
                 1.0F, 1, 0.01F, 200);
+        activeCamera.cameraName = "Начальная камера";
+        cacheNameCameras.put(activeCamera.cameraName, activeCamera);
+        cameras.add(activeCamera);
         isSceneEntitySelect = false;
 
+    }
+
+    public static void createNewCamera(){
+        Camera newCamera = new Camera(
+                new Vector3f(0, 0, 40),
+                new Vector3f(0, 0, 0),
+                1.0F, 1, 0.01F, 200);
+        newCamera.cameraName = String.format("Камера %d", Camera.cameraId);
+        cacheNameCameras.put(newCamera.cameraName, newCamera);
+        cameras.add(newCamera);
+    }
+
+    public static void deleteCameraFromScene(String cameraName){
+        Camera targetCamera = cacheNameCameras.get(cameraName);
+        cameras.remove(targetCamera);
+        cacheNameCameras.remove(cameraName);
     }
 
     public static void loadModelToScene(Model model){
