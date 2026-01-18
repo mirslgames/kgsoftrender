@@ -17,13 +17,13 @@ public class Rasterization {
     /**
      * Вычисляет барицентрические координаты точки относительно треугольника.
      *
-     * @param point точка для которой вычисляются координаты (в экранных координатах)
+     * @param x (раньше был point, но я убрал) точка для которой вычисляются координаты (в экранных координатах)
      * @param v1, v2, v3 вершины треугольника в экранных координатах (Point2f)
      * @return массив [alpha, beta, gamma] - барицентрические координаты для конкретного треугольника
      */
-    public static float[] calculateBarycentricCoordinates(Point2f point, Point2f v1, Point2f v2, Point2f v3) {
-        float x = point.getX();
-        float y = point.getY();
+    public static void calculateBarycentricCoordinates(float x, float y, Point2f v1, Point2f v2, Point2f v3, float[] out) {
+        /* float x = point.getX();
+        float y = point.getY(); */
 
         float x1 = v1.getX(), y1 = v1.getY();
         float x2 = v2.getX(), y2 = v2.getY();
@@ -38,14 +38,20 @@ public class Rasterization {
 
         if (Math.abs(denom) < 1e-10f) {
             //Вырожденные случай
-            return new float[]{0, 0, 0};
+            //return new float[]{0, 0, 0};
+            out[0] = 0;
+            out[1] = 0;
+            out[2] = 0;
+            return;
         }
 
         float alpha = ((y2 - y3) * (x - x3) + (x3 - x2) * (y - y3)) / denom;
         float beta = ((y3 - y1) * (x - x3) + (x1 - x3) * (y - y3)) / denom;
         float gamma = 1.0f - alpha - beta;
-
-        return new float[]{alpha, beta, gamma};
+        out[0] = alpha;
+        out[1] = beta;
+        out[2] = gamma;
+        //return new float[]{alpha, beta, gamma};
     }
 
     /**
@@ -347,22 +353,26 @@ public class Rasterization {
             float z1, float z2, float z3,
             Vertex vertex1, Vertex vertex2, Vertex vertex3,
             Vector2f tex1, Vector2f tex2, Vector2f tex3,
-            PixelCallback pixelCallback) {
+            PixelCallback pixelCallback, int width, int height) {
 
         // Находим границу полигона(треугольника)
-        int[] bbox = getBoundingBox(v1, v2, v3);
+        /* int[] bbox = getBoundingBox(v1, v2, v3);
         int minX = bbox[0];
         int minY = bbox[1];
         int maxX = bbox[2];
-        int maxY = bbox[3];
+        int maxY = bbox[3]; */
+        int[] bbox = getBoundingBoxClamped(v1, v2, v3, width, height);
+        int minX = bbox[0], minY = bbox[1], maxX = bbox[2], maxY = bbox[3];
 
+        if (minX > maxX || minY > maxY) return;
+        float[] barycentric = new float[3];
         // Проходим по всем пикселям в ограничивающем прямоугольнике
         for (int y = minY; y <= maxY; y++) {
             for (int x = minX; x <= maxX; x++) {
-                Point2f pixel = new Point2f(x, y);
+                //Point2f pixel = new Point2f(x, y);
 
                 // Вычисляем барицентрические координаты
-                float[] barycentric = calculateBarycentricCoordinates(pixel, v1, v2, v3);
+                calculateBarycentricCoordinates(x + 0.5f, y + 0.5f, v1, v2, v3, barycentric);
 
                 // Проверяем, находится ли пиксель внутри треугольника
                 if (isInsideTriangle(barycentric)) {
@@ -388,24 +398,47 @@ public class Rasterization {
             }
         }
     }
+
+    public static int[] getBoundingBoxClamped(Point2f v1, Point2f v2, Point2f v3, int width, int height) {
+        int minX = (int) Math.floor(Math.min(Math.min(v1.getX(), v2.getX()), v3.getX()));
+        int maxX = (int) Math.ceil (Math.max(Math.max(v1.getX(), v2.getX()), v3.getX()));
+        int minY = (int) Math.floor(Math.min(Math.min(v1.getY(), v2.getY()), v3.getY()));
+        int maxY = (int) Math.ceil (Math.max(Math.max(v1.getY(), v2.getY()), v3.getY()));
+
+        // clamp к экрану
+        minX = Math.max(minX, 0);
+        minY = Math.max(minY, 0);
+        maxX = Math.min(maxX, width  - 1);
+        maxY = Math.min(maxY, height - 1);
+
+        return new int[]{minX, minY, maxX, maxY};
+    }
+
+
     public static void rasterizeTriangleWithWorldPos(
             Point2f v1, Point2f v2, Point2f v3,
             float z1, float z2, float z3,
             Vertex vertex1, Vertex vertex2, Vertex vertex3,
             Vector2f tex1, Vector2f tex2, Vector2f tex3,
             Vector3f worldPos1, Vector3f worldPos2, Vector3f worldPos3,
-            PixelCallback pixelCallback, Matrix4f modelMatrix) {
+            PixelCallback pixelCallback, Matrix4f modelMatrix, int width, int height) {
 
-        int[] bbox = getBoundingBox(v1, v2, v3);
+        /* int[] bbox = getBoundingBox(v1, v2, v3);
         int minX = bbox[0];
         int minY = bbox[1];
         int maxX = bbox[2];
-        int maxY = bbox[3];
+        int maxY = bbox[3]; */
 
+        int[] bbox = getBoundingBoxClamped(v1, v2, v3, width, height);
+        int minX = bbox[0], minY = bbox[1], maxX = bbox[2], maxY = bbox[3];
+
+        if (minX > maxX || minY > maxY) return;
+
+        float[] barycentric = new float[3];
         for (int y = minY; y <= maxY; y++) {
             for (int x = minX; x <= maxX; x++) {
-                Point2f pixel = new Point2f(x, y);
-                float[] barycentric = calculateBarycentricCoordinates(pixel, v1, v2, v3);
+                //Point2f pixel = new Point2f(x, y);
+                calculateBarycentricCoordinates(x + 0.5f, y + 0.5f, v1, v2, v3, barycentric);
 
                 if (isInsideTriangle(barycentric)) {
                     float z = interpolate(z1, z2, z3, barycentric);
