@@ -53,7 +53,6 @@ public class Model {
     public void bakeCurrentTransformIntoGeometry() {
         if (currentTransform == null || vertices == null) return;
 
-        // Та же матрица, что используется в рендере
         com.cgvsu.math.matrixs.Matrix4f modelMatrix =
                 com.cgvsu.render_engine.GraphicConveyor.rotateScaleTranslate(
                         currentTransform.scaleX, currentTransform.scaleY, currentTransform.scaleZ,
@@ -66,7 +65,6 @@ public class Model {
             v.position = modelMatrix.multiplyOnVector(v.position);
         }
 
-        // Нормали проще и надёжнее пересчитать заново
         try {
             new MyVertexNormalCalc().calculateVertexNormals(this);
         } catch (Exception ignored) { }

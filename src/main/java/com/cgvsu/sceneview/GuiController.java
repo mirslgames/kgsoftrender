@@ -388,6 +388,11 @@ public class GuiController {
                 deleteCameraButton.setVisible(false);
                 generateCameraButtons();
                 logInfo(String.format("Камера: %s была успешно удалена", logString));
+                if(currentRenderMode == RenderMode.EVERY_TRANSFORM_FRAME ||
+                        currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
+                        currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
+                    renderFrame();
+                }
             }
 
 
@@ -1417,7 +1422,7 @@ public class GuiController {
         pastMoveX = (float) mouseEvent.getX();
         pastMoveY = (float) mouseEvent.getY();
 
-        SceneManager.activeCamera.moveCamera(-deltaX, deltaY,
+        SceneManager.activeCamera.moveCamera(deltaX, deltaY,
                 (int) sceneCanvas.getWidth(), (int) sceneCanvas.getHeight());
         if(currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
                 currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
@@ -1431,7 +1436,7 @@ public class GuiController {
         pastRotateX = (float) mouseEvent.getX();
         pastRotateY = (float) mouseEvent.getY();
 
-        SceneManager.activeCamera.rotateCamera(-deltaX * ROT, -deltaY * ROT);
+        SceneManager.activeCamera.rotateCamera(deltaX * ROT, -deltaY * ROT);
         if(currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_FRAME ||
                 currentRenderMode == RenderMode.EVERY_CAMERA_MOTION_TRANSFORM_FRAME){
             renderFrame();
