@@ -10,7 +10,7 @@ import java.util.Arrays;
 public class GraphicConveyor {
 
     public static Matrix4f rotateScaleTranslate(
-            float sx, float sy, float sz,
+            float sx, float sy, float    sz,
             float dx, float dy, float dz,
             float tx, float ty, float tz
     ) {

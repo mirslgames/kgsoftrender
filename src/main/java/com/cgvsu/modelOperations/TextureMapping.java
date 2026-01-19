@@ -98,6 +98,7 @@ public class TextureMapping {
             float k
     ) {
         // 1. Нормаль в точке
+        k = clamp01(k);
         Vector3f n = worldNormal.normalize();
 
         // 2. Луч света (от точки к камере = направление К источнику света в камере)
@@ -114,12 +115,17 @@ public class TextureMapping {
         float intensity = (1f - k) + k * l;
 
         return new Color(
-                baseColor.getRed()   * intensity,
-                baseColor.getGreen() * intensity,
-                baseColor.getBlue()  * intensity,
+                clamp01((float) (baseColor.getRed()   * intensity)),
+                clamp01((float) (baseColor.getGreen() * intensity)),
+                clamp01((float) (baseColor.getBlue()  * intensity)),
                 baseColor.getOpacity()
         );
     }
+
+    private static float clamp01(float v) {
+        return Math.max(0f, Math.min(1f, v));
+    }
+
 
 
 
