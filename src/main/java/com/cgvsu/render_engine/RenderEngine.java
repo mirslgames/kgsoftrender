@@ -17,78 +17,21 @@ import javafx.scene.paint.Color;
 
 import java.util.ArrayList;
 
+import static com.cgvsu.math.matrixs.Matrix4f.buildNormalMatrix3x3;
+import static com.cgvsu.modelOperations.Rasterization.perspectiveCorrectInterpolate3;
 import static com.cgvsu.render_engine.GraphicConveyor.*;
 
 public class RenderEngine {
-
-//    public static void render(
-//            final GraphicsContext graphicsContext,
-//            final Camera camera,
-//            final Model mesh,
-//            final int width,
-//            final int height) {
-//
-//        Matrix4f modelMatrix = rotateScaleTranslate(
-//                mesh.currentTransform.scaleX, mesh.currentTransform.scaleY, mesh.currentTransform.scaleZ,
-//                mesh.currentTransform.rotationX, mesh.currentTransform.rotationY, mesh.currentTransform.rotationZ,
-//                mesh.currentTransform.positionX, mesh.currentTransform.positionY, mesh.currentTransform.positionZ
-//        );
-//
-//        Matrix4f viewMatrix = camera.getViewMatrix();
-//        Matrix4f projMatrix = camera.getProjectionMatrix();
-//
-//        Vector3f targetView = viewMatrix.multiplyOnVector(camera.getTarget());
-//        boolean forwardMinusZ = targetView.getZ() < 0;
-//
-//        Matrix4f modelView = new Matrix4f(viewMatrix.getMatrix());
-//        modelView.multiply(modelMatrix);
-//
-//        final int nPolygons = mesh.polygonsBoundaries.size();
-//        graphicsContext.setStroke(Color.web(ThemeSettings.wireframeColor));
-//        graphicsContext.setLineWidth(ThemeSettings.wireframeWidth);
-//
-//        float near = camera.getNearPlane();
-//
-//        for (int polygonInd = 0; polygonInd < nPolygons; ++polygonInd) {
-//            int startIndex = mesh.polygonsBoundaries.get(polygonInd);
-//            int endIndex = (polygonInd + 1 < nPolygons)
-//                    ? mesh.polygonsBoundaries.get(polygonInd + 1)
-//                    : mesh.polygons.size();
-//
-//            int n = endIndex - startIndex;
-//            if (n < 2) continue;
-//
-//            ArrayList<Vector3f> viewPts = new ArrayList<>(n);
-//            for (int i = startIndex; i < endIndex; ++i) {
-//                int vertexIndex = mesh.polygons.get(i);
-//                Vector3f p = mesh.vertices.get(vertexIndex).position;
-//                Vector3f viewP = modelView.multiplyOnVector(new Vector3f(p.getX(), p.getY(), p.getZ()));
-//                viewPts.add(viewP);
-//            }
-//
-//            for (int i = 0; i < n; i++) {
-//                Vector3f a0 = viewPts.get(i);
-//                Vector3f b0 = viewPts.get((i + 1) % n);
-//
-//                Vector3f a = new Vector3f(a0.getX(), a0.getY(), a0.getZ());
-//                Vector3f b = new Vector3f(b0.getX(), b0.getY(), b0.getZ());
-//
-//                Vector3f[] seg = clipLineToNear(a, b, near, forwardMinusZ);
-//                if (seg == null) continue;
-//
-//                Point2f pa = vertexToPoint(projMatrix.multiplyOnVector(seg[0]), width, height);
-//                Point2f pb = vertexToPoint(projMatrix.multiplyOnVector(seg[1]), width, height);
-//
-//                if (!Float.isFinite(pa.getX()) || !Float.isFinite(pa.getY()) ||
-//                        !Float.isFinite(pb.getX()) || !Float.isFinite(pb.getY())) {
-//                    continue;
-//                }
-//
-//                graphicsContext.strokeLine(pa.getX(), pa.getY(), pb.getX(), pb.getY());
-//            }
-//        }
-//    }
-
+    /**
+     * Метод, который рендерит каждый кадр с учётом режимов отрисовки
+     * @param graphicsContext графический контекст для наложения цвета на пиксель
+     * @param camera камера, относительно который рендерим кадр(в нашем случае это ActiveCamera)
+     * @param mesh сама модель, которую нужно отрендерить
+     * @param width ширина экрана
+     * @param height высота экрана
+     * @param zBuffer z-Буффер, который используется для отсечения задних полигонов и сетке
+     *                (сетка отсекается при цвете или текстуре)
+     */
     public static void renderWithRenderingMods(
             final GraphicsContext graphicsContext,
             final Camera camera,
@@ -165,7 +108,7 @@ public class RenderEngine {
                 // world pos (для освещения)
                 Vector3f worldPos = modelMatrix.multiplyOnVector(posVec);
 
-                // view pos (для клиппинга/глубины)
+                // view pos (для глубины)
                 Vector3f viewPos = modelViewMatrix.multiplyOnVector(posVec);
 
                 // Near-plane check в view-space
@@ -238,7 +181,7 @@ public class RenderEngine {
                     || SceneManager.useLight;
 
             if (shouldRenderFill) {
-                // ---- ВАЖНО: делаем final-копии для лямбды ----
+                //Делаем констант копии переменных, чтобы передать их в lambda функцию
                 final float fZ1 = zD1, fZ2 = zD2, fZ3 = zD3;
                 final Vector3f fW1 = w1Orig, fW2 = w2Orig, fW3 = w3Orig;
                 final Vector3f fFaceN = faceNormalWorld;
@@ -340,32 +283,6 @@ public class RenderEngine {
         return (maxX < 0 || minX > width || maxY < 0 || minY > height);
     }
 
-    private static Vector3f[] clipLineToNear(Vector3f a, Vector3f b, float near, boolean forwardMinusZ) {
-        float za = a.getZ();
-        float zb = b.getZ();
-
-        float planeZ = forwardMinusZ ? -near : near;
-
-        boolean ina = forwardMinusZ ? (za <= planeZ) : (za >= planeZ);
-        boolean inb = forwardMinusZ ? (zb <= planeZ) : (zb >= planeZ);
-
-        if (!ina && !inb) return null;
-        if (ina && inb) return new Vector3f[]{a, b};
-
-        float denom = (zb - za);
-        if (Math.abs(denom) < 1e-8f) return null;
-
-        float t = (planeZ - za) / denom;
-        Vector3f p = a.added(b.subbed(a).multiplied(t));
-
-        if (!ina) a = p;
-        else b = p;
-
-        return new Vector3f[]{a, b};
-    }
-
-    // -------------------- helpers (depth, normals, world pos) --------------------
-
     // Перспективно-корректная глубина (если используем viewDepth > 0)
     private static float perspectiveCorrectDepth(float z1, float z2, float z3,
                                                  float a, float b, float c) {
@@ -374,29 +291,6 @@ public class RenderEngine {
         return 1.0f / denom;
     }
 
-    // Перспективно-корректная интерполяция Vector3f (world position)
-    private static Vector3f perspectiveCorrectInterpolate3(
-            Vector3f p1, Vector3f p2, Vector3f p3,
-            float z1, float z2, float z3,
-            float a, float b, float c) {
-
-        float iz1 = 1.0f / z1;
-        float iz2 = 1.0f / z2;
-        float iz3 = 1.0f / z3;
-
-        Vector3f p1oz = p1.multiplied(iz1);
-        Vector3f p2oz = p2.multiplied(iz2);
-        Vector3f p3oz = p3.multiplied(iz3);
-
-        Vector3f sum = p1oz.multiplied(a)
-                .added(p2oz.multiplied(b))
-                .added(p3oz.multiplied(c));
-
-        float iz = a * iz1 + b * iz2 + c * iz3;
-        if (Math.abs(iz) < 1e-12f) return new Vector3f(0, 0, 0);
-
-        return sum.multiplied(1.0f / iz);
-    }
 
     // Face normal в world space (на случай битых вершинных нормалей)
     private static Vector3f computeFaceNormalWorld(Vector3f w1, Vector3f w2, Vector3f w3) {
@@ -406,37 +300,6 @@ public class RenderEngine {
         Vector3f n = e1.crossed(e2);
         if (n.len() < 1e-8f) return new Vector3f(0, 1, 0);
         return n.normalized();
-    }
-
-    // Строим (L^-1)^T для верхней 3x3 матрицы modelMatrix (нужно для нормалей при scale)
-    // Возвращает 9 значений построчно, или null если матрица вырожденная.
-    private static float[] buildNormalMatrix3x3(Matrix4f m) {
-        float a = m.getValue(0, 0), b = m.getValue(0, 1), c = m.getValue(0, 2);
-        float d = m.getValue(1, 0), e = m.getValue(1, 1), f = m.getValue(1, 2);
-        float g = m.getValue(2, 0), h = m.getValue(2, 1), i = m.getValue(2, 2);
-
-        float det = a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g);
-        if (Math.abs(det) < 1e-12f) return null;
-
-        float c00 = (e * i - f * h);
-        float c01 = -(d * i - f * g);
-        float c02 = (d * h - e * g);
-
-        float c10 = -(b * i - c * h);
-        float c11 = (a * i - c * g);
-        float c12 = -(a * h - b * g);
-
-        float c20 = (b * f - c * e);
-        float c21 = -(a * f - c * d);
-        float c22 = (a * e - b * d);
-
-        float invDet = 1.0f / det;
-
-        return new float[]{
-                c00 * invDet, c01 * invDet, c02 * invDet,
-                c10 * invDet, c11 * invDet, c12 * invDet,
-                c20 * invDet, c21 * invDet, c22 * invDet
-        };
     }
 
     // Трансформация нормали: inverse-transpose, без translation
@@ -464,67 +327,5 @@ public class RenderEngine {
         float z = v.getX() * m.getValue(2, 0) + v.getY() * m.getValue(2, 1) + v.getZ() * m.getValue(2, 2);
         return new Vector3f(x, y, z);
     }
-    public static void render(
-            final GraphicsContext graphicsContext,
-            final Camera camera,
-            final Model mesh,
-            final int width,
-            final int height) {
-        Matrix4f modelMatrix = rotateScaleTranslate(mesh.currentTransform.scaleX, mesh.currentTransform.scaleY, mesh.currentTransform.scaleZ,
-                mesh.currentTransform.rotationX, mesh.currentTransform.rotationY, mesh.currentTransform.rotationZ,
-                mesh.currentTransform.positionX, mesh.currentTransform.positionY, mesh.currentTransform.positionZ);
 
-        Matrix4f viewMatrix = camera.getViewMatrix();
-        Matrix4f projMatrix = camera.getProjectionMatrix();
-
-        Matrix4f modelViewMatrix = new Matrix4f(viewMatrix.getMatrix());
-        modelViewMatrix.multiply(modelMatrix);
-
-        float near = camera.getNearPlane();
-        Vector3f targetView = viewMatrix.multiplyOnVector(camera.getTarget());
-        boolean forwardMinusZ = targetView.getZ() < 0;
-
-        final int nPolygons = mesh.polygonsBoundaries.size();
-        graphicsContext.setStroke(Color.web(ThemeSettings.wireframeColor));
-        graphicsContext.setLineWidth(ThemeSettings.wireframeWidth);
-
-
-
-        for (int polygonInd = 0; polygonInd < nPolygons; ++polygonInd) {
-            int startIndex = mesh.polygonsBoundaries.get(polygonInd);
-            int endIndex = (polygonInd + 1 < nPolygons) ? mesh.polygonsBoundaries.get(polygonInd + 1) : mesh.polygons.size();
-            int n = endIndex - startIndex;
-
-            ArrayList<Vector3f> viewPts = new ArrayList<>(n);
-            for (int i = startIndex; i < endIndex; ++i) {
-                int vertexIndex = mesh.polygons.get(i);
-                Vector3f p = mesh.vertices.get(vertexIndex).position;
-                Vector3f viewP = modelViewMatrix.multiplyOnVector(new Vector3f(p.getX(), p.getY(), p.getZ()));
-                viewPts.add(viewP);
-            }
-
-            for (int i = 0; i < n; i++) {
-                Vector3f a0 = viewPts.get(i);
-                Vector3f b0 = viewPts.get((i + 1) % n);
-
-                Vector3f a = new Vector3f(a0.getX(), a0.getY(), a0.getZ());
-                Vector3f b = new Vector3f(b0.getX(), b0.getY(), b0.getZ());
-
-                Vector3f[] seg = clipLineToNear(a, b, near, forwardMinusZ);
-                if (seg == null) continue;
-
-                Point2f pa = vertexToPoint(projMatrix.multiplyOnVector(seg[0]), width, height);
-                Point2f pb = vertexToPoint(projMatrix.multiplyOnVector(seg[1]), width, height);
-
-                if (!Float.isFinite(pa.getX()) || !Float.isFinite(pa.getY()) ||
-                        !Float.isFinite(pb.getX()) || !Float.isFinite(pb.getY())) continue;
-
-
-                if (Float.isNaN(pa.getX()) || Float.isNaN(pa.getY()) || Float.isNaN(pb.getX()) || Float.isNaN(pb.getY()))
-                    continue;
-
-                graphicsContext.strokeLine(pa.getX(), pa.getY(), pb.getX(), pb.getY());
-            }
-        }
-    }
 }

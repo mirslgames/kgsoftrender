@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class TriangulationAlgorithm {
-
+    //Алгоритм триангуляции, тут особо писать нечегоЮ можно лишь добавить, что в Model мы триангулируем всю модель
     public static List<List<Integer>> triangulate(List<Integer> polygon){
         List<Integer> copy = new ArrayList<>(polygon);
         int n = copy.size();

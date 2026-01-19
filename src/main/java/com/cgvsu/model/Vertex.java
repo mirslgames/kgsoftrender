@@ -6,8 +6,8 @@ import com.cgvsu.math.vectors.Vector3f;
 import java.util.ArrayList;
 
 public class Vertex {
-    public Vector3f position;
-    public Vector3f normal;
+    public Vector3f position;  //Положение вершины в мировой системе координат
+    public Vector3f normal;  //Нормаль вершины в мировой системе координат, нужна для освещения
     public ArrayList<Vector2f> textureCoordinates = new ArrayList<>();; //UV, которые использовались с этой позицией вершины
 
     public boolean equals(Vertex vertex) {
@@ -40,12 +40,12 @@ public class Vertex {
         textureCoordinates.add(new Vector2f(uv.getX(), uv.getY()));
         return textureCoordinates.size() - 1;
     }
-
+    //Метод, который получает текстурную координату из списка по индексу, используется в методе рендера
     public Vector2f getTextureCoordinate(final int localIndex) {
         if (localIndex < 0 || localIndex >= textureCoordinates.size()) return null;
         return textureCoordinates.get(localIndex);
     }
-
+    // Метод, который копирует непустую верщины, в случае вершины null вернёт null
     public Vertex deepCopy() {
         Vertex copy = new Vertex();
 

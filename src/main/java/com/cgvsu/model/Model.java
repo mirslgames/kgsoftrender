@@ -15,9 +15,9 @@ public class Model {
     public ArrayList<Integer> polygonsBoundaries = new ArrayList<>(); //Номер индекса с которого идут вершины для данного полигона (старт)
     public ArrayList<Integer> polygonsTextureCoordinateIndices = new ArrayList<>();
 
-    public boolean hasTexture;
-    public Image texture;
-    public String textureName;
+    public boolean hasTexture;  //Флаг для текстуры, используется в рендере
+    public Image texture;   //Текстура в формате Image
+    public String textureName;  //Название текстуры, используется в GuiController
     public static Image defaultTexture; //Дефолтная текстура
 
     //Положение модельки в сцене

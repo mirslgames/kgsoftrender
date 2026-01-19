@@ -83,26 +83,14 @@ public class TextureMapping {
         return getTextureColor(texture, texCoord);
     }
 
-//    /**
-//     *
-//     * @param ray луч света от камеры
-//     * @param normal нормаль в текущей точке
-//     * @param baseColor базовые цвет из текстуры
-//     * @param lightIntensity интенсивность света, задаётся через интерфейс
-//     * @return цвет с учётом освещения
-//     */
-//    public static Color getModifiedColorWithLighting(Vector3f ray, Vector3f normal, Color baseColor,
-//                                                     float lightIntensity){
-//
-//        float l = -1 * ray.dot(normal);
-//        if (l < 0){
-//            l = 0;
-//        }
-//        double new_r = baseColor.getRed() * (1-lightIntensity) + baseColor.getRed() * l * lightIntensity;
-//        double new_g = baseColor.getGreen() * (1-lightIntensity) + baseColor.getGreen() * l * lightIntensity;
-//        double new_b = baseColor.getBlue() * (1-lightIntensity) + baseColor.getBlue() * l * lightIntensity;
-//        return new Color(new_r, new_g, new_b, baseColor.getOpacity());
-//    }
+    /**
+     *  Метод, который применяет к конкретному пикселю фонговскую модель освещения ambient + diffuse
+     * @param worldNormal нормаль вершины в мировых координатах
+     * @param worldPosition позиция пикселя в мировой системе координат
+     * @param baseColor начальны цвет конкртного пикселя(нужен для наложения цветов)
+     * @param k интенсивность освещения, подаётся в GuiController
+     * @return
+     */
     public static Color getModifiedColorWithLighting(
             Vector3f worldNormal,
             Vector3f worldPosition,

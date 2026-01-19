@@ -107,5 +107,35 @@ public class Matrix4f extends AbstractMatrix<Matrix4f> {
         Matrix4f matrix4f = this.copy();
         return matrix4f.multiplyOnVector(vector3f);
     }
+    // Строим (L^-1)^T для верхней 3x3 матрицы modelMatrix (нужно для нормалей при scale)
+    // Возвращает 9 значений построчно, или null если матрица вырожденная.
+    public static float[] buildNormalMatrix3x3(Matrix4f m) {
+        float a = m.getValue(0, 0), b = m.getValue(0, 1), c = m.getValue(0, 2);
+        float d = m.getValue(1, 0), e = m.getValue(1, 1), f = m.getValue(1, 2);
+        float g = m.getValue(2, 0), h = m.getValue(2, 1), i = m.getValue(2, 2);
+
+        float det = a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g);
+        if (Math.abs(det) < 1e-12f) return null;
+
+        float c00 = (e * i - f * h);
+        float c01 = -(d * i - f * g);
+        float c02 = (d * h - e * g);
+
+        float c10 = -(b * i - c * h);
+        float c11 = (a * i - c * g);
+        float c12 = -(a * h - b * g);
+
+        float c20 = (b * f - c * e);
+        float c21 = -(a * f - c * d);
+        float c22 = (a * e - b * d);
+
+        float invDet = 1.0f / det;
+
+        return new float[]{
+                c00 * invDet, c01 * invDet, c02 * invDet,
+                c10 * invDet, c11 * invDet, c12 * invDet,
+                c20 * invDet, c21 * invDet, c22 * invDet
+        };
+    }
 
 }

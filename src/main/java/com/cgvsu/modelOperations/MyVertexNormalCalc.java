@@ -10,7 +10,11 @@ import static com.cgvsu.modelOperations.NormalCalculation.calculatePolygonNormal
 import static com.cgvsu.modelOperations.NormalCalculation.computePolygonArea;
 
 public class MyVertexNormalCalc implements VertexNormals<Model> {
-
+    /**
+     * Метод, которые рассчитывает нормали к вершинам модели. Очень важно, чтобы модель на входе была триангулированная
+     * Реализация использует рассчёт по весам, а не среднее, так как это точнее
+     * @param model триангулированная модель, которой надо посчитать нормали
+     */
     @Override
     public void calculateVertexNormals(Model model) {
         int vertexCount = model.vertices.size();

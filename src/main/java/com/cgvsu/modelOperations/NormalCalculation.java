@@ -6,9 +6,16 @@ import com.cgvsu.model.Vertex;
 import java.util.List;
 
 public class NormalCalculation {
-
+    /**
+     *  Метод, который рассчитывает нормаль для конкретного полигона в модели.Конкретно в этом методе не важно, чтобы модель
+     *  была триангулированной. Рассчёт основывавется на операциях векторного произведения
+     * @param vertices
+     * @param polygon
+     * @param start
+     * @param end
+     * @return
+     */
     public static Vector3f calculatePolygonNormal(List<Vertex> vertices, List<Integer> polygon, int start, int end) {
-        // end — EXCLUSIVE
         if (end - start < 3) return new Vector3f(0, 0, 0);
 
         int i1 = polygon.get(start);
@@ -26,7 +33,7 @@ public class NormalCalculation {
         Vector3f normal = pos2.subbed(pos1).crossed(pos3.subbed(pos1));
 
         if (normal.len() < 1e-6f) {
-            // Не подмешиваем “фейковую” нормаль — иначе будут пятна в освещении
+            // Обрабатываем вырожденный случай, чтобы не было артефактов в освещении
             return new Vector3f(0, 0, 0);
         }
 
@@ -34,6 +41,15 @@ public class NormalCalculation {
         return normal;
     }
 
+    /**
+     * Метод, который рассчитывает площадь одного полигона(треугольника) в модели, используется для сравения по весам
+     * в MyVertexNormalCalc
+     * @param vertices список вершин модели
+     * @param polygon список индексов на вершины в треугольнике (плоский массив)
+     * @param start  первый индекс для навигации в плоском массиве polygon
+     * @param end   второй индекс верши для навигации в плоском массиве polygon
+     * @return
+     */
     public static float computePolygonArea(List<Vertex> vertices, List<Integer> polygon, int start, int end) {
         if (end - start < 3) return 0f;
 
